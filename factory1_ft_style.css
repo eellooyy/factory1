@@ -164,6 +164,146 @@ body {
     margin-left: -120px;
 }
 
+.f1ft-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+    margin-top: 16px;
+}
+
+.f1ft-main-table-box {
+    flex: 1 1 0;
+    min-width: 0;
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e5ea;
+}
+
+.f1ft-side-panel {
+    width: 220px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.f1ft-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e5ea;
+}
+
+.f1ft-box-header {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1d1d1f;
+    text-align: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f2f2f7;
+}
+
+.f1ft-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.f1ft-th,
+.f1ft-td {
+    border: 1px solid #d2d2d7;
+    height: 38px;
+    vertical-align: middle;
+    padding: 0;
+}
+
+.f1ft-th {
+    background: #f5f5f7;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d1d1f;
+    text-align: center;
+}
+
+.row-title {
+    background: #fafafc;
+    color: #1d1d1f;
+    width: 110px;
+}
+
+.border-outer {
+    border: 2px solid #8e8e93 !important;
+}
+
+.border-right-thick {
+    border-right: 2px solid #8e8e93 !important;
+}
+
+.border-top-thick th,
+.border-top-thick td {
+    border-top: 2px solid #8e8e93 !important;
+}
+
+.border-bottom-thick th,
+.border-bottom-thick td {
+    border-bottom: 2px solid #8e8e93 !important;
+}
+
+.col-row-title {
+    width: 110px;
+}
+
+.col-data {
+    width: 72px;
+}
+
+.col-memo {
+    width: 140px;
+}
+
+.f1ft-td.readonly {
+    background: #fbfbfd;
+}
+
+.f1ft-td.editable {
+    background: #ffffff;
+}
+
+.f1ft-td.memo-cell {
+    background: #fcfcfe;
+}
+
+.f1ft-input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    text-align: center;
+    padding: 0 8px;
+    font-size: 14px;
+    color: #1d1d1f;
+    box-sizing: border-box;
+}
+
+.f1ft-input::placeholder {
+    color: #c7c7cc;
+}
+
+.mini-table th {
+    font-size: 12px;
+    height: 30px;
+}
+
+.mini-table td {
+    height: 34px;
+}
+
 @media (max-width: 760px) {
     body {
         padding: 12px;
@@ -177,5 +317,13 @@ body {
     .f1ft-controls {
         width: 100%;
         justify-content: flex-start;
+    }
+
+    .f1ft-layout {
+        flex-direction: column;
+    }
+
+    .f1ft-side-panel {
+        width: 100%;
     }
 }
