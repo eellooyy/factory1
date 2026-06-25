@@ -319,6 +319,14 @@ body {
     background: #ffffff;
 }
 
+.f1ft-wrapper.edit-mode .f1ft-td.editable {
+    background: #fff9e6;
+}
+
+.f1ft-wrapper.edit-mode .f1ft-td.editable .f1ft-input:focus {
+    background: #fff2cc;
+}
+
 .f1ft-td.memo-cell {
     background: #fcfcfe;
 }

@@ -3,7 +3,8 @@
 
     const state = {
         currentDate: null,
-        fp: null
+        fp: null,
+        isEditMode: false
     };
 
     const elements = {};
@@ -23,6 +24,16 @@
             const d = new Date(`${dateStr}T00:00:00`);
             const days = ['일', '월', '화', '수', '목', '금', '토'];
             return `${d.getFullYear()}년 ${String(d.getMonth() + 1).padStart(2, '0')}월 ${String(d.getDate()).padStart(2, '0')}일 (${days[d.getDay()]})`;
+        },
+        parseNum(value) {
+            if (!value) return 0;
+            return Number(String(value).replace(/,/g, '').trim()) || 0;
+        },
+        formatNum(value) {
+            if (!value) return '';
+            return Number.isInteger(value)
+                ? value.toLocaleString()
+                : value.toLocaleString(undefined, { maximumFractionDigits: 2 });
         }
     };
 
@@ -44,6 +55,61 @@
         }
     }
 
+    function getInput(field, key, attr = 'col') {
+        return elements.wrapper.querySelector(`.f1ft-input[data-field="${field}"][data-${attr}="${key}"]`);
+    }
+
+    function setReadOnlyMode(isReadOnly) {
+        elements.wrapper.classList.toggle('edit-mode', !isReadOnly);
+        elements.wrapper
+            .querySelectorAll('.f1ft-input[data-field="start"], .f1ft-input[data-field="end"], .f1ft-input[data-field="memo"], .f1ft-input[data-field="erp"]')
+            .forEach((input) => {
+                input.readOnly = isReadOnly;
+            });
+    }
+
+    function calculateFields() {
+        const groups = { A: 0, C: 0, D: 0 };
+        const columns = ['A1', 'A2', 'A3', 'A4', 'C1', 'C2', 'D1', 'D2'];
+
+        columns.forEach((col) => {
+            const startInput = getInput('start', col);
+            const endInput = getInput('end', col);
+            const usageInput = getInput('usage', col);
+            const start = utils.parseNum(startInput?.value);
+            const end = utils.parseNum(endInput?.value);
+            const usage = start - end;
+            const group = startInput?.dataset.group;
+
+            if (usageInput) {
+                usageInput.value = start || end ? utils.formatNum(usage) : '';
+            }
+
+            if (group && Object.prototype.hasOwnProperty.call(groups, group)) {
+                groups[group] += usage;
+            }
+        });
+
+        Object.entries(groups).forEach(([group, realUsage]) => {
+            const realInput = getInput('real', group, 'group');
+            const erpInput = getInput('erp', group, 'group');
+            const diffInput = getInput('diff', group, 'group');
+            const erpValue = utils.parseNum(erpInput?.value);
+            const baseValue = utils.parseNum(diffInput?.dataset.base);
+            const diffValue = baseValue + erpValue - realUsage;
+
+            if (realInput) realInput.value = realUsage ? utils.formatNum(realUsage) : '';
+            if (diffInput) diffInput.value = erpValue || realUsage || baseValue ? utils.formatNum(diffValue) : '';
+        });
+    }
+
+    function toggleEditMode() {
+        state.isEditMode = !state.isEditMode;
+        setReadOnlyMode(!state.isEditMode);
+        elements.editBtn.textContent = state.isEditMode ? '보기' : '수정';
+        elements.saveBtn.disabled = !state.isEditMode;
+    }
+
     function initCalendar() {
         state.fp = flatpickr('#f1ftFlatpickr', {
             locale: 'ko',
@@ -56,14 +122,14 @@
             onReady(_, __, instance) {
                 instance.calendarContainer.style.marginTop = '10px';
             },
-            onChange(selectedDates, dateStr) {
+            onChange(_, dateStr) {
                 if (!dateStr) return;
                 setDate(dateStr);
             }
         });
     }
 
-    function bindEvents() {
+    function bindDateEvents() {
         elements.dateText.addEventListener('click', (event) => {
             event.stopPropagation();
             if (!state.fp) return;
@@ -89,14 +155,37 @@
                 setDate(today);
             }
         });
+    }
 
-        const pendingAlert = (label) => {
-            alert(`${label} 기능은 하단 레이아웃과 DB 연결을 정리한 뒤 활성화할 예정입니다.`);
-        };
+    function bindInputEvents() {
+        elements.wrapper.querySelectorAll('.numeric-input').forEach((input) => {
+            input.addEventListener('focus', function () {
+                if (this.readOnly) return;
+                this.value = this.value.replace(/,/g, '');
+                this.select();
+            });
 
-        elements.editBtn.addEventListener('click', () => pendingAlert('수정'));
-        elements.saveBtn.addEventListener('click', () => pendingAlert('저장'));
-        elements.excelBtn.addEventListener('click', () => pendingAlert('엑셀 출력'));
+            input.addEventListener('input', calculateFields);
+
+            input.addEventListener('blur', function () {
+                const value = utils.parseNum(this.value);
+                this.value = value ? utils.formatNum(value) : '';
+                calculateFields();
+            });
+        });
+    }
+
+    function bindButtonEvents() {
+        elements.editBtn.addEventListener('click', toggleEditMode);
+
+        elements.saveBtn.addEventListener('click', () => {
+            if (!state.isEditMode) return;
+            toggleEditMode();
+        });
+
+        elements.excelBtn.addEventListener('click', () => {
+            alert('엑셀 출력 기능은 하단 레이아웃과 DB 연결을 정리한 뒤 활성화할 예정입니다.');
+        });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -113,9 +202,14 @@
 
         const today = utils.getTodayStr();
         state.currentDate = utils.addDays(today, -1);
-        syncDateLabel();
 
+        elements.editBtn.disabled = false;
+        syncDateLabel();
         initCalendar();
-        bindEvents();
+        bindDateEvents();
+        bindInputEvents();
+        bindButtonEvents();
+        setReadOnlyMode(true);
+        calculateFields();
     });
 })();
