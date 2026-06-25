@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1공장 FT 일지</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="factory1_ft_style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+</head>
+<body>
+    <div class="f1ft-wrapper" data-page-module="Factory1FtModule">
+        <header class="f1ft-header">
+            <span class="f1ft-main-title">1공장 FT 일지</span>
+
+            <div class="f1ft-controls">
+                <div class="f1ft-nav-group">
+                    <button id="f1ftPrevBtn" class="f1ft-icon-btn" title="이전 날짜" type="button">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </button>
+                    <div class="f1ft-cal-wrap" id="f1ftCalendarWrap">
+                        <span id="f1ftDateText" class="f1ft-date-text cursor-pointer"></span>
+                        <input type="text" id="f1ftFlatpickr" class="f1ft-hidden-input" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <button id="f1ftNextBtn" class="f1ft-icon-btn" title="다음 날짜" type="button">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </button>
+                </div>
+
+                <button id="f1ftTodayBtn" class="f1ft-action-btn today-btn" type="button">오늘</button>
+                <button id="f1ftEditBtn" class="f1ft-action-btn edit-btn" type="button" disabled>수정</button>
+                <button id="f1ftSaveBtn" class="f1ft-action-btn save-btn" type="button" disabled>저장</button>
+                <button id="f1ftExcelBtn" class="f1ft-action-btn excel-btn" type="button" disabled>
+                    <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">table_view</span>엑셀 출력
+                </button>
+            </div>
+        </header>
+    </div>
+
+    <script src="factory1_ft_script.js"></script>
+</body>
+</html>
