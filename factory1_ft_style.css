@@ -166,14 +166,15 @@ body {
 
 .f1ft-layout {
     display: flex;
-    align-items: flex-start;
+    align-items: stretch;
+    flex-wrap: wrap;
     gap: 16px;
     width: 100%;
     margin-top: 16px;
 }
 
 .f1ft-main-table-box {
-    flex: 1 1 0;
+    flex: 1 1 720px;
     min-width: 0;
     background: #fff;
     border-radius: 12px;
@@ -183,14 +184,18 @@ body {
 }
 
 .f1ft-side-panel {
-    width: 220px;
-    flex-shrink: 0;
+    flex: 0 0 220px;
+    min-width: 220px;
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
 
 .f1ft-box {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
     background: #fff;
     border-radius: 12px;
     padding: 16px;
@@ -244,6 +249,12 @@ body {
     border-right: 2px solid #8e8e93 !important;
 }
 
+.f1ft-main-table-box .f1ft-table tr > *:nth-child(5),
+.f1ft-main-table-box .f1ft-table tr > *:nth-child(7),
+.f1ft-main-table-box .f1ft-table tr > *:nth-child(9) {
+    border-right: 2px solid #8e8e93 !important;
+}
+
 .border-top-thick th,
 .border-top-thick td {
     border-top: 2px solid #8e8e93 !important;
@@ -264,6 +275,36 @@ body {
 
 .col-memo {
     width: 140px;
+}
+
+.side-col-label {
+    width: 30%;
+}
+
+.side-col-value {
+    width: 70%;
+}
+
+.mini-table .row-title {
+    width: 30%;
+}
+
+.mini-table td {
+    width: 70%;
+}
+
+.mini-table {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+}
+
+.mini-table tbody {
+    height: 100%;
+}
+
+.mini-table tbody tr {
+    height: 33.333%;
 }
 
 .f1ft-td.readonly {
@@ -325,5 +366,14 @@ body {
 
     .f1ft-side-panel {
         width: 100%;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+}
+
+@media (max-width: 980px) {
+    .f1ft-side-panel {
+        flex-basis: 100%;
+        min-width: 0;
     }
 }
