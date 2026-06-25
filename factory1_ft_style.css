@@ -184,7 +184,7 @@ body {
 
 .f1ft-summary-row {
     display: grid;
-    grid-template-columns: repeat(3, minmax(220px, 1fr));
+    grid-template-columns: minmax(210px, 1fr) minmax(210px, 1fr) minmax(170px, 0.72fr) minmax(210px, 1fr);
     gap: 16px;
     width: 100%;
 }
@@ -194,6 +194,11 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
+}
+
+.f1ft-side-panel-compact .f1ft-box {
+    padding-left: 14px;
+    padding-right: 14px;
 }
 
 .f1ft-box {
@@ -353,6 +358,20 @@ body {
     color: #c7c7cc;
 }
 
+.delta-input {
+    font-weight: 700;
+}
+
+.delta-positive {
+    background: #e8f7e8 !important;
+    color: #218739;
+}
+
+.delta-negative {
+    background: #fdeaea !important;
+    color: #c62828;
+}
+
 .mini-table th {
     font-size: 12px;
     height: 30px;
@@ -360,6 +379,12 @@ body {
 
 .mini-table td {
     height: 34px;
+}
+
+@media (max-width: 980px) {
+    .f1ft-summary-row {
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+    }
 }
 
 @media (max-width: 760px) {

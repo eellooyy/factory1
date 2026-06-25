@@ -34,6 +34,11 @@
             return Number.isInteger(value)
                 ? value.toLocaleString()
                 : value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+        },
+        formatSignedNum(value) {
+            if (!value) return '';
+            const formatted = utils.formatNum(Math.abs(value));
+            return value > 0 ? `+${formatted}` : `-${formatted}`;
         }
     };
 
@@ -93,12 +98,19 @@
         Object.entries(groups).forEach(([group, realUsage]) => {
             const realInput = getInput('real', group, 'group');
             const erpInput = getInput('erp', group, 'group');
+            const deltaInput = getInput('delta', group, 'group');
             const diffInput = getInput('diff', group, 'group');
             const erpValue = utils.parseNum(erpInput?.value);
             const baseValue = utils.parseNum(diffInput?.dataset.base);
-            const diffValue = baseValue + erpValue - realUsage;
+            const deltaValue = erpValue - realUsage;
+            const diffValue = baseValue + deltaValue;
 
             if (realInput) realInput.value = realUsage ? utils.formatNum(realUsage) : '';
+            if (deltaInput) {
+                deltaInput.value = deltaValue ? utils.formatSignedNum(deltaValue) : '';
+                deltaInput.classList.toggle('delta-positive', deltaValue > 0);
+                deltaInput.classList.toggle('delta-negative', deltaValue < 0);
+            }
             if (diffInput) diffInput.value = erpValue || realUsage || baseValue ? utils.formatNum(diffValue) : '';
         });
     }
