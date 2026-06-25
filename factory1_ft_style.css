@@ -381,15 +381,3 @@ body {
         grid-template-columns: 1fr;
     }
 }
-
-@media (max-width: 980px) {
-    .f1ft-summary-row {
-        grid-template-columns: repeat(3, minmax(180px, 1fr));
-    }
-}
-
-@media (max-width: 680px) {
-    .f1ft-summary-row {
-        grid-template-columns: 1fr;
-    }
-}
