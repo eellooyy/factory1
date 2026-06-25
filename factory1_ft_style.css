@@ -174,7 +174,7 @@ body {
 }
 
 .f1ft-main-table-box {
-    flex: 1 1 720px;
+    flex: 1 1 860px;
     min-width: 0;
     background: #fff;
     border-radius: 12px;
@@ -252,6 +252,10 @@ body {
 .f1ft-main-table-box .f1ft-table tr > *:nth-child(5),
 .f1ft-main-table-box .f1ft-table tr > *:nth-child(7),
 .f1ft-main-table-box .f1ft-table tr > *:nth-child(9) {
+    border-right: 2px solid #8e8e93 !important;
+}
+
+.f1ft-main-table-box .f1ft-table tr > *:first-child {
     border-right: 2px solid #8e8e93 !important;
 }
 
