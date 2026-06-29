@@ -84,6 +84,7 @@
 
     function calculateFields() {
         const groups = { A: 0, C: 0, D: 0 };
+        const validCounts = { A: 0, C: 0, D: 0 }; // 그룹별로 계산이 유효한 항목 수를 체크
         const columns = ['A1', 'A2', 'A3', 'A4', 'C1', 'C2', 'D1', 'D2'];
 
         columns.forEach((col) => {
@@ -92,15 +93,23 @@
             const usageInput = getInput('usage', col);
             const start = utils.parseNum(startInput?.value);
             const end = utils.parseNum(endInput?.value);
-            const usage = start - end;
             const group = startInput?.dataset.group;
 
-            if (usageInput) {
-                usageInput.value = start || end ? utils.formatNum(usage) : '';
-            }
+            // 실무적 변경점: 사용 후 잔량(end)에 값이 입력된 경우에만 계산 실행
+            if (endInput && endInput.value.trim() !== '') {
+                const usage = start - end;
+                if (usageInput) {
+                    usageInput.value = utils.formatNum(usage);
+                }
 
-            if (group && Object.prototype.hasOwnProperty.call(groups, group)) {
-                groups[group] += usage;
+                if (group && Object.prototype.hasOwnProperty.call(groups, group)) {
+                    groups[group] += usage;
+                    validCounts[group]++; // 유효한 데이터 카운트 증가
+                }
+            } else {
+                if (usageInput) {
+                    usageInput.value = ''; // 사용 후 잔량이 없으면 비워둠
+                }
             }
         });
 
@@ -109,18 +118,30 @@
             const erpInput = getInput('erp', group, 'group');
             const deltaInput = getInput('delta', group, 'group');
             const diffInput = getInput('diff', group, 'group');
-            const erpValue = utils.parseNum(erpInput?.value);
-            const baseValue = utils.parseNum(diffInput?.dataset.base);
-            const deltaValue = erpValue - realUsage;
-            const diffValue = baseValue + deltaValue;
+            
+            // 해당 그룹에 실재고(end) 입력이 있거나, ERP 입력량이 있을 때만 하단 요약부 계산
+            if (validCounts[group] > 0 || (erpInput && erpInput.value.trim() !== '')) {
+                const erpValue = utils.parseNum(erpInput?.value);
+                const baseValue = utils.parseNum(diffInput?.dataset.base);
+                const deltaValue = erpValue - realUsage;
+                const diffValue = baseValue + deltaValue;
 
-            if (realInput) realInput.value = realUsage ? utils.formatNum(realUsage) : '';
-            if (deltaInput) {
-                deltaInput.value = deltaValue ? utils.formatSignedNum(deltaValue) : '';
-                deltaInput.classList.toggle('delta-positive', deltaValue > 0);
-                deltaInput.classList.toggle('delta-negative', deltaValue < 0);
+                if (realInput) realInput.value = utils.formatNum(realUsage);
+                if (deltaInput) {
+                    deltaInput.value = deltaValue === 0 ? '0' : utils.formatSignedNum(deltaValue);
+                    deltaInput.classList.toggle('delta-positive', deltaValue > 0);
+                    deltaInput.classList.toggle('delta-negative', deltaValue < 0);
+                }
+                if (diffInput) diffInput.value = utils.formatNum(diffValue);
+            } else {
+                // 데이터가 하나도 입력되지 않았다면 요약부도 깨끗하게 비워둠
+                if (realInput) realInput.value = '';
+                if (deltaInput) {
+                    deltaInput.value = '';
+                    deltaInput.classList.remove('delta-positive', 'delta-negative');
+                }
+                if (diffInput) diffInput.value = '';
             }
-            if (diffInput) diffInput.value = erpValue || realUsage || baseValue ? utils.formatNum(diffValue) : '';
         });
     }
 
