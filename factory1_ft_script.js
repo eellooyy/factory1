@@ -32,7 +32,6 @@
             return `${d.getFullYear()}년 ${String(d.getMonth() + 1).padStart(2, '0')}월 ${String(d.getDate()).padStart(2, '0')}일 (${days[d.getDay()]})`;
         },
         parseNum(value) {
-            // [수정] 0을 명확히 숫자로 인지하도록 로직 강화
             if (value === undefined || value === null || value === '') return 0;
             const parsed = Number(String(value).replace(/,/g, '').trim());
             return isNaN(parsed) ? 0 : parsed;
@@ -97,7 +96,6 @@
         const validCounts = { A: 0, C: 0, D: 0 }; 
         const columns = ['A1', 'A2', 'A3', 'A4', 'C1', 'C2', 'D1', 'D2'];
 
-        // 1. 각 셀별 사용량 계산
         columns.forEach((col) => {
             const startInput = getInput('start', col);
             const endInput = getInput('end', col);
@@ -122,7 +120,6 @@
             }
         });
 
-        // 2. 그룹별 요약 및 이월값 계산
         Object.entries(groups).forEach(([group, realUsage]) => {
             const realInput = getInput('real', group, 'group');
             const erpInput = getInput('erp', group, 'group');
@@ -130,7 +127,6 @@
             const diffInput = getInput('diff', group, 'group');
             
             const erpValue = utils.parseNum(erpInput?.value);
-            
             const baseValue = utils.parseNum(diffInput?.dataset.base); 
             const savedValue = diffInput?.dataset.saved; 
 
@@ -255,6 +251,7 @@
         const columns = ['A1', 'A2', 'A3', 'A4', 'C1', 'C2', 'D1', 'D2'];
         let autoFilledCols = [];
 
+        // 1. 화면 내 빈칸 자동 채우기 및 계산 반영
         columns.forEach((col) => {
             const startInput = getInput('start', col);
             const endInput = getInput('end', col);
@@ -278,12 +275,43 @@
         elements.saveBtn.disabled = true;
         elements.saveBtn.textContent = '저장 중...';
 
+        // 2. 화면 데이터 수집
+        const startData = collectInputData('start', false);
+        const endData = collectInputData('end', false);
+
+        // 3. [핵심 로직] 사용 전/후 잔량을 짝지어 '사용 전 잔량' 기준 내림차순 자동 정렬
+        const sortedStartData = {};
+        const sortedEndData = {};
+        const groupKeys = { 'A': ['A1', 'A2', 'A3', 'A4'], 'C': ['C1', 'C2'], 'D': ['D1', 'D2'] };
+
+        Object.keys(groupKeys).forEach(group => {
+            const keys = groupKeys[group];
+            
+            // 유효한 데이터 쌍(pair)만 추출
+            let pairs = keys.map(k => ({
+                start: startData[k] || 0,
+                end: endData[k] || 0
+            })).filter(p => p.start > 0 || p.end > 0);
+            
+            // 사용 전 잔량(start) 기준 내림차순(큰 숫자가 먼저 오도록) 정렬
+            pairs.sort((a, b) => b.start - a.start);
+            
+            // 정렬된 결과를 좌측 열부터 차례대로 재배치
+            keys.forEach((k, index) => {
+                if (pairs[index]) {
+                    if (pairs[index].start > 0) sortedStartData[k] = pairs[index].start;
+                    if (pairs[index].end > 0 || pairs[index].end === 0) sortedEndData[k] = pairs[index].end;
+                }
+            });
+        });
+
         const memoInput = elements.wrapper.querySelector('.f1ft-input[data-field="memo"]');
 
+        // 4. 정렬된 데이터로 DB Payload 구성
         const payload = {
             log_date: state.currentDate,
-            start_values: collectInputData('start', false),
-            end_values: collectInputData('end', false),
+            start_values: sortedStartData, // 정렬된 데이터
+            end_values: sortedEndData,     // 짝맞춰 정렬된 데이터
             erp_usage: collectInputData('erp', true),
             memo: memoInput ? memoInput.value.trim() : '',
             contrast_qty: {
@@ -308,11 +336,16 @@
         alert('성공적으로 저장되었습니다.');
         state.isChanged = false; 
 
-        if (state.currentDate < utils.getTodayStr()) {
-            alert('[주의] 과거 데이터를 수정하셨습니다.\n수정하신 내역이 이후 날짜의 이월 및 누적 계산에 연쇄적으로 영향을 미칩니다.\n\n반드시 오늘 날짜까지 차례대로 확인하시고 재저장해 주세요.');
+        // [수정] 4일 이전 기준 과거 데이터 수정 경고창
+        const fourDaysAgo = utils.addDays(utils.getTodayStr(), -4);
+        if (state.currentDate < fourDaysAgo) {
+            alert('[주의] 4일 이상 경과된 과거 데이터를 수정하셨습니다.\n수정하신 내역이 이후 날짜의 이월 및 누적 계산에 연쇄적으로 영향을 미칩니다.\n\n반드시 오늘 날짜까지 차례대로 확인하시고 재저장해 주세요.');
         }
 
         toggleEditMode(); 
+        
+        // 정렬된 결과를 화면(UI)에 즉시 렌더링하기 위해 데이터 리로드
+        await loadFactoryData(state.currentDate);
     }
     // --- DB 연동 로직 끝 --- //
 
@@ -392,9 +425,85 @@
     }
 
     function bindInputEvents() {
+        // [수정] 드래그 복사/붙여넣기 방지 (실수 방지)
+        elements.wrapper.addEventListener('dragstart', (e) => {
+            if (e.target.classList.contains('f1ft-input')) e.preventDefault();
+        });
+        elements.wrapper.addEventListener('drop', (e) => {
+            if (e.target.classList.contains('f1ft-input')) e.preventDefault();
+        });
+
         elements.wrapper.addEventListener('input', (e) => {
             if (e.target.classList.contains('f1ft-input')) {
                 state.isChanged = true;
+            }
+        });
+
+        // [수정] 엑셀식 방향키 및 엔터 이동 (상하좌우 완벽 대응)
+        elements.wrapper.addEventListener('keydown', (e) => {
+            if (e.target.classList.contains('f1ft-input') && !e.target.readOnly) {
+                const key = e.key;
+                if (['Enter', 'ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+                    
+                    // 입력 중 텍스트 수정(커서 이동)을 위한 예외 처리
+                    if (key === 'ArrowLeft' && e.target.selectionStart > 0) return;
+                    if (key === 'ArrowRight' && e.target.selectionEnd < e.target.value.length) return;
+
+                    e.preventDefault();
+                    
+                    const td = e.target.closest('td');
+                    if (!td) return;
+                    const tr = td.closest('tr');
+                    const tds = Array.from(tr.querySelectorAll('td'));
+                    const colIndex = tds.indexOf(td);
+                    
+                    let nextInput = null;
+                    
+                    if (key === 'ArrowLeft') {
+                        let prevTd = td.previousElementSibling;
+                        while (prevTd && !prevTd.querySelector('.f1ft-input:not([readonly])')) {
+                            prevTd = prevTd.previousElementSibling;
+                        }
+                        if (prevTd) nextInput = prevTd.querySelector('.f1ft-input:not([readonly])');
+                    } 
+                    else if (key === 'ArrowRight') {
+                        let nextTd = td.nextElementSibling;
+                        while (nextTd && !nextTd.querySelector('.f1ft-input:not([readonly])')) {
+                            nextTd = nextTd.nextElementSibling;
+                        }
+                        if (nextTd) nextInput = nextTd.querySelector('.f1ft-input:not([readonly])');
+                    } 
+                    else if (key === 'ArrowUp') {
+                        let prevTr = tr.previousElementSibling;
+                        while (prevTr) {
+                            const targetTd = Array.from(prevTr.querySelectorAll('td'))[colIndex];
+                            if (targetTd && targetTd.querySelector('.f1ft-input:not([readonly])')) {
+                                nextInput = targetTd.querySelector('.f1ft-input:not([readonly])');
+                                break;
+                            }
+                            prevTr = prevTr.previousElementSibling;
+                        }
+                    } 
+                    else if (key === 'ArrowDown' || key === 'Enter') {
+                        let nextTr = tr.nextElementSibling;
+                        while (nextTr) {
+                            const targetTd = Array.from(nextTr.querySelectorAll('td'))[colIndex];
+                            if (targetTd && targetTd.querySelector('.f1ft-input:not([readonly])')) {
+                                nextInput = targetTd.querySelector('.f1ft-input:not([readonly])');
+                                break;
+                            }
+                            nextTr = nextTr.nextElementSibling;
+                        }
+                    }
+                    
+                    if (nextInput) {
+                        nextInput.focus();
+                        // 셀 이동 시 내용 전체를 블록 지정해 엑셀처럼 바로 덮어쓸 수 있게 함
+                        if (nextInput.type === 'text' || nextInput.type === 'number') {
+                            nextInput.select();
+                        }
+                    }
+                }
             }
         });
 
@@ -408,7 +517,6 @@
             input.addEventListener('input', calculateFields);
 
             input.addEventListener('blur', function () {
-                // [수정] 명시적으로 0을 입력했을 때 날아가지 않고 '0'으로 포맷되도록 분기 처리
                 if (this.value.trim() === '') {
                     this.value = '';
                 } else {
