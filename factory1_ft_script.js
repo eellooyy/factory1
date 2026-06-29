@@ -32,8 +32,10 @@
             return `${d.getFullYear()}년 ${String(d.getMonth() + 1).padStart(2, '0')}월 ${String(d.getDate()).padStart(2, '0')}일 (${days[d.getDay()]})`;
         },
         parseNum(value) {
-            if (!value) return 0;
-            return Number(String(value).replace(/,/g, '').trim()) || 0;
+            // [수정] 0을 명확히 숫자로 인지하도록 로직 강화
+            if (value === undefined || value === null || value === '') return 0;
+            const parsed = Number(String(value).replace(/,/g, '').trim());
+            return isNaN(parsed) ? 0 : parsed;
         },
         formatNum(value) {
             if (value === '' || value == null) return '';
@@ -90,7 +92,6 @@
             });
     }
 
-    // [핵심 수정] 당일 계산 및 이월값 반영 로직
     function calculateFields() {
         const groups = { A: 0, C: 0, D: 0 };
         const validCounts = { A: 0, C: 0, D: 0 }; 
@@ -121,7 +122,7 @@
             }
         });
 
-        // 2. 그룹별 요약 및 [이월값 누적] 계산
+        // 2. 그룹별 요약 및 이월값 계산
         Object.entries(groups).forEach(([group, realUsage]) => {
             const realInput = getInput('real', group, 'group');
             const erpInput = getInput('erp', group, 'group');
@@ -130,20 +131,17 @@
             
             const erpValue = utils.parseNum(erpInput?.value);
             
-            // 전일 데이터(이월값)와 당일 DB 저장값
             const baseValue = utils.parseNum(diffInput?.dataset.base); 
             const savedValue = diffInput?.dataset.saved; 
 
-            // 당일 작업 내역이 하나라도 있는지 확인
             const hasTodayInput = validCounts[group] > 0 || (erpInput && erpInput.value.trim() !== '');
 
             let diffValue = 0;
             let shouldShowDiff = false;
 
-            // 조건 A: 당일 데이터 입력이 있을 때 -> 누적 계산 (전일 이월값 + 당일 증감)
             if (hasTodayInput) {
                 const deltaValue = erpValue - realUsage;
-                diffValue = baseValue + deltaValue; // 핵심 누적 로직
+                diffValue = baseValue + deltaValue; 
                 shouldShowDiff = true;
 
                 if (realInput) realInput.value = utils.formatNum(realUsage);
@@ -153,7 +151,6 @@
                     deltaInput.classList.toggle('delta-negative', deltaValue < 0);
                 }
             } 
-            // 조건 B: 당일 데이터가 없을 때 -> 전일 이월값 표시 또는 수동입력값 표시
             else {
                 if (realInput) realInput.value = '';
                 if (deltaInput) {
@@ -162,17 +159,14 @@
                 }
 
                 if (savedValue !== '') {
-                    // 수동으로 SQL Insert한 값이 있다면 그걸 우선 표시
                     diffValue = utils.parseNum(savedValue);
                     shouldShowDiff = true;
                 } else if (baseValue !== 0) {
-                    // 아무것도 없으면 어제 넘어온 이월값(base)을 보여주어 흐름 유지
                     diffValue = baseValue;
                     shouldShowDiff = true;
                 }
             }
 
-            // 실재고-ERP(diff) 필드에 결과값 반영
             if (diffInput) {
                 diffInput.value = shouldShowDiff ? utils.formatNum(diffValue) : '';
             }
@@ -218,26 +212,23 @@
         const yesterdayData = yesterdayRes.data || {};
         const todayData = todayRes.data || {};
 
-        // 1. [핵심] 전일 결과값(Base)과 당일 DB 기록 매핑
         const prevContrast = yesterdayData.contrast_qty || {};
         const todayContrast = todayData.contrast_qty || {};
 
         ['A', 'C', 'D'].forEach(group => {
             const input = getInput('diff', group, 'group');
             if (input) {
-                input.dataset.base = prevContrast[group] || 0; // 전날 값이 오늘의 기준값(Base)
-                input.dataset.saved = todayContrast[group] !== undefined ? todayContrast[group] : ''; // 수동 Insert 대응
+                input.dataset.base = prevContrast[group] || 0; 
+                input.dataset.saved = todayContrast[group] !== undefined ? todayContrast[group] : ''; 
             }
         });
 
-        // 2. 사용 전 잔량
         const startValues = todayData.start_values || yesterdayData.end_values || {};
         Object.entries(startValues).forEach(([col, val]) => {
             const input = getInput('start', col, 'col');
             if (input) input.value = utils.formatNum(val);
         });
 
-        // 3. 당일 사용 후 잔량 및 ERP 입력량
         const endValues = todayData.end_values || {};
         Object.entries(endValues).forEach(([col, val]) => {
             const input = getInput('end', col, 'col');
@@ -250,7 +241,6 @@
             if (input) input.value = utils.formatNum(val);
         });
 
-        // 4. 비고 
         const memoInput = elements.wrapper.querySelector('.f1ft-input[data-field="memo"]');
         if (memoInput && todayData.memo) {
             memoInput.value = todayData.memo;
@@ -418,8 +408,13 @@
             input.addEventListener('input', calculateFields);
 
             input.addEventListener('blur', function () {
-                const value = utils.parseNum(this.value);
-                this.value = value ? utils.formatNum(value) : '';
+                // [수정] 명시적으로 0을 입력했을 때 날아가지 않고 '0'으로 포맷되도록 분기 처리
+                if (this.value.trim() === '') {
+                    this.value = '';
+                } else {
+                    const value = utils.parseNum(this.value);
+                    this.value = utils.formatNum(value);
+                }
                 calculateFields();
             });
         });
