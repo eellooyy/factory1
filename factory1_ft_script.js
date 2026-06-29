@@ -1,6 +1,11 @@
 (function () {
     'use strict';
 
+    // Supabase 설정 (본인 프로젝트 정보)
+    const supabaseUrl = 'https://npiflqoscsvnnauvqhrr.supabase.co';
+    const supabaseKey = 'sb_publishable_ir-mHSsX6SSIQwHerkLbfA_2qCOP3KW'; 
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
     const state = {
         currentDate: null,
         fp: null,
@@ -48,6 +53,7 @@
         }
     }
 
+    // 날짜 설정 시 데이터를 DB에서 새로 불러옵니다.
     function setDate(dateStr) {
         state.currentDate = dateStr;
         syncDateLabel();
@@ -58,6 +64,9 @@
                 state.fp.setDate(dateStr, false);
             }
         }
+        
+        // 날짜 변경 시 해당 일자 DB 불러오기
+        loadFactoryData(dateStr);
     }
 
     function getInput(field, key, attr = 'col') {
@@ -114,6 +123,128 @@
             if (diffInput) diffInput.value = erpValue || realUsage || baseValue ? utils.formatNum(diffValue) : '';
         });
     }
+
+    // --- DB 연동 로직 시작 --- //
+
+    // 화면의 입력값 초기화
+    function clearAllInputs() {
+        elements.wrapper.querySelectorAll('.f1ft-input').forEach(input => {
+            input.value = '';
+            if(input.dataset.base) input.dataset.base = "0"; 
+        });
+    }
+
+    // 빈 값은 제외하고 데이터 수집
+    function collectInputData(field, isGroup = false) {
+        const data = {};
+        elements.wrapper.querySelectorAll(`.f1ft-input[data-field="${field}"]`).forEach(input => {
+            const val = input.value.trim();
+            if (val !== '') {
+                const key = isGroup ? input.dataset.group : input.dataset.col;
+                if (key) {
+                   data[key] = input.classList.contains('numeric-input') ? utils.parseNum(val) : val;
+                }
+            }
+        });
+        return data;
+    }
+
+    // 데이터 불러오기 (오늘과 어제 기록 연동)
+    async function loadFactoryData(dateStr) {
+        clearAllInputs();
+        elements.editBtn.disabled = true; // 로딩 중 버튼 비활성화
+
+        const yesterdayStr = utils.addDays(dateStr, -1);
+
+        // 어제 데이터와 선택한 날짜 데이터를 동시에 가져옵니다.
+        const [yesterdayRes, todayRes] = await Promise.all([
+            supabase.from('factory1_ft_real').select('end_values, contrast_qty').eq('log_date', yesterdayStr).single(),
+            supabase.from('factory1_ft_real').select('*').eq('log_date', dateStr).single()
+        ]);
+
+        const yesterdayData = yesterdayRes.data || {};
+        const todayData = todayRes.data || {};
+
+        // 1. [실재고 - ERP] 전일 기록을 Base로 설정
+        const prevContrast = yesterdayData.contrast_qty || { A: 0, C: 0, D: 0 };
+        if (getInput('diff', 'A', 'group')) getInput('diff', 'A', 'group').dataset.base = prevContrast.A || 0;
+        if (getInput('diff', 'C', 'group')) getInput('diff', 'C', 'group').dataset.base = prevContrast.C || 0;
+        if (getInput('diff', 'D', 'group')) getInput('diff', 'D', 'group').dataset.base = prevContrast.D || 0;
+
+        // 2. 사용 전 잔량 (오늘 저장된게 있으면 오늘것, 없으면 어제 사용 후 잔량 불러오기)
+        const startValues = todayData.start_values || yesterdayData.end_values || {};
+        Object.entries(startValues).forEach(([col, val]) => {
+            const input = getInput('start', col, 'col');
+            if (input) input.value = utils.formatNum(val);
+        });
+
+        // 3. 오늘 저장된 사용 후 잔량, ERP 입력량 세팅
+        const endValues = todayData.end_values || {};
+        Object.entries(endValues).forEach(([col, val]) => {
+            const input = getInput('end', col, 'col');
+            if (input) input.value = utils.formatNum(val);
+        });
+
+        const erpUsage = todayData.erp_usage || {};
+        Object.entries(erpUsage).forEach(([group, val]) => {
+            const input = getInput('erp', group, 'group');
+            if (input) input.value = utils.formatNum(val);
+        });
+
+        // 4. 비고 세팅
+        const memoInput = elements.wrapper.querySelector('.f1ft-input[data-field="memo"]');
+        if (memoInput && todayData.memo) {
+            memoInput.value = todayData.memo;
+        }
+
+        calculateFields(); // 로드된 데이터로 전체 재계산
+        elements.editBtn.disabled = false;
+    }
+
+    // 데이터 DB에 저장하기
+    async function saveFactoryData() {
+        elements.saveBtn.disabled = true;
+        elements.saveBtn.textContent = '저장 중...';
+
+        // 비고 입력칸 찾기
+        const memoInput = elements.wrapper.querySelector('.f1ft-input[data-field="memo"]');
+
+        // 입력된 내용만 모아서 JSON으로 만들기
+        const payload = {
+            log_date: state.currentDate,
+            start_values: collectInputData('start', false),
+            end_values: collectInputData('end', false),
+            erp_usage: collectInputData('erp', true),
+            memo: memoInput ? memoInput.value.trim() : '',
+            contrast_qty: {
+                A: utils.parseNum(getInput('diff', 'A', 'group')?.value) || 0,
+                C: utils.parseNum(getInput('diff', 'C', 'group')?.value) || 0,
+                D: utils.parseNum(getInput('diff', 'D', 'group')?.value) || 0
+            }
+        };
+
+        const { error } = await supabase
+            .from('factory1_ft_real')
+            .upsert(payload, { onConflict: 'log_date' });
+
+        elements.saveBtn.disabled = false;
+        elements.saveBtn.textContent = '저장';
+
+        if (error) {
+            alert('저장에 실패했습니다: ' + error.message);
+            return;
+        }
+
+        alert('성공적으로 저장되었습니다.');
+
+        // [전략 A] 과거 데이터 수정 시 경고 알림 발생
+        if (state.currentDate < utils.getTodayStr()) {
+            alert('[주의] 과거 데이터를 수정하셨습니다.\n수정하신 내역이 이후 날짜의 "시작 잔량" 및 "실재고" 계산에 연쇄적으로 영향을 미칩니다.\n\n반드시 오늘 날짜까지 차례대로 확인하시고 재저장해 주세요.');
+        }
+
+        toggleEditMode(); // 수정 모드 종료
+    }
+    // --- DB 연동 로직 끝 --- //
 
     function toggleEditMode() {
         state.isEditMode = !state.isEditMode;
@@ -192,7 +323,8 @@
 
         elements.saveBtn.addEventListener('click', () => {
             if (!state.isEditMode) return;
-            toggleEditMode();
+            // 로컬 로직 대신 DB 저장 함수 호출
+            saveFactoryData();
         });
 
         elements.excelBtn.addEventListener('click', () => {
@@ -212,16 +344,19 @@
         elements.saveBtn = document.getElementById('f1ftSaveBtn');
         elements.excelBtn = document.getElementById('f1ftExcelBtn');
 
+        // 초기 시작 날짜 설정 (오늘 날짜)
         const today = utils.getTodayStr();
-        state.currentDate = utils.addDays(today, -1);
+        state.currentDate = today; 
 
-        elements.editBtn.disabled = false;
-        syncDateLabel();
+        elements.editBtn.disabled = true; // DB 로딩 전까지는 수정 버튼 잠금
+        
         initCalendar();
         bindDateEvents();
         bindInputEvents();
         bindButtonEvents();
         setReadOnlyMode(true);
-        calculateFields();
+        
+        // 날짜 세팅 및 최초 DB 로딩 실행
+        setDate(state.currentDate); 
     });
 })();
