@@ -163,8 +163,16 @@
                 }
             }
 
+            // diffInput 값 및 디자인 업데이트 추가
             if (diffInput) {
-                diffInput.value = shouldShowDiff ? utils.formatNum(diffValue) : '';
+                if (shouldShowDiff) {
+                    diffInput.value = diffValue === 0 ? '0' : utils.formatSignedNum(diffValue);
+                    diffInput.classList.toggle('delta-positive', diffValue > 0);
+                    diffInput.classList.toggle('delta-negative', diffValue < 0);
+                } else {
+                    diffInput.value = '';
+                    diffInput.classList.remove('delta-positive', 'delta-negative');
+                }
             }
         });
     }
