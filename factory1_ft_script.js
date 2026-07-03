@@ -227,7 +227,19 @@
             }
         });
 
-        const startValues = todayData.start_values || yesterdayData.end_values || {};
+        // [수정] 전날의 end_values에서 0인 항목은 이월하지 않도록 필터링
+        let startValues = todayData.start_values;
+        if (!startValues && yesterdayData.end_values) {
+            startValues = {};
+            Object.entries(yesterdayData.end_values).forEach(([col, val]) => {
+                const numVal = utils.parseNum(val);
+                if (numVal > 0) { // 0 초과인 경우만 이월
+                    startValues[col] = numVal;
+                }
+            });
+        }
+        startValues = startValues || {};
+
         Object.entries(startValues).forEach(([col, val]) => {
             const input = getInput('start', col, 'col');
             if (input) input.value = utils.formatNum(val);
