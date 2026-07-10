@@ -9,7 +9,8 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <link rel="stylesheet" href="factory1_ft_style.css">
+    <!-- 폴더 구조 반영된 CSS 경로 -->
+    <link rel="stylesheet" href="css/factory1_ft_style.css">
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
@@ -17,7 +18,19 @@
 <body>
     <div class="f1ft-wrapper" data-page-module="Factory1FtModule">
         <header class="f1ft-header">
-            <span class="f1ft-main-title">1공장 FT 일지</span>
+            <!-- 삼선 메뉴 및 제목 드롭다운 영역 -->
+            <div class="f1ft-title-area">
+                <button id="f1ftMenuBtn" class="f1ft-menu-btn" title="메뉴 열기" type="button">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <span id="f1ftMainTitle" class="f1ft-main-title clickable">1공장 FT 일지</span>
+                
+                <!-- 드롭다운 메뉴 박스 -->
+                <div id="f1ftDropdown" class="f1ft-dropdown-menu">
+                    <a href="factory1_ft.html" class="f1ft-dropdown-item active">1공장 FT 일지</a>
+                    <a href="factory1_ilji.html" class="f1ft-dropdown-item">1공장 급지 일지</a>
+                </div>
+            </div>
 
             <div class="f1ft-controls">
                 <div class="f1ft-nav-group">
@@ -220,10 +233,10 @@
         </main>
     </div>
 
-    <!-- 1공장 FT 모듈 (constant → api → render → main 순서로 로드) -->
-    <script src="factory1_ft_constant.js"></script>
-    <script src="factory1_ft_api.js"></script>
-    <script src="factory1_ft_render.js"></script>
-    <script src="factory1_ft_main.js"></script>
+    <!-- 폴더 구조 반영된 JS 파일 로드 순서 -->
+    <script src="js/factory1_ft_constant.js"></script>
+    <script src="js/factory1_ft_api.js"></script>
+    <script src="js/factory1_ft_render.js"></script>
+    <script src="js/factory1_ft_main.js"></script>
 </body>
 </html>

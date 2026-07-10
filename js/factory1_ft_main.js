@@ -103,6 +103,41 @@
         });
     }
 
+    // ── 메뉴 드롭다운 이벤트 바인딩 추가 ────────────────────────────────────────
+    function bindDropdownEvents() {
+        const toggleDropdown = (e) => {
+            e.stopPropagation();
+            App.elements.dropdown.classList.toggle('show');
+        };
+
+        // 삼선 메뉴 및 메인 제목 클릭 시 오픈 토글
+        App.elements.menuBtn.addEventListener('click', toggleDropdown);
+        App.elements.mainTitle.addEventListener('click', toggleDropdown);
+
+        // 드롭다운 바깥 영역 클릭 시 메뉴 자동 닫힘
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.f1ft-title-area')) {
+                App.elements.dropdown.classList.remove('show');
+            }
+        });
+
+        // 드롭다운 메뉴 클릭 시 미저장 경고(컨펌) 처리 연동
+        App.elements.dropdown.querySelectorAll('.f1ft-dropdown-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                // 현재 활성화된 페이지인 경우 단순 닫기
+                if (item.classList.contains('active')) {
+                    e.preventDefault();
+                    App.elements.dropdown.classList.remove('show');
+                    return;
+                }
+                // 변경 사항이 있는데 이동을 취소한 경우 
+                if (!confirmLeave()) {
+                    e.preventDefault();
+                }
+            });
+        });
+    }
+
     // ── 버튼 이벤트 바인딩 ───────────────────────────────────────────────────
     function bindButtonEvents() {
         App.elements.editBtn.addEventListener('click', () => {
@@ -130,15 +165,18 @@
     // ── 모듈 공개 API ─────────────────────────────────────────────────────────
     const Factory1FtModule = {
         init() {
-            // elements 캐시
-            App.elements.wrapper  = document.querySelector('.f1ft-wrapper');
-            App.elements.dateText = document.getElementById('f1ftDateText');
-            App.elements.prevBtn  = document.getElementById('f1ftPrevBtn');
-            App.elements.nextBtn  = document.getElementById('f1ftNextBtn');
-            App.elements.todayBtn = document.getElementById('f1ftTodayBtn');
-            App.elements.editBtn  = document.getElementById('f1ftEditBtn');
-            App.elements.saveBtn  = document.getElementById('f1ftSaveBtn');
-            App.elements.excelBtn = document.getElementById('f1ftExcelBtn');
+            // elements 캐시 및 새로 추가된 엘리먼트 바인딩 추가
+            App.elements.wrapper   = document.querySelector('.f1ft-wrapper');
+            App.elements.menuBtn   = document.getElementById('f1ftMenuBtn');
+            App.elements.mainTitle = document.getElementById('f1ftMainTitle');
+            App.elements.dropdown  = document.getElementById('f1ftDropdown');
+            App.elements.dateText  = document.getElementById('f1ftDateText');
+            App.elements.prevBtn   = document.getElementById('f1ftPrevBtn');
+            App.elements.nextBtn   = document.getElementById('f1ftNextBtn');
+            App.elements.todayBtn  = document.getElementById('f1ftTodayBtn');
+            App.elements.editBtn   = document.getElementById('f1ftEditBtn');
+            App.elements.saveBtn   = document.getElementById('f1ftSaveBtn');
+            App.elements.excelBtn  = document.getElementById('f1ftExcelBtn');
 
             if (!App.elements.wrapper) return;
 
@@ -149,6 +187,7 @@
 
             initCalendar();
             bindDateEvents();
+            bindDropdownEvents(); // 드롭다운 리스너 초기화
             App.bindInputFormatters();      // render.js
             App.bindKeyboardNavigation();  // render.js
             bindButtonEvents();

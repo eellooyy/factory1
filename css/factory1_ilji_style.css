@@ -1,0 +1,258 @@
+body {
+    margin: 0;
+    padding: 20px;
+    background: #f5f5f7;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+*,
+*:before,
+*:after {
+    box-sizing: inherit;
+}
+
+.f1il-wrapper {
+    width: 100%;
+    max-width: 1600px; /* 좌우 배치를 위해 폭 여유를 줌 */
+    margin: 0 auto;
+    padding: 10px 0;
+}
+
+/* ── 헤더 ── */
+.f1il-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    background: #fff;
+    padding: 12px 20px;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e5ea;
+}
+.f1il-main-title { font-size: 20px; font-weight: 700; color: #1d1d1f; white-space: nowrap; }
+.f1il-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.f1il-nav-group { display: flex; align-items: center; background: #f5f5f7; border-radius: 20px; padding: 4px; }
+.f1il-icon-btn { width: 28px; height: 28px; border-radius: 50%; border: none; background: #fff; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.f1il-icon-btn span { font-size: 18px; line-height: 28px; }
+.f1il-cal-wrap { position: relative; margin: 0 12px; }
+.f1il-date-text { min-width: 160px; display: inline-block; text-align: center; font-size: 18px; font-weight: 700; cursor: pointer; }
+.f1il-hidden-input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.f1il-action-btn { padding: 6px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.today-btn { background: #e8f4fd; color: #007aff; }
+.edit-btn { background: #f2f2f7; color: #1d1d1f; }
+.save-btn { background: #007aff; color: #fff; }
+.excel-btn { background: #217346; color: #fff; display: inline-flex; align-items: center; }
+.edit-btn:disabled, .save-btn:disabled, .excel-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── 메인 레이아웃 (좌측 테이블 / 우측 패널) ── */
+.f1il-layout {
+    display: flex;
+    flex-direction: row; /* 좌우 배치 설정 */
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+    margin-top: 16px;
+}
+
+.f1il-machines {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.f1il-side-panels {
+    flex: 0 0 420px; /* 우측 요약 패널 고정폭 */
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ── 호기 박스 (메인테이블 + 미니재고) ── */
+.f1il-machine-box {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e5ea;
+}
+
+.f1il-machine-table-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.f1il-machine-summary {
+    flex: 0 0 160px; /* 요약 패널 너비 대폭 축소 */
+}
+
+.f1il-box-header {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1d1d1f;
+    text-align: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f2f2f7;
+}
+
+/* ── 공통 테이블 / 폰트 조정 ── */
+.f1il-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.f1il-th,
+.f1il-td {
+    border: 1px solid #d2d2d7;
+    height: 34px;
+    vertical-align: middle;
+    padding: 0;
+}
+
+.f1il-th {
+    background: #f5f5f7;
+    font-size: 12px; /* 폰트 통일 축소 */
+    font-weight: 600;
+    color: #1d1d1f;
+    text-align: center;
+    letter-spacing: -0.3px;
+}
+
+.f1il-row-title {
+    background: #fafafc;
+    width: 76px; /* 행 타이틀 폭 축소 (기존 92px) */
+    font-size: 12px;
+}
+
+.border-outer { border: 2px solid #8e8e93 !important; }
+.f1il-machine-table tr > *:first-child { border-right: 2px solid #8e8e93 !important; }
+
+/* ── 입력 셀(input / select) 공통 디자인 ── */
+.f1il-cell {
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    text-align: center;
+    text-align-last: center;
+    padding: 0 4px; /* 패딩 축소 */
+    font-size: 12px; /* 폰트 통일 */
+    font-weight: 500;
+    color: #1d1d1f;
+    box-sizing: border-box;
+}
+
+input.f1il-cell { background: #ffffff; }
+.f1il-wrapper.edit-mode input.f1il-cell:not([readonly]) { background: #fff9e6; }
+.f1il-wrapper.edit-mode input.f1il-cell:not([readonly]):focus { background: #fff2cc; }
+
+select.f1il-cell {
+    cursor: pointer;
+    background: #ffffff;
+    appearance: none;
+    -webkit-appearance: none;
+}
+select.f1il-cell:disabled { cursor: default; opacity: 1; color: #1d1d1f; }
+select.f1il-cell.type-dh { background: #ffffff; }
+select.f1il-cell.type-jj { background: #ffe4b5; }
+select.f1il-cell.type-pp { background: #e8f5e9; }
+
+/* ── 호기별 미니 재고표 ── */
+.f1il-mini-table td {
+    text-align: right;
+    padding-right: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #ffffff;
+}
+.f1il-mini-table .f1il-subtotal-row th,
+.f1il-mini-table .f1il-subtotal-row td {
+    background: #f5f5f7;
+    font-weight: 700;
+}
+
+/* ── 우측 패널 (통합 테이블) ── */
+.f1il-panel-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e5ea;
+}
+
+.f1il-panel-table td {
+    padding: 0;
+}
+
+/* span 태그 텍스트 우측 정렬 유지 */
+span.f1il-panel-cell {
+    display: block;
+    width: 100%;
+    text-align: right;
+    padding-right: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+span.f1il-panel-total {
+    display: block;
+    text-align: right;
+    padding-right: 8px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* input 형태 패널 셀 */
+input.f1il-panel-cell {
+    text-align: right;
+    padding-right: 8px;
+    font-weight: 600;
+}
+
+.f1il-panel-table .f1il-panel-cell.readonly { background: #fbfbfd; }
+.f1il-panel-total-row th,
+.f1il-panel-total-row td { background: #f5f5f7; font-weight: 700; }
+
+/* 통합테이블의 오차(실사용-ERP) 색상 클래스 */
+.delta-positive { background: #e8f7e8 !important; color: #218739; }
+.delta-negative { background: #fdeaea !important; color: #c62828; }
+
+/* ── 반응형 미디어 쿼리 ── */
+@media (max-width: 1350px) {
+    /* 폭이 좁아지면 좌우 배치 -> 상하 배치로 전환 */
+    .f1il-layout {
+        flex-direction: column;
+    }
+    .f1il-side-panels {
+        flex: 1 1 auto;
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(280px, 1fr)); /* 패널 3개를 가로로 3등분 배치 */
+    }
+}
+
+@media (max-width: 900px) {
+    .f1il-machine-box {
+        flex-direction: column;
+    }
+    .f1il-machine-summary {
+        flex: 1 1 auto;
+    }
+    .f1il-side-panels {
+        grid-template-columns: 1fr; /* 패널 세로 1줄로 떨어짐 */
+    }
+}
+
+@media (max-width: 600px) {
+    body { padding: 12px; }
+    .f1il-header { align-items: flex-start; flex-direction: column; }
+    .f1il-controls { width: 100%; justify-content: flex-start; }
+}

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1공장 일지</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="factory1_ilji_style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+</head>
+<body>
+    <div class="f1il-wrapper" data-page-module="Factory1IljiModule">
+        <header class="f1il-header">
+            <span class="f1il-main-title">1공장 일지</span>
+
+            <div class="f1il-controls">
+                <div class="f1il-nav-group">
+                    <button id="f1ilPrevBtn" class="f1il-icon-btn" title="이전 날짜" type="button">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </button>
+                    <div class="f1il-cal-wrap" id="f1ilCalendarWrap">
+                        <span id="f1ilDateText" class="f1il-date-text cursor-pointer"></span>
+                        <input type="text" id="f1ilFlatpickr" class="f1il-hidden-input" aria-hidden="true" tabindex="-1">
+                    </div>
+                    <button id="f1ilNextBtn" class="f1il-icon-btn" title="다음 날짜" type="button">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </button>
+                </div>
+
+                <button id="f1ilTodayBtn" class="f1il-action-btn today-btn" type="button">오늘</button>
+                <button id="f1ilEditBtn" class="f1il-action-btn edit-btn" type="button" disabled>수정</button>
+                <button id="f1ilSaveBtn" class="f1il-action-btn save-btn" type="button" disabled>저장</button>
+                <button id="f1ilExcelBtn" class="f1il-action-btn excel-btn" type="button" disabled>
+                    <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">table_view</span>엑셀 출력
+                </button>
+            </div>
+        </header>
+
+        <main class="f1il-layout">
+            <section class="f1il-machines">
+                <div class="f1il-machine-box">
+                    <div class="f1il-machine-table-wrap">
+                        <div class="f1il-box-header">1호기</div>
+                        <table class="f1il-table f1il-machine-table border-outer">
+                            <thead>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title"></th>
+                                    <th class="f1il-th">R1(B)</th><th class="f1il-th">R1(A)</th><th class="f1il-th">R2</th><th class="f1il-th">R3(B)</th><th class="f1il-th">R3(A)</th><th class="f1il-th">R4</th><th class="f1il-th">R5</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title">용지 선택</th>
+                                    <td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m1" data-col="R1B" disabled><option value="dh_1404">대한 1404</option><option value="dh_702" selected>대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m1" data-col="R1A" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m1" data-col="R2" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m1" data-col="R3B" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m1" data-col="R3A" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m1" data-col="R4" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m1" data-col="R5" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td>
+                                </tr>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title">사용전 잔량</th>
+                                    <td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m1" data-col="R1B" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m1" data-col="R1A" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m1" data-col="R2" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m1" data-col="R3B" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m1" data-col="R3A" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m1" data-col="R4" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m1" data-col="R5" inputmode="decimal" readonly></td>
+                                </tr>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title">용지 선택</th>
+                                    <td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m1" data-col="R1B" disabled><option value="dh_1404">대한 1404</option><option value="dh_702" selected>대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m1" data-col="R1A" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m1" data-col="R2" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m1" data-col="R3B" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m1" data-col="R3A" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m1" data-col="R4" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m1" data-col="R5" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td>
+                                </tr>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title">완롤 잔량</th>
+                                    <td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m1" data-col="R1B" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m1" data-col="R1A" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m1" data-col="R2" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m1" data-col="R3B" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m1" data-col="R3A" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m1" data-col="R4" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m1" data-col="R5" inputmode="decimal" readonly></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="f1il-machine-summary">
+                        <div class="f1il-box-header">1호기 잔량</div>
+                        <table class="f1il-table f1il-mini-table border-outer">
+                            <tbody>
+                                <tr><th class="f1il-th f1il-row-title">대한 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m1" data-type="dh_1404">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">대한 702</th><td class="f1il-td"><span class="f1il-note" data-machine="m1" data-type="dh_702">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">전주 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m1" data-type="jj_1404">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">전주 702</th><td class="f1il-td"><span class="f1il-note" data-machine="m1" data-type="jj_702">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">페이퍼 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m1" data-type="pp_1404">0kg</span></td></tr>
+                                <tr class="f1il-subtotal-row"><th class="f1il-th f1il-row-title">호기 소계</th><td class="f1il-td"><span class="f1il-subtotal" data-machine="m1">0kg</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="f1il-machine-box">
+                    <div class="f1il-machine-table-wrap">
+                        <div class="f1il-box-header">2호기</div>
+                        <table class="f1il-table f1il-machine-table border-outer">
+                            <thead>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title"></th>
+                                    <th class="f1il-th">R1(B)</th><th class="f1il-th">R1(A)</th><th class="f1il-th">R2</th><th class="f1il-th">R3(B)</th><th class="f1il-th">R3(A)</th><th class="f1il-th">R4</th><th class="f1il-th">R5</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title">용지 선택</th>
+                                    <td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m2" data-col="R1B" disabled><option value="dh_1404">대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702" selected>전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m2" data-col="R1A" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m2" data-col="R2" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m2" data-col="R3B" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m2" data-col="R3A" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m2" data-col="R4" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m2" data-col="R5" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td>
+                                </tr>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title">사용전 잔량</th>
+                                    <td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m2" data-col="R1B" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m2" data-col="R1A" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m2" data-col="R2" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m2" data-col="R3B" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m2" data-col="R3A" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m2" data-col="R4" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m2" data-col="R5" inputmode="decimal" readonly></td>
+                                </tr>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title">용지 선택</th>
+                                    <td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m2" data-col="R1B" disabled><option value="dh_1404">대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702" selected>전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m2" data-col="R1A" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m2" data-col="R2" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m2" data-col="R3B" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m2" data-col="R3A" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m2" data-col="R4" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m2" data-col="R5" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td>
+                                </tr>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title">완롤 잔량</th>
+                                    <td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m2" data-col="R1B" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m2" data-col="R1A" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m2" data-col="R2" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m2" data-col="R3B" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m2" data-col="R3A" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m2" data-col="R4" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m2" data-col="R5" inputmode="decimal" readonly></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="f1il-machine-summary">
+                        <div class="f1il-box-header">2호기 잔량</div>
+                        <table class="f1il-table f1il-mini-table border-outer">
+                            <tbody>
+                                <tr><th class="f1il-th f1il-row-title">대한 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m2" data-type="dh_1404">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">대한 702</th><td class="f1il-td"><span class="f1il-note" data-machine="m2" data-type="dh_702">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">전주 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m2" data-type="jj_1404">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">전주 702</th><td class="f1il-td"><span class="f1il-note" data-machine="m2" data-type="jj_702">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">페이퍼 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m2" data-type="pp_1404">0kg</span></td></tr>
+                                <tr class="f1il-subtotal-row"><th class="f1il-th f1il-row-title">호기 소계</th><td class="f1il-td"><span class="f1il-subtotal" data-machine="m2">0kg</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="f1il-machine-box">
+                    <div class="f1il-machine-table-wrap">
+                        <div class="f1il-box-header">3호기</div>
+                        <table class="f1il-table f1il-machine-table border-outer">
+                            <thead>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title"></th>
+                                    <th class="f1il-th">R1(B)</th><th class="f1il-th">R1(A)</th><th class="f1il-th">R2</th><th class="f1il-th">R3(B)</th><th class="f1il-th">R3(A)</th><th class="f1il-th">R4</th><th class="f1il-th">R5</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title">용지 선택</th>
+                                    <td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m3" data-col="R1B" disabled><option value="dh_1404">대한 1404</option><option value="dh_702" selected>대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m3" data-col="R1A" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m3" data-col="R2" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m3" data-col="R3B" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m3" data-col="R3A" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m3" data-col="R4" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type1" data-machine="m3" data-col="R5" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td>
+                                </tr>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title">사용전 잔량</th>
+                                    <td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m3" data-col="R1B" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m3" data-col="R1A" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m3" data-col="R2" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m3" data-col="R3B" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m3" data-col="R3A" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m3" data-col="R4" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="pre" data-machine="m3" data-col="R5" inputmode="decimal" readonly></td>
+                                </tr>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title">용지 선택</th>
+                                    <td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m3" data-col="R1B" disabled><option value="dh_1404">대한 1404</option><option value="dh_702" selected>대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m3" data-col="R1A" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m3" data-col="R2" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m3" data-col="R3B" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m3" data-col="R3A" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m3" data-col="R4" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td><td class="f1il-td"><select class="f1il-cell f1il-select" data-field="type2" data-machine="m3" data-col="R5" disabled><option value="dh_1404" selected>대한 1404</option><option value="dh_702">대한 702</option><option value="jj_1404">전주 1404</option><option value="jj_702">전주 702</option><option value="pp_1404">페이퍼 1404</option></select></td>
+                                </tr>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title">완롤 잔량</th>
+                                    <td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m3" data-col="R1B" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m3" data-col="R1A" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m3" data-col="R2" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m3" data-col="R3B" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m3" data-col="R3A" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m3" data-col="R4" inputmode="decimal" readonly></td><td class="f1il-td"><input type="text" class="f1il-cell numeric-input" data-field="count" data-machine="m3" data-col="R5" inputmode="decimal" readonly></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="f1il-machine-summary">
+                        <div class="f1il-box-header">3호기 잔량</div>
+                        <table class="f1il-table f1il-mini-table border-outer">
+                            <tbody>
+                                <tr><th class="f1il-th f1il-row-title">대한 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m3" data-type="dh_1404">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">대한 702</th><td class="f1il-td"><span class="f1il-note" data-machine="m3" data-type="dh_702">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">전주 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m3" data-type="jj_1404">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">전주 702</th><td class="f1il-td"><span class="f1il-note" data-machine="m3" data-type="jj_702">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">페이퍼 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m3" data-type="pp_1404">0kg</span></td></tr>
+                                <tr class="f1il-subtotal-row"><th class="f1il-th f1il-row-title">호기 소계</th><td class="f1il-td"><span class="f1il-subtotal" data-machine="m3">0kg</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="f1il-side-panels">
+                <div class="f1il-panel-box">
+                    <div class="f1il-box-header">1. 급지 재고</div>
+                    <table class="f1il-table f1il-panel-table border-outer">
+                        <tbody>
+                            <tr><th class="f1il-th f1il-row-title">대한 1404</th><td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="dh_1404">0kg</span></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">대한 702</th><td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="dh_702">0kg</span></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">전주 1404</th><td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="jj_1404">0kg</span></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">전주 702</th><td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="jj_702">0kg</span></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">페이퍼 1404</th><td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="pp_1404">0kg</span></td></tr>
+                            <tr class="f1il-panel-total-row"><th class="f1il-th f1il-row-title">총 재고량</th><td class="f1il-td"><span class="f1il-panel-total" data-field="inventory">0kg</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="f1il-panel-box">
+                    <div class="f1il-box-header">2. 급지 출고 롤</div>
+                    <table class="f1il-table f1il-panel-table border-outer">
+                        <tbody>
+                            <tr><th class="f1il-th f1il-row-title">대한 1404</th><td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="dh_1404" inputmode="decimal" readonly></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">대한 702</th><td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="dh_702" inputmode="decimal" readonly></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">전주 1404</th><td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="jj_1404" inputmode="decimal" readonly></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">전주 702</th><td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="jj_702" inputmode="decimal" readonly></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">페이퍼 1404</th><td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="pp_1404" inputmode="decimal" readonly></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="f1il-panel-box">
+                    <div class="f1il-box-header">3. 사용량 상세 내역</div>
+                    <table class="f1il-table f1il-panel-table border-outer">
+                        <thead>
+                            <tr>
+                                <th class="f1il-th f1il-row-title">용지</th>
+                                <th class="f1il-th">실사용</th>
+                                <th class="f1il-th">ERP</th>
+                                <th class="f1il-th">오차</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th class="f1il-th f1il-row-title">대한 1404</th>
+                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="actual" data-type="dh_1404">0kg</span></td>
+                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="erp" data-type="dh_1404" inputmode="decimal" readonly></td>
+                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="diff" data-type="dh_1404">0kg</span></td>
+                            </tr>
+                            <tr>
+                                <th class="f1il-th f1il-row-title">대한 702</th>
+                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="actual" data-type="dh_702">0kg</span></td>
+                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="erp" data-type="dh_702" inputmode="decimal" readonly></td>
+                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="diff" data-type="dh_702">0kg</span></td>
+                            </tr>
+                            <tr>
+                                <th class="f1il-th f1il-row-title">전주 1404</th>
+                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="actual" data-type="jj_1404">0kg</span></td>
+                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="erp" data-type="jj_1404" inputmode="decimal" readonly></td>
+                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="diff" data-type="jj_1404">0kg</span></td>
+                            </tr>
+                            <tr>
+                                <th class="f1il-th f1il-row-title">전주 702</th>
+                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="actual" data-type="jj_702">0kg</span></td>
+                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="erp" data-type="jj_702" inputmode="decimal" readonly></td>
+                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="diff" data-type="jj_702">0kg</span></td>
+                            </tr>
+                            <tr>
+                                <th class="f1il-th f1il-row-title">페이퍼 1404</th>
+                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="actual" data-type="pp_1404">0kg</span></td>
+                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="erp" data-type="pp_1404" inputmode="decimal" readonly></td>
+                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="diff" data-type="pp_1404">0kg</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <script src="factory1_ilji_constant.js"></script>
+    <script src="factory1_ilji_api.js"></script>
+    <script src="factory1_ilji_render.js"></script>
+    <script src="factory1_ilji_main.js"></script>
+</body>
+</html>
