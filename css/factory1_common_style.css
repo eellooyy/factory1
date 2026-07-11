@@ -1,0 +1,266 @@
+/* factory1_common_style.css
+   ────────────────────────────────────────────────────────────────
+   1공장 FT / 급지 일지 등 모든 하위 페이지가 "공통으로" 사용하는 스타일.
+   - body 기본 스타일
+   - 헤더(제목 + 삼선메뉴 + 드롭다운 + 날짜 네비게이션 + 버튼) 스타일
+   반드시 factory1_ft_style.css / factory1_ilji_style.css 보다 먼저 로드하세요.
+   ──────────────────────────────────────────────────────────────── */
+
+body {
+    margin: 0;
+    padding: 20px;
+    background: #f5f5f7;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    zoom: 115%;
+}
+
+*,
+*:before,
+*:after {
+    box-sizing: inherit;
+}
+
+/* ── 전체 셸(헤더 + 하위 페이지 콘텐츠) 컨테이너 ── */
+.f1-shell {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 10px 0;
+}
+
+/* ── 헤더 ── */
+.f1-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    background: #fff;
+    padding: 12px 20px;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e5ea;
+}
+
+/* ── 제목 & 삼선 드롭다운 ── */
+.f1-title-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+
+.f1-menu-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #1d1d1f;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+}
+
+.f1-menu-btn:hover {
+    background: #f2f2f7;
+}
+
+.f1-menu-btn span {
+    font-size: 22px;
+}
+
+.f1-main-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1d1d1f;
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+}
+
+.f1-main-title.clickable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.f1-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 8px;
+    background: #ffffff;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    z-index: 1000;
+    min-width: 180px;
+    padding: 6px 0;
+}
+
+.f1-dropdown-menu.show {
+    display: block;
+}
+
+.f1-dropdown-item {
+    display: block;
+    padding: 10px 16px;
+    color: #1d1d1f;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.f1-dropdown-item:hover {
+    background: #f5f5f7;
+}
+
+.f1-dropdown-item.active {
+    color: #007aff;
+    font-weight: 600;
+    background: #e8f4fd;
+}
+
+/* ── 날짜 네비게이션 / 컨트롤 영역 ── */
+.f1-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.f1-nav-group {
+    display: flex;
+    align-items: center;
+    background: #f5f5f7;
+    border-radius: 20px;
+    padding: 4px;
+}
+
+.f1-icon-btn {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    color: #1d1d1f;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.1s ease, opacity 0.2s ease;
+}
+
+.f1-icon-btn:hover {
+    transform: scale(1.05);
+}
+
+.f1-icon-btn span {
+    font-size: 18px;
+}
+
+.f1-cal-wrap {
+    position: relative;
+    margin: 0 12px;
+}
+
+.f1-date-text {
+    min-width: 160px;
+    display: inline-block;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1d1d1f;
+    cursor: pointer;
+    user-select: none;
+}
+
+.f1-hidden-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 1px;
+    height: 1px;
+    border: 0;
+    padding: 0;
+    margin: 0;
+}
+
+/* ── 액션 버튼 (오늘 / 수정 / 저장 / 엑셀 출력) ── */
+.f1-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.today-btn {
+    background: #e8f4fd;
+    color: #007aff;
+}
+
+.today-btn:hover {
+    background: #d0e7fa;
+}
+
+.edit-btn {
+    background: #f2f2f7;
+    color: #1d1d1f;
+}
+
+.edit-btn:disabled,
+.save-btn:disabled,
+.excel-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.save-btn {
+    background: #007aff;
+    color: #fff;
+}
+
+.save-btn:not(:disabled):hover {
+    opacity: 0.85;
+}
+
+.excel-btn {
+    background: #217346;
+    color: #fff;
+}
+
+.excel-btn:not(:disabled):hover {
+    background: #1e6b40;
+    opacity: 0.9;
+}
+
+.flatpickr-calendar {
+    margin-top: 5px;
+    margin-left: -120px;
+}
+
+@media (max-width: 760px) {
+    body {
+        padding: 12px;
+    }
+
+    .f1-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .f1-controls {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
