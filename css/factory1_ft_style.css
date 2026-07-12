@@ -6,6 +6,14 @@
    반드시 factory1_common_style.css 다음에 로드하세요.
    ──────────────────────────────────────────────────────────────── */
 
+/* 공통 헤더(셸)는 이제 항상 1260px 로 고정이지만, FT 콘텐츠는 기존 디자인 그대로
+   1200px 을 유지하고 싶으므로 여기서 폭을 다시 캡을 씌우고 중앙 정렬합니다.
+   (좌우로 남는 여백은 자동으로 균등하게 생깁니다) */
+.f1ft-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
 .f1ft-layout {
     display: flex;
     flex-direction: column;

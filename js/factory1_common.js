@@ -262,8 +262,10 @@
                 item.classList.toggle('active', item.dataset.page === key);
             });
         }
-        // 페이지마다 셸 폭/줌 등이 다를 수 있으므로 .f1-shell 에 페이지별 클래스를 부여
-        // (예: 급지일지는 f1-shell--ilji 로 max-width:1600px, zoom:1 오버라이드)
+        // 셸의 좌우 폭(max-width)은 이제 페이지와 무관하게 항상 고정입니다
+        // (factory1_common_style.css 의 .f1-shell 참고 — 헤더가 페이지 전환 시
+        //  절대 움직이지 않도록 하기 위함). 페이지별로 다른 건 zoom 배율 뿐이라,
+        // 그 차이만 클래스로 부여합니다 (예: 급지일지는 f1-shell--ilji 로 zoom:1).
         if (els.shell) {
             Object.keys(PAGES).forEach(k => els.shell.classList.remove(`f1-shell--${k}`));
             els.shell.classList.add(`f1-shell--${key}`);
