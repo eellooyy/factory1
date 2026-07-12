@@ -6,11 +6,12 @@
    반드시 factory1_common_style.css 다음에 로드하세요.
    ──────────────────────────────────────────────────────────────── */
 
-/* 급지일지 페이지는 좌우 배치 레이아웃 때문에 셸 폭이 더 넓고(1600px),
-   확대(zoom)를 쓰지 않습니다. (FT 페이지는 zoom:115%, max-width:1200px)
+/* 급지일지 페이지는 좌우 배치 레이아웃이라 FT보다 셸 폭이 조금 더 필요하지만,
+   R1(B)~R5 컬럼 폭을 대폭 줄여 FT 페이지(1200px)에 최대한 가깝게 맞췄습니다.
+   확대(zoom)도 FT처럼 쓰지 않고 100% 그대로 표시합니다.
    factory1_common.js 가 페이지 전환 시 .f1-shell 에 이 클래스를 붙여줍니다. */
 .f1-shell--ilji {
-    max-width: 1600px;
+    max-width: 1260px;
     zoom: 1;
 }
 
@@ -25,8 +26,9 @@
 }
 
 .f1il-machines {
-    flex: 1 1 auto;
-    min-width: 0;
+    /* 표 폭을 고정했으므로, 이 컬럼도 남는 공간을 억지로 채우지 않고
+       내용(호기 박스) 폭만큼만 차지하도록 변경 */
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -49,11 +51,13 @@
     padding: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     border: 1px solid #e5e5ea;
+    /* 표(고정폭) + 미니재고(고정폭)만큼만 차지 — 남는 공간을 채우며 늘어나지 않음 */
+    width: fit-content;
 }
 
 .f1il-machine-table-wrap {
-    flex: 1 1 auto;
-    min-width: 0;
+    /* 표 자체를 고정폭으로 만들었으므로 더 이상 늘어날 필요가 없음 */
+    flex: 0 0 auto;
 }
 
 .f1il-machine-summary {
@@ -98,6 +102,13 @@
     background: #fafafc;
     width: 76px; /* 행 타이틀 폭 축소 (기존 92px) */
     font-size: 12px;
+}
+
+/* 호기별 메인 표(R1(B)~R5)만 고정폭으로 지정해 컬럼 폭을 대폭 축소.
+   (76px 타이틀 칸을 제외한 나머지를 7개 컬럼이 균등 분할 → 약 75px/컬럼)
+   미니재고표(.f1il-mini-table)·우측 패널표(.f1il-panel-table)는 영향 없음 */
+.f1il-machine-table {
+    width: 601px;
 }
 
 .border-outer { border: 2px solid #8e8e93 !important; }
