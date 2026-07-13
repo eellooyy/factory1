@@ -56,6 +56,9 @@
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
+    function getYesterdayStr() {
+        return addDays(getTodayStr(), -1);
+    }
     function addDays(dateStr, days) {
         const d = new Date(`${dateStr}T00:00:00`);
         d.setDate(d.getDate() + days);
@@ -137,7 +140,7 @@
         state.fp = flatpickr('#f1Flatpickr', {
             locale: 'ko',
             dateFormat: 'Y-m-d',
-            defaultDate: state.currentDate || getTodayStr(),
+            defaultDate: state.currentDate || getYesterdayStr(),
             clickOpens: false,
             allowInput: false,
             positionElement: els.dateText,
@@ -310,7 +313,7 @@
                     history.pushState({ page: key }, '', conf.url);
                 }
 
-                setDate(state.currentDate || getTodayStr());
+                setDate(state.currentDate || getYesterdayStr());
             })
             .catch(err => {
                 alert('페이지 전환 중 오류가 발생했습니다.\n' + err.message);
@@ -367,7 +370,7 @@
         const mod = getActiveModule();
         if (mod && mod.init) mod.init();
 
-        setDate(getTodayStr());
+        setDate(getYesterdayStr());
 
         window.addEventListener('popstate', e => {
             const key = (e.state && e.state.page) || detectPageKeyFromLocation() || initialKey;
