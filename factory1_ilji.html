@@ -14,38 +14,6 @@
     <link rel="stylesheet" href="css/factory1_ft_style.css">
     <link rel="stylesheet" href="css/factory1_ilji_style.css">
 
-    <!-- ===== 레이아웃 조정 보정 스타일 =====
-         호기 타이틀(1/2/3호기)을 표 헤더 셀 안으로 이동하고,
-         호기별 잔량 미니테이블을 제거하면서 발생한 여백/폭 차이를
-         원본 factory1_ilji_style.css 값 기준으로 최소 보정합니다.
-         (원본 CSS 파일 수치를 정확히 알 수 없어 임시값이니, 실제 파일을 주시면 정밀 보정해 드릴 수 있습니다) -->
-    <style>
-        /* 표 헤더 첫 칸에 들어간 호기 이름 표시 */
-        .f1il-machine-name {
-            white-space: nowrap;
-            font-weight: 700;
-        }
-        /* box-header(1호기 등) 제거로 절약된 만큼 박스 상하 여백 축소 */
-        .f1il-machine-table-wrap {
-            margin-bottom: 6px;
-        }
-        .f1il-machine-box + .f1il-machine-box {
-            margin-top: 6px;
-        }
-        /* 급지 재고·출고 롤 병합 테이블 헤더 가운데 정렬 */
-        .f1il-panel-table thead th {
-            text-align: center;
-        }
-        /* 병합된 1층(급지 재고·출고 롤)과 2층(사용량 상세 내역) 폭을 동일하게 맞춤 */
-        .f1il-side-panels .f1il-panel-box {
-            width: 100%;
-        }
-        .f1il-side-panels .f1il-panel-box table {
-            table-layout: fixed;
-            width: 100%;
-        }
-    </style>
-
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
 </head>
@@ -95,10 +63,11 @@
             <section class="f1il-machines">
                 <div class="f1il-machine-box">
                     <div class="f1il-machine-table-wrap">
+                        <div class="f1il-box-header">1호기</div>
                         <table class="f1il-table f1il-machine-table border-outer">
                             <thead>
                                 <tr>
-                                    <th class="f1il-th f1il-row-title f1il-machine-name">1호기</th>
+                                    <th class="f1il-th f1il-row-title"></th>
                                     <th class="f1il-th">R1(B)</th><th class="f1il-th">R1(A)</th><th class="f1il-th">R2</th><th class="f1il-th">R3(B)</th><th class="f1il-th">R3(A)</th><th class="f1il-th">R4</th><th class="f1il-th">R5</th>
                                 </tr>
                             </thead>
@@ -122,14 +91,28 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="f1il-machine-summary">
+                        <div class="f1il-box-header">1호기 잔량</div>
+                        <table class="f1il-table f1il-mini-table border-outer">
+                            <tbody>
+                                <tr><th class="f1il-th f1il-row-title">대한 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m1" data-type="dh_1404">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">대한 702</th><td class="f1il-td"><span class="f1il-note" data-machine="m1" data-type="dh_702">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">전주 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m1" data-type="jj_1404">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">전주 702</th><td class="f1il-td"><span class="f1il-note" data-machine="m1" data-type="jj_702">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">페이퍼 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m1" data-type="pp_1404">0kg</span></td></tr>
+                                <tr class="f1il-subtotal-row"><th class="f1il-th f1il-row-title">호기 소계</th><td class="f1il-td"><span class="f1il-subtotal" data-machine="m1">0kg</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="f1il-machine-box">
                     <div class="f1il-machine-table-wrap">
+                        <div class="f1il-box-header">2호기</div>
                         <table class="f1il-table f1il-machine-table border-outer">
                             <thead>
                                 <tr>
-                                    <th class="f1il-th f1il-row-title f1il-machine-name">2호기</th>
+                                    <th class="f1il-th f1il-row-title"></th>
                                     <th class="f1il-th">R1(B)</th><th class="f1il-th">R1(A)</th><th class="f1il-th">R2</th><th class="f1il-th">R3(B)</th><th class="f1il-th">R3(A)</th><th class="f1il-th">R4</th><th class="f1il-th">R5</th>
                                 </tr>
                             </thead>
@@ -153,14 +136,28 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="f1il-machine-summary">
+                        <div class="f1il-box-header">2호기 잔량</div>
+                        <table class="f1il-table f1il-mini-table border-outer">
+                            <tbody>
+                                <tr><th class="f1il-th f1il-row-title">대한 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m2" data-type="dh_1404">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">대한 702</th><td class="f1il-td"><span class="f1il-note" data-machine="m2" data-type="dh_702">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">전주 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m2" data-type="jj_1404">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">전주 702</th><td class="f1il-td"><span class="f1il-note" data-machine="m2" data-type="jj_702">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">페이퍼 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m2" data-type="pp_1404">0kg</span></td></tr>
+                                <tr class="f1il-subtotal-row"><th class="f1il-th f1il-row-title">호기 소계</th><td class="f1il-td"><span class="f1il-subtotal" data-machine="m2">0kg</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="f1il-machine-box">
                     <div class="f1il-machine-table-wrap">
+                        <div class="f1il-box-header">3호기</div>
                         <table class="f1il-table f1il-machine-table border-outer">
                             <thead>
                                 <tr>
-                                    <th class="f1il-th f1il-row-title f1il-machine-name">3호기</th>
+                                    <th class="f1il-th f1il-row-title"></th>
                                     <th class="f1il-th">R1(B)</th><th class="f1il-th">R1(A)</th><th class="f1il-th">R2</th><th class="f1il-th">R3(B)</th><th class="f1il-th">R3(A)</th><th class="f1il-th">R4</th><th class="f1il-th">R5</th>
                                 </tr>
                             </thead>
@@ -184,52 +181,52 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="f1il-machine-summary">
+                        <div class="f1il-box-header">3호기 잔량</div>
+                        <table class="f1il-table f1il-mini-table border-outer">
+                            <tbody>
+                                <tr><th class="f1il-th f1il-row-title">대한 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m3" data-type="dh_1404">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">대한 702</th><td class="f1il-td"><span class="f1il-note" data-machine="m3" data-type="dh_702">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">전주 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m3" data-type="jj_1404">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">전주 702</th><td class="f1il-td"><span class="f1il-note" data-machine="m3" data-type="jj_702">0kg</span></td></tr>
+                                <tr><th class="f1il-th f1il-row-title">페이퍼 1404</th><td class="f1il-td"><span class="f1il-note" data-machine="m3" data-type="pp_1404">0kg</span></td></tr>
+                                <tr class="f1il-subtotal-row"><th class="f1il-th f1il-row-title">호기 소계</th><td class="f1il-td"><span class="f1il-subtotal" data-machine="m3">0kg</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 
             <aside class="f1il-side-panels">
                 <div class="f1il-panel-box">
-                    <div class="f1il-box-header">급지 재고 · 출고 롤</div>
+                    <div class="f1il-box-header">1. 급지 재고</div>
                     <table class="f1il-table f1il-panel-table border-outer">
-                        <thead>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">용지</th>
-                                <th class="f1il-th">재고</th>
-                                <th class="f1il-th">출고</th>
-                            </tr>
-                        </thead>
                         <tbody>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">대한 1404</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="dh_1404">0kg</span></td>
-                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="dh_1404" inputmode="decimal" readonly></td>
-                            </tr>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">대한 702</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="dh_702">0kg</span></td>
-                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="dh_702" inputmode="decimal" readonly></td>
-                            </tr>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">전주 1404</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="jj_1404">0kg</span></td>
-                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="jj_1404" inputmode="decimal" readonly></td>
-                            </tr>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">전주 702</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="jj_702">0kg</span></td>
-                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="jj_702" inputmode="decimal" readonly></td>
-                            </tr>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">페이퍼 1404</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="pp_1404">0kg</span></td>
-                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="pp_1404" inputmode="decimal" readonly></td>
-                            </tr>
+                            <tr><th class="f1il-th f1il-row-title">대한 1404</th><td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="dh_1404">0kg</span></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">대한 702</th><td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="dh_702">0kg</span></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">전주 1404</th><td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="jj_1404">0kg</span></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">전주 702</th><td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="jj_702">0kg</span></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">페이퍼 1404</th><td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="pp_1404">0kg</span></td></tr>
+                            <tr class="f1il-panel-total-row"><th class="f1il-th f1il-row-title">총 재고량</th><td class="f1il-td"><span class="f1il-panel-total" data-field="inventory">0kg</span></td></tr>
                         </tbody>
                     </table>
                 </div>
 
                 <div class="f1il-panel-box">
-                    <div class="f1il-box-header">사용량 상세 내역</div>
+                    <div class="f1il-box-header">2. 급지 출고 롤</div>
+                    <table class="f1il-table f1il-panel-table border-outer">
+                        <tbody>
+                            <tr><th class="f1il-th f1il-row-title">대한 1404</th><td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="dh_1404" inputmode="decimal" readonly></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">대한 702</th><td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="dh_702" inputmode="decimal" readonly></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">전주 1404</th><td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="jj_1404" inputmode="decimal" readonly></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">전주 702</th><td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="jj_702" inputmode="decimal" readonly></td></tr>
+                            <tr><th class="f1il-th f1il-row-title">페이퍼 1404</th><td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="pp_1404" inputmode="decimal" readonly></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="f1il-panel-box">
+                    <div class="f1il-box-header">3. 사용량 상세 내역</div>
                     <table class="f1il-table f1il-panel-table border-outer">
                         <thead>
                             <tr>
