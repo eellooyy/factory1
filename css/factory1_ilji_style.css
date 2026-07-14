@@ -24,41 +24,26 @@
 }
 
 .f1il-machines {
-    /* 표 폭을 고정했으므로, 이 컬럼도 남는 공간을 억지로 채우지 않고
-       내용(호기 박스) 폭만큼만 차지하도록 변경 */
     flex: 0 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
 }
 
 .f1il-side-panels {
-    /* 1층(호기별 잔량 통합표) + 2층(재고·출고 나란히) + 3층(사용량 상세) 3단 적층 구조.
-       좌측 호기 박스(1/2/3호기)와 세로 개수를 맞춰 정렬되도록 구성 */
-    flex: 0 0 460px; /* 통합표(용지+3개 호기 컬럼)를 담기 위해 폭을 소폭 확장 */
+    flex: 0 0 340px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
 
-/* 2층: 급지 재고 + 급지 출고 롤을 좌우로 나란히 배치 */
-.f1il-panel-row {
-    display: flex;
-    gap: 16px;
-}
-.f1il-panel-row .f1il-panel-box {
-    flex: 1 1 0;
-    min-width: 0;
-}
-
-/* ── 호기 박스 (메인테이블만 포함 — 잔량 요약은 우측 1층으로 이동) ── */
+/* ── 호기 박스 ── */
 .f1il-machine-box {
     background: #fff;
     border-radius: 12px;
-    padding: 16px;
+    padding: 10px 14px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     border: 1px solid #e5e5ea;
-    /* 표 폭만큼만 차지 */
     width: fit-content;
 }
 
@@ -212,18 +197,9 @@ input.f1il-panel-cell {
         flex: 1 1 auto;
         width: 100%;
     }
-    /* 1층(통합 잔량표)·3층(사용량 상세)은 폭이 넓어진 만큼 최대폭 제한, 2층은 그대로 좌우 배치 유지 */
+    /* 폭이 넓어진 만큼 최대폭 제한 */
     .f1il-tier1,
-    .f1il-tier3 {
+    .f1il-tier2 {
         max-width: 640px;
-    }
-    .f1il-panel-row {
-        max-width: 640px;
-    }
-}
-
-@media (max-width: 900px) {
-    .f1il-panel-row {
-        flex-direction: column; /* 재고/출고 패널을 세로로 재배치 */
     }
 }

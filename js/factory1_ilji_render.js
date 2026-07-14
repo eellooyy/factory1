@@ -123,11 +123,8 @@
         const globalInventory = {};
         App.TYPE_KEYS.forEach(k => { globalInventory[k] = 0; });
 
-        // 1) 호기별 재고 합산
+        // 1) 호기별 재고 합산 (전체 재고 globalInventory 산출용)
         App.MACHINES.forEach(machine => {
-            const machineSums = {};
-            App.TYPE_KEYS.forEach(k => { machineSums[k] = 0; });
-
             App.COLUMNS.forEach(col => {
                 const type1 = getMachineEl('type1', machine, col);
                 const pre = getMachineEl('pre', machine, col);
@@ -137,40 +134,26 @@
                 const preVal = App.utils.parseNum(pre?.value);
                 if (pre && pre.value.trim() !== '' && preVal !== 0) {
                     const key = type1?.value;
-                    if (key && Object.prototype.hasOwnProperty.call(machineSums, key)) {
-                        machineSums[key] += preVal;
+                    if (key && Object.prototype.hasOwnProperty.call(globalInventory, key)) {
+                        globalInventory[key] += preVal;
                     }
                 }
 
                 const countVal = App.utils.parseNum(count?.value);
                 if (count && count.value.trim() !== '' && countVal !== 0) {
                     const key2 = type2?.value;
-                    if (key2 && Object.prototype.hasOwnProperty.call(machineSums, key2)) {
-                        machineSums[key2] += countVal * App.rollWeight(key2);
+                    if (key2 && Object.prototype.hasOwnProperty.call(globalInventory, key2)) {
+                        globalInventory[key2] += countVal * App.rollWeight(key2);
                     }
                 }
             });
-
-            let subtotal = 0;
-            App.TYPE_KEYS.forEach(k => {
-                const noteEl = getNoteEl(machine, k);
-                if (noteEl) noteEl.textContent = `${App.utils.formatNum(machineSums[k]) || '0'}kg`;
-                globalInventory[k] += machineSums[k];
-                subtotal += machineSums[k];
-            });
-            const subtotalEl = getSubtotalEl(machine);
-            if (subtotalEl) subtotalEl.textContent = `${App.utils.formatNum(subtotal) || '0'}kg`;
         });
 
-        // 2) 전체 재고 (우측 패널)
-        let grandTotal = 0;
+        // 2) 전체 재고 (우측 패널) - 총 재고량은 행이 삭제되었으므로 각 품목별 재고만 반영
         App.TYPE_KEYS.forEach(k => {
             const invEl = getPanelEl('inventory', k);
             if (invEl) invEl.textContent = `${App.utils.formatNum(globalInventory[k]) || '0'}kg`;
-            grandTotal += globalInventory[k];
         });
-        const invTotalEl = getPanelTotalEl('inventory');
-        if (invTotalEl) invTotalEl.textContent = `${App.utils.formatNum(grandTotal) || '0'}kg`;
 
         // 3) 실사용량 = (오늘 재고 + 출고롤*중량) - 다음날 재고(DB 연결 전에는 0)
         // 4) 실사용량 - ERP
