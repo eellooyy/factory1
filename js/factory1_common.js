@@ -113,7 +113,7 @@
         toggleEditMode() { toggleEditMode(); }
     };
 
-    // ── 날짜 변경 ──
+    // ── 날짜 변경 및 하단 요약 UI 연쇄 동기화 ──
     function setDate(dateStr) {
         state.currentDate = dateStr;
 
@@ -134,6 +134,15 @@
         els.editBtn.disabled = true;
         Promise.resolve(mod.activate(dateStr)).then(() => {
             els.editBtn.disabled = false;
+            
+            // [보완] 데이터 렌더링 완료 직후 하단 요약 계산이 누락되지 않도록 강제 이벤트 전파
+            setTimeout(() => {
+                const mainInputs = els.pageRoot.querySelectorAll('.numeric-input, input[data-field]');
+                mainInputs.forEach(input => {
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+            }, 50);
         });
     }
 
@@ -357,9 +366,11 @@
         bindButtonEvents();
         initCalendar();
 
-        // 초기 진입 페이지 키 확인 후 비동기로 컨텐츠 삽입 지시
-        const initialKey = document.body.dataset.initialPage || 'ft';
-        switchPage(initialKey, { pushState: false });
+        // [개선] 브라우저의 최초 UI 배치(Rendering Stack)가 안전하게 끝난 후 비동기 조각 호출 지시
+        setTimeout(() => {
+            const initialKey = document.body.dataset.initialPage || 'ft';
+            switchPage(initialKey, { pushState: false });
+        }, 50);
 
         window.addEventListener('popstate', e => {
             const key = (e.state && e.state.page) || detectPageKeyFromLocation() || initialKey;
