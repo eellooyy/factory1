@@ -54,25 +54,33 @@
         fp: null
     };
 
-    // ── 날짜 유틸 ──
+    // ── [버그 수정] 날짜 유틸리티 표준화 (내부는 항상 YYYY-MM-DD 유지) ──
     function getTodayStr() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
+    
     function getYesterdayStr() {
-        return addDays(getTodayStr(), -1);
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
+    
     function addDays(dateStr, days) {
+        if (!dateStr) return getTodayStr();
         const d = new Date(`${dateStr}T00:00:00`);
         d.setDate(d.getDate() + days);
-        return `${d.getFullYear()}년 ${String(d.getMonth() + 1).padStart(2, '0')}월 ${String(d.getDate()).padStart(2, '0')}일`;
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
+    
     function formatKoDate(dateStr) {
         if (!dateStr) return '';
         const d = new Date(`${dateStr}T00:00:00`);
+        if (isNaN(d.getTime())) return dateStr;
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         return `${d.getFullYear()}년 ${String(d.getMonth() + 1).padStart(2, '0')}월 ${String(d.getDate()).padStart(2, '0')}일 (${days[d.getDay()]})`;
     }
+    
     function syncDateLabel() {
         if (els.dateText) els.dateText.textContent = formatKoDate(state.currentDate);
     }
@@ -135,7 +143,7 @@
         Promise.resolve(mod.activate(dateStr)).then(() => {
             els.editBtn.disabled = false;
             
-            // [보완] 데이터 렌더링 완료 직후 하단 요약 계산이 누락되지 않도록 강제 이벤트 전파
+            // 데이터 렌더링 완료 직후 하단 요약 계산 강제 트리거
             setTimeout(() => {
                 const mainInputs = els.pageRoot.querySelectorAll('.numeric-input, input[data-field]');
                 mainInputs.forEach(input => {
@@ -366,7 +374,7 @@
         bindButtonEvents();
         initCalendar();
 
-        // [개선] 브라우저의 최초 UI 배치(Rendering Stack)가 안전하게 끝난 후 비동기 조각 호출 지시
+        // 브라우저 렌더링 스택 안전 확인 후 첫 페이지 로드 지시
         setTimeout(() => {
             const initialKey = document.body.dataset.initialPage || 'ft';
             switchPage(initialKey, { pushState: false });
