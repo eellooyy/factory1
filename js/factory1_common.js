@@ -65,7 +65,7 @@
     function addDays(dateStr, days) {
         const d = new Date(`${dateStr}T00:00:00`);
         d.setDate(d.getDate() + days);
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        return `${d.getFullYear()}년 ${String(d.getMonth() + 1).padStart(2, '0')}월 ${String(d.getDate()).padStart(2, '0')}일`;
     }
     function formatKoDate(dateStr) {
         if (!dateStr) return '';
@@ -216,11 +216,10 @@
             if (!e.target.closest('.f1-title-area')) closeDropdown();
         });
 
-        // 서브메뉴 확장에 맞춰 data-page가 할당된 실제 링크 노드들만 바인딩하도록 개선
         els.dropdown.querySelectorAll('.f1-dropdown-item[data-page]').forEach(item => {
             item.addEventListener('click', e => {
                 e.preventDefault();
-                e.stopPropagation(); // 서브메뉴 항목 클릭 시 버블링 차단
+                e.stopPropagation();
                 const key = item.dataset.page;
                 if (key === state.currentPageKey) {
                     closeDropdown();
@@ -278,14 +277,13 @@
     // ── 페이지 전환 ──
     function switchPage(key, opts) {
         opts = opts || {};
-        if (key === state.currentPageKey) {
+        if (key === state.currentPageKey && state.currentPageKey !== null) {
             closeDropdown();
             return;
         }
 
         const conf = PAGES[key];
         if (!conf) return;
-        if (!confirmLeave()) return;
 
         fetch(conf.fragmentUrl)
             .then(res => {
@@ -342,7 +340,6 @@
 
         if (!els.pageRoot) return;
 
-        // 신규 추가된 Factory1FtIo 주입 대상 리스트에 추가
         [window.Factory1Ft, window.Factory1FtIo, window.Factory1Ilji].forEach(App => {
             if (!App) return;
             App.elements.dateText = els.dateText;
@@ -360,14 +357,9 @@
         bindButtonEvents();
         initCalendar();
 
+        // 초기 진입 페이지 키 확인 후 비동기로 컨텐츠 삽입 지시
         const initialKey = document.body.dataset.initialPage || 'ft';
-        state.currentPageKey = initialKey;
-        updateHeaderUI(initialKey);
-
-        const mod = getActiveModule();
-        if (mod && mod.init) mod.init();
-
-        setDate(getYesterdayStr());
+        switchPage(initialKey, { pushState: false });
 
         window.addEventListener('popstate', e => {
             const key = (e.state && e.state.page) || detectPageKeyFromLocation() || initialKey;

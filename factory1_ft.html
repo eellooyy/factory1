@@ -26,7 +26,7 @@
                 </button>
                 <span id="f1MainTitle" class="f1-main-title clickable">1공장 FT 일지</span>
 
-                <!-- 계층형 드롭다운 메뉴로 개편 (3공장 설비 스타일 적용) -->
+                <!-- 계층형 서브메뉴 구조 -->
                 <div id="f1Dropdown" class="f1-dropdown-menu">
                     <div class="f1-dropdown-item has-submenu">
                         <div class="submenu-title-wrap">1공장 FT</div>
@@ -64,91 +64,26 @@
             </div>
         </header>
 
-        <div id="f1PageRoot">
-            <!-- 로드 시 factory1_ft_content.html의 내부 내용이 이곳에 바인딩됩니다 -->
-            <div class="f1ft-wrapper" data-page-module="Factory1FtModule">
-                <main class="f1ft-layout">
-                    <section class="f1ft-main-table-box">
-                        <table class="f1ft-table border-outer">
-                            <colgroup>
-                                <col class="col-row-title">
-                                <col class="col-data"><col class="col-data"><col class="col-data"><col class="col-data">
-                                <col class="col-data"><col class="col-data"><col class="col-data"><col class="col-data">
-                                <col class="col-memo">
-                            </colgroup>
-                            <thead class="border-bottom-thick">
-                                <tr>
-                                    <th class="f1ft-th"></th>
-                                    <th class="f1ft-th">A</th><th class="f1ft-th">A</th><th class="f1ft-th">A</th><th class="f1ft-th">A</th>
-                                    <th class="f1ft-th">C</th><th class="f1ft-th">C</th>
-                                    <th class="f1ft-th">D</th><th class="f1ft-th">D</th>
-                                    <th class="f1ft-th">비고</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <th class="f1ft-th row-title">사용 전 잔량</th>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="A" data-col="A1" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="A" data-col="A2" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="A" data-col="A3" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="A" data-col="A4" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="C" data-col="C1" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="C" data-col="C2" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="D" data-col="D1" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="D" data-col="D2" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td memo-cell editable"><input type="text" class="f1ft-input memo-input" data-field="memo" readonly></td>
-                                </tr>
-                                <tr>
-                                    <th class="f1ft-th row-title">사용량</th>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="A" data-col="A1" readonly></td>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="A" data-col="A2" readonly></td>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="A" data-col="A3" readonly></td>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="A" data-col="A4" readonly></td>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="C" data-col="C1" readonly></td>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="C" data-col="C2" readonly></td>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="D" data-col="D1" readonly></td>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="D" data-col="D2" readonly></td>
-                                    <td class="f1ft-td memo-cell readonly"><input type="text" class="f1ft-input" readonly></td>
-                                </tr>
-                                <tr>
-                                    <th class="f1ft-th row-title">사용 후 잔량</th>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="A" data-col="A1" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="A" data-col="A2" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="A" data-col="A3" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="A" data-col="A4" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="C" data-col="C1" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="C" data-col="C2" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="D" data-col="D1" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="D" data-col="D2" inputmode="decimal" readonly></td>
-                                    <td class="f1ft-td memo-cell readonly"><input type="text" class="f1ft-input" readonly></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </section>
-                </main>
-            </div>
-        </div>
+        <!-- 비동기 fetch 대상 영역이므로 완전히 비워둡니다 -->
+        <div id="f1PageRoot"></div>
     </div>
 
-    <!-- FT 페이지 모듈 -->
+    <!-- 스크립트 모듈 로드 -->
     <script src="js/factory1_ft_constant.js"></script>
     <script src="js/factory1_ft_api.js"></script>
     <script src="js/factory1_ft_render.js"></script>
     <script src="js/factory1_ft_main.js"></script>
 
-    <!-- FT 재고 종합 페이지 모듈 신설 연결 -->
     <script src="js/factory1_ft_io_constant.js"></script>
     <script src="js/factory1_ft_io_api.js"></script>
     <script src="js/factory1_ft_io_render.js"></script>
     <script src="js/factory1_ft_io_main.js"></script>
 
-    <!-- 급지일지 페이지 모듈 -->
     <script src="js/factory1_ilji_constant.js"></script>
     <script src="js/factory1_ilji_api.js"></script>
     <script src="js/factory1_ilji_render.js"></script>
     <script src="js/factory1_ilji_main.js"></script>
 
-    <!-- 공통 헤더 컨트롤러 · 페이지 라우터 -->
     <script src="js/factory1_common.js"></script>
 </body>
 </html>
