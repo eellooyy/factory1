@@ -54,7 +54,7 @@
         fp: null
     };
 
-    // ── [버그 수정] 날짜 유틸리티 표준화 (내부는 항상 YYYY-MM-DD 유지) ──
+    // ── 날짜 유틸리티 표준화 (내부는 항상 YYYY-MM-DD 유지) ──
     function getTodayStr() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -150,6 +150,12 @@
                     input.dispatchEvent(new Event('input', { bubbles: true }));
                     input.dispatchEvent(new Event('change', { bubbles: true }));
                 });
+
+                // [버그 수정] 강제 이벤트 발생으로 인해 오염된 변경 감지 플래그(isChanged)를 깨끗하게 초기화
+                const app = getActiveApp();
+                if (app && app.state) {
+                    app.state.isChanged = false;
+                }
             }, 50);
         });
     }
