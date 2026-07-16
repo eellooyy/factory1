@@ -9,7 +9,6 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <!-- 공통 헤더 스타일 → FT 전용 스타일 → 급지일지 전용 스타일 순서로 로드 -->
     <link rel="stylesheet" href="css/factory1_common_style.css">
     <link rel="stylesheet" href="css/factory1_ft_style.css">
     <link rel="stylesheet" href="css/factory1_ilji_style.css">
@@ -20,15 +19,23 @@
 <body data-initial-page="ft">
     <div class="f1-shell f1-shell--ft">
         <header class="f1-header">
-            <!-- 공통 삼선 메뉴 및 제목 드롭다운 영역 (페이지 전환해도 항상 유지됨) -->
+            <!-- 공통 삼선 메뉴 및 제목 드롭다운 영역 -->
             <div class="f1-title-area">
                 <button id="f1MenuBtn" class="f1-menu-btn" title="메뉴 열기" type="button">
                     <span class="material-symbols-outlined">menu</span>
                 </button>
                 <span id="f1MainTitle" class="f1-main-title clickable">1공장 FT 일지</span>
 
+                <!-- 계층형 드롭다운 메뉴로 개편 (3공장 설비 스타일 적용) -->
                 <div id="f1Dropdown" class="f1-dropdown-menu">
-                    <a href="factory1_ft.html" data-page="ft" class="f1-dropdown-item active">1공장 FT 일지</a>
+                    <div class="f1-dropdown-item has-submenu">
+                        <div class="submenu-title-wrap">1공장 FT</div>
+                        <span class="material-symbols-outlined submenu-arrow">chevron_right</span>
+                        <div class="f1-submenu">
+                            <a href="factory1_ft.html" data-page="ft" class="f1-dropdown-item active">FT 일지</a>
+                            <a href="factory1_ft_io.html" data-page="ft_io" class="f1-dropdown-item">FT 재고 종합</a>
+                        </div>
+                    </div>
                     <a href="factory1_ilji.html" data-page="ilji" class="f1-dropdown-item">1공장 급지 일지</a>
                 </div>
             </div>
@@ -58,184 +65,68 @@
         </header>
 
         <div id="f1PageRoot">
-<div class="f1ft-wrapper" data-page-module="Factory1FtModule">
-        <main class="f1ft-layout">
-            <section class="f1ft-main-table-box">
-                <table class="f1ft-table border-outer">
-                    <colgroup>
-                        <col class="col-row-title">
-                        <col class="col-data">
-                        <col class="col-data">
-                        <col class="col-data">
-                        <col class="col-data">
-                        <col class="col-data">
-                        <col class="col-data">
-                        <col class="col-data">
-                        <col class="col-data">
-                        <col class="col-memo">
-                    </colgroup>
-                    <thead class="border-bottom-thick">
-                        <tr>
-                            <th class="f1ft-th"></th>
-                            <th class="f1ft-th">A</th>
-                            <th class="f1ft-th">A</th>
-                            <th class="f1ft-th">A</th>
-                            <th class="f1ft-th">A</th>
-                            <th class="f1ft-th">C</th>
-                            <th class="f1ft-th">C</th>
-                            <th class="f1ft-th">D</th>
-                            <th class="f1ft-th">D</th>
-                            <th class="f1ft-th">비고</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th class="f1ft-th row-title">사용 전 잔량</th>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="A" data-col="A1" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="A" data-col="A2" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="A" data-col="A3" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="A" data-col="A4" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="C" data-col="C1" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="C" data-col="C2" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="D" data-col="D1" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="D" data-col="D2" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td memo-cell editable"><input type="text" class="f1ft-input memo-input" data-field="memo" readonly></td>
-                        </tr>
-                        <tr>
-                            <th class="f1ft-th row-title">사용량</th>
-                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="A" data-col="A1" readonly></td>
-                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="A" data-col="A2" readonly></td>
-                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="A" data-col="A3" readonly></td>
-                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="A" data-col="A4" readonly></td>
-                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="C" data-col="C1" readonly></td>
-                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="C" data-col="C2" readonly></td>
-                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="D" data-col="D1" readonly></td>
-                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="D" data-col="D2" readonly></td>
-                            <td class="f1ft-td memo-cell readonly"><input type="text" class="f1ft-input" readonly></td>
-                        </tr>
-                        <tr>
-                            <th class="f1ft-th row-title">사용 후 잔량</th>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="A" data-col="A1" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="A" data-col="A2" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="A" data-col="A3" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="A" data-col="A4" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="C" data-col="C1" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="C" data-col="C2" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="D" data-col="D1" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="D" data-col="D2" inputmode="decimal" readonly></td>
-                            <td class="f1ft-td memo-cell readonly"><input type="text" class="f1ft-input" readonly></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
-
-            <section class="f1ft-summary-row">
-                <aside class="f1ft-side-panel">
-                    <div class="f1ft-box">
-                        <div class="f1ft-box-header">실사용량</div>
-                        <table class="f1ft-table mini-table border-outer">
+            <!-- 로드 시 factory1_ft_content.html의 내부 내용이 이곳에 바인딩됩니다 -->
+            <div class="f1ft-wrapper" data-page-module="Factory1FtModule">
+                <main class="f1ft-layout">
+                    <section class="f1ft-main-table-box">
+                        <table class="f1ft-table border-outer">
                             <colgroup>
-                                <col class="side-col-label">
-                                <col class="side-col-value">
+                                <col class="col-row-title">
+                                <col class="col-data"><col class="col-data"><col class="col-data"><col class="col-data">
+                                <col class="col-data"><col class="col-data"><col class="col-data"><col class="col-data">
+                                <col class="col-memo">
                             </colgroup>
+                            <thead class="border-bottom-thick">
+                                <tr>
+                                    <th class="f1ft-th"></th>
+                                    <th class="f1ft-th">A</th><th class="f1ft-th">A</th><th class="f1ft-th">A</th><th class="f1ft-th">A</th>
+                                    <th class="f1ft-th">C</th><th class="f1ft-th">C</th>
+                                    <th class="f1ft-th">D</th><th class="f1ft-th">D</th>
+                                    <th class="f1ft-th">비고</th>
+                                </tr>
+                            </thead>
                             <tbody>
                                 <tr>
-                                    <th class="f1ft-th row-title">A</th>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="real" data-group="A" readonly></td>
+                                    <th class="f1ft-th row-title">사용 전 잔량</th>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="A" data-col="A1" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="A" data-col="A2" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="A" data-col="A3" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="A" data-col="A4" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="C" data-col="C1" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="C" data-col="C2" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="D" data-col="D1" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="start" data-group="D" data-col="D2" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td memo-cell editable"><input type="text" class="f1ft-input memo-input" data-field="memo" readonly></td>
                                 </tr>
                                 <tr>
-                                    <th class="f1ft-th row-title">C</th>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="real" data-group="C" readonly></td>
+                                    <th class="f1ft-th row-title">사용량</th>
+                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="A" data-col="A1" readonly></td>
+                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="A" data-col="A2" readonly></td>
+                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="A" data-col="A3" readonly></td>
+                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="A" data-col="A4" readonly></td>
+                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="C" data-col="C1" readonly></td>
+                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="C" data-col="C2" readonly></td>
+                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="D" data-col="D1" readonly></td>
+                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="usage" data-group="D" data-col="D2" readonly></td>
+                                    <td class="f1ft-td memo-cell readonly"><input type="text" class="f1ft-input" readonly></td>
                                 </tr>
                                 <tr>
-                                    <th class="f1ft-th row-title">D</th>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="real" data-group="D" readonly></td>
+                                    <th class="f1ft-th row-title">사용 후 잔량</th>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="A" data-col="A1" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="A" data-col="A2" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="A" data-col="A3" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="A" data-col="A4" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="C" data-col="C1" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="C" data-col="C2" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="D" data-col="D1" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="end" data-group="D" data-col="D2" inputmode="decimal" readonly></td>
+                                    <td class="f1ft-td memo-cell readonly"><input type="text" class="f1ft-input" readonly></td>
                                 </tr>
                             </tbody>
                         </table>
-                    </div>
-                </aside>
-
-                <aside class="f1ft-side-panel">
-                    <div class="f1ft-box">
-                        <div class="f1ft-box-header">ERP 입력량</div>
-                        <table class="f1ft-table mini-table border-outer">
-                            <colgroup>
-                                <col class="side-col-label">
-                                <col class="side-col-value">
-                            </colgroup>
-                            <tbody>
-                                <tr>
-                                    <th class="f1ft-th row-title">A</th>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="erp" data-group="A" inputmode="decimal" readonly></td>
-                                </tr>
-                                <tr>
-                                    <th class="f1ft-th row-title">C</th>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="erp" data-group="C" inputmode="decimal" readonly></td>
-                                </tr>
-                                <tr>
-                                    <th class="f1ft-th row-title">D</th>
-                                    <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="erp" data-group="D" inputmode="decimal" readonly></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </aside>
-
-                <aside class="f1ft-side-panel f1ft-side-panel-compact">
-                    <div class="f1ft-box">
-                        <div class="f1ft-box-header">증감</div>
-                        <table class="f1ft-table mini-table border-outer">
-                            <colgroup>
-                                <col class="side-col-label">
-                                <col class="side-col-value">
-                            </colgroup>
-                            <tbody>
-                                <tr>
-                                    <th class="f1ft-th row-title">A</th>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="delta" data-group="A" readonly></td>
-                                </tr>
-                                <tr>
-                                    <th class="f1ft-th row-title">C</th>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="delta" data-group="C" readonly></td>
-                                </tr>
-                                <tr>
-                                    <th class="f1ft-th row-title">D</th>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="delta" data-group="D" readonly></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </aside>
-
-                <aside class="f1ft-side-panel">
-                    <div class="f1ft-box">
-                        <div class="f1ft-box-header">실재고 - ERP</div>
-                        <table class="f1ft-table mini-table border-outer">
-                            <colgroup>
-                                <col class="side-col-label">
-                                <col class="side-col-value">
-                            </colgroup>
-                            <tbody>
-                                <tr>
-                                    <th class="f1ft-th row-title">A</th>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="diff" data-group="A" data-base="0" readonly></td>
-                                </tr>
-                                <tr>
-                                    <th class="f1ft-th row-title">C</th>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="diff" data-group="C" data-base="0" readonly></td>
-                                </tr>
-                                <tr>
-                                    <th class="f1ft-th row-title">D</th>
-                                    <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="diff" data-group="D" data-base="0" readonly></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </aside>
-            </section>
-        </main>
-</div>
+                    </section>
+                </main>
+            </div>
         </div>
     </div>
 
@@ -245,13 +136,19 @@
     <script src="js/factory1_ft_render.js"></script>
     <script src="js/factory1_ft_main.js"></script>
 
-    <!-- 급지일지 페이지 모듈 (드롭다운 클릭 시 새로고침 없이 바로 전환하기 위해 함께 로드) -->
+    <!-- FT 재고 종합 페이지 모듈 신설 연결 -->
+    <script src="js/factory1_ft_io_constant.js"></script>
+    <script src="js/factory1_ft_io_api.js"></script>
+    <script src="js/factory1_ft_io_render.js"></script>
+    <script src="js/factory1_ft_io_main.js"></script>
+
+    <!-- 급지일지 페이지 모듈 -->
     <script src="js/factory1_ilji_constant.js"></script>
     <script src="js/factory1_ilji_api.js"></script>
     <script src="js/factory1_ilji_render.js"></script>
     <script src="js/factory1_ilji_main.js"></script>
 
-    <!-- 공통 헤더 컨트롤러 · 페이지 라우터 (반드시 마지막에 로드) -->
+    <!-- 공통 헤더 컨트롤러 · 페이지 라우터 -->
     <script src="js/factory1_common.js"></script>
 </body>
 </html>

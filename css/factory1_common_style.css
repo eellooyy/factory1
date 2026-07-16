@@ -23,9 +23,7 @@ body {
 
 /* ── 전체 셸(헤더 + 하위 페이지 콘텐츠) 컨테이너 ──
    페이지가 바뀌어도 헤더가 절대 움직이지 않도록, 폭을 페이지별로 바꾸지 않고
-   항상 고정합니다. 두 페이지 중 콘텐츠가 더 넓은 급지일지(약 1243px) 기준으로
-   여유를 조금 두고 1260px 로 고정했습니다.
-   (더 넓은 페이지가 추후 추가되면 이 값만 올려주면 됩니다) */
+   항상 고정합니다. 콘텐츠가 넓은 급지일지 기준으로 1260px 로 고정했습니다. */
 .f1-shell {
     width: 100%;
     max-width: 1260px;
@@ -115,6 +113,7 @@ body {
     font-size: 14px;
     font-weight: 500;
     transition: background 0.15s ease, color 0.15s ease;
+    cursor: pointer;
 }
 
 .f1-dropdown-item:hover {
@@ -125,6 +124,53 @@ body {
     color: #007aff;
     font-weight: 600;
     background: #e8f4fd;
+}
+
+/* ── 2단계 우측 확장형 서브 메뉴 스타일 추가 ── */
+.f1-dropdown-item.has-submenu {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.f1-dropdown-item.has-submenu .submenu-title-wrap {
+    display: inline-flex;
+    align-items: center;
+}
+
+.f1-dropdown-item.has-submenu .submenu-arrow {
+    font-size: 16px;
+    color: #8e8e93;
+    margin-left: 8px;
+}
+
+.f1-submenu {
+    display: none;
+    position: absolute;
+    top: -6px;
+    left: 100%;
+    margin-left: 2px;
+    background: #ffffff;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    min-width: 165px;
+    padding: 6px 0;
+    z-index: 1010;
+}
+
+/* 마우스 오버 시 우측 서브메뉴 표시 */
+.f1-dropdown-item.has-submenu:hover {
+    background: #f5f5f7;
+}
+
+.f1-dropdown-item.has-submenu:hover .f1-submenu {
+    display: block;
+}
+
+.f1-submenu .f1-dropdown-item {
+    padding: 10px 16px;
 }
 
 /* ── 날짜 네비게이션 / 컨트롤 영역 ── */
