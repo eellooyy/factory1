@@ -131,9 +131,20 @@
 
         syncDateLabel();
 
-        if (state.fp && state.fp.selectedDates[0]) {
-            const selected = state.fp.formatDate(state.fp.selectedDates[0], 'Y-m-d');
-            if (selected !== dateStr) state.fp.setDate(dateStr, false);
+        // [버그 수정] 모바일 환경 등에서 flatpickr 인스턴스의 selectedDates 가
+        // 아직 준비되지 않은 시점에 접근하면 예외가 발생했고, 그 여파로 바로 아래의
+        // 실제 DB 로딩 코드(mod.activate)까지 실행되지 못하고 함수가 중단되는 문제가
+        // 있었습니다. 캘린더 동기화는 부가 기능이므로 실패하더라도 DB 로딩은
+        // 반드시 진행되도록 try/catch 로 분리합니다.
+        try {
+            if (state.fp && Array.isArray(state.fp.selectedDates) && state.fp.selectedDates[0]) {
+                const selected = state.fp.formatDate(state.fp.selectedDates[0], 'Y-m-d');
+                if (selected !== dateStr) state.fp.setDate(dateStr, false);
+            } else if (state.fp && typeof state.fp.setDate === 'function') {
+                state.fp.setDate(dateStr, false);
+            }
+        } catch (err) {
+            console.warn('[f1] 캘린더 날짜 동기화 중 오류가 발생했지만 무시하고 계속 진행합니다:', err);
         }
 
         const mod = getActiveModule();
@@ -168,6 +179,12 @@
             defaultDate: state.currentDate || getYesterdayStr(),
             clickOpens: false,
             allowInput: false,
+            // [버그 수정] disableMobile 을 지정하지 않으면 모바일 기기에서 flatpickr가
+            // 자체 캘린더 대신 OS 네이티브 날짜 선택기로 전환됩니다. 이 모드에서는
+            // 커스텀 위치 지정(positionElement)이나 열기/닫기 제어가 데스크톱과
+            // 다르게 동작해 selectedDates 관련 오류의 원인이 되었으므로, 모든 기기에서
+            // 동일한 커스텀 캘린더 UI를 사용하도록 고정합니다.
+            disableMobile: true,
             positionElement: els.dateText,
             position: 'auto center',
             onReady(_, __, instance) {
@@ -223,7 +240,11 @@
 
     // ── 삼선 메뉴 / 드롭다운 ──
     function closeDropdown() {
-        if (els.dropdown) els.dropdown.classList.remove('show');
+        if (els.dropdown) {
+            els.dropdown.classList.remove('show');
+            els.dropdown.querySelectorAll('.f1-dropdown-item.has-submenu.submenu-open')
+                .forEach(item => item.classList.remove('submenu-open'));
+        }
     }
 
     function bindDropdownEvents() {
@@ -237,6 +258,22 @@
 
         document.addEventListener('click', e => {
             if (!e.target.closest('.f1-title-area')) closeDropdown();
+        });
+
+        // [버그 수정] 사이드로 펼쳐지는 서브메뉴는 CSS :hover 로만 열려서
+        // 호버가 없는 터치 기기(모바일)에서는 하위 메뉴를 열 수 없었습니다.
+        // 제목 영역을 클릭/탭하면 열고 닫히도록 별도 토글을 추가합니다.
+        els.dropdown.querySelectorAll('.f1-dropdown-item.has-submenu').forEach(item => {
+            const trigger = item.querySelector('.submenu-title-wrap') || item;
+            trigger.addEventListener('click', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                const willOpen = !item.classList.contains('submenu-open');
+                els.dropdown.querySelectorAll('.f1-dropdown-item.has-submenu').forEach(other => {
+                    other.classList.remove('submenu-open');
+                });
+                if (willOpen) item.classList.add('submenu-open');
+            });
         });
 
         els.dropdown.querySelectorAll('.f1-dropdown-item[data-page]').forEach(item => {
@@ -380,9 +417,14 @@
         bindButtonEvents();
         initCalendar();
 
+        // [버그 수정] initialKey 를 setTimeout 콜백 밖(상위 스코프)에 선언하여
+        // 아래 popstate 핸들러에서도 안전하게 참조할 수 있도록 함
+        // (기존에는 setTimeout 콜백 안에서만 선언되어 popstate 발생 시
+        //  ReferenceError 가 날 수 있었습니다).
+        const initialKey = document.body.dataset.initialPage || 'ft';
+
         // 브라우저 렌더링 스택 안전 확인 후 첫 페이지 로드 지시
         setTimeout(() => {
-            const initialKey = document.body.dataset.initialPage || 'ft';
             switchPage(initialKey, { pushState: false });
         }, 50);
 

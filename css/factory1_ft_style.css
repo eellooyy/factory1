@@ -241,4 +241,23 @@
     .f1ft-summary-row {
         grid-template-columns: 1fr;
     }
+
+    /* 표의 실제 폭(약 826px)이 모바일 화면보다 넓으므로, 페이지 전체가
+       옆으로 밀리는 대신 표 영역 안에서만 가로 스크롤 되도록 합니다. */
+    .f1ft-main-table-box {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 12px;
+    }
+
+    .f1ft-main-table-box .f1ft-table {
+        min-width: 780px;
+    }
+
+    /* iOS Safari 는 폰트 크기가 16px 미만인 입력창에 포커스가 가면
+       화면을 자동으로 확대해버려 표가 틀어져 보이는 문제가 있었습니다.
+       모바일에서는 입력창 글자 크기를 16px 이상으로 올려 확대를 막습니다. */
+    .f1ft-input {
+        font-size: 16px;
+    }
 }

@@ -160,13 +160,26 @@ body {
     z-index: 1010;
 }
 
-/* 마우스 오버 시 우측 서브메뉴 표시 */
+/* 마우스 오버 시 우측 서브메뉴 표시 (데스크톱) */
 .f1-dropdown-item.has-submenu:hover {
     background: #f5f5f7;
 }
 
 .f1-dropdown-item.has-submenu:hover .f1-submenu {
     display: block;
+}
+
+/* 클릭/탭으로 여는 서브메뉴 (모바일 등 호버가 없는 터치 기기 대응) */
+.f1-dropdown-item.has-submenu.submenu-open {
+    background: #f5f5f7;
+}
+
+.f1-dropdown-item.has-submenu.submenu-open .f1-submenu {
+    display: block;
+}
+
+.f1-dropdown-item.has-submenu.submenu-open .submenu-arrow {
+    transform: rotate(90deg);
 }
 
 .f1-submenu .f1-dropdown-item {
@@ -312,5 +325,47 @@ body {
     .f1-controls {
         width: 100%;
         justify-content: flex-start;
+    }
+
+    /* 화면 폭이 좁으면 옆으로 튀어나가는 캘린더 오프셋이 화면 밖으로
+       잘릴 수 있어 오프셋을 제거하고 자동 위치 지정에 맡깁니다. */
+    .flatpickr-calendar {
+        margin-left: 0;
+    }
+
+    /* iOS Safari 는 폰트 크기가 16px 미만인 입력창에 포커스가 가면
+       화면을 자동으로 확대합니다. 드롭다운/캘린더 관련 입력 요소는
+       숨김 처리되어 있지만, 혹시 모를 확대를 막기 위해 기본값을 올려둡니다. */
+    .f1-hidden-input {
+        font-size: 16px;
+    }
+
+    /* 사이드로 튀어나가는 서브메뉴가 좁은 화면에서 화면 밖으로 잘리는 것을
+       막기 위해, 옆으로 펼치는 대신 같은 목록 안에서 아래로 펼치는
+       방식으로 전환합니다. */
+    .f1-submenu {
+        position: static;
+        display: none;
+        top: auto;
+        left: auto;
+        margin-left: 0;
+        margin-top: 4px;
+        margin-bottom: 4px;
+        box-shadow: none;
+        border: none;
+        background: #fafafc;
+        padding: 2px 0;
+    }
+
+    .f1-dropdown-item.has-submenu:hover .f1-submenu {
+        display: none;
+    }
+
+    .f1-dropdown-item.has-submenu.submenu-open .f1-submenu {
+        display: block;
+    }
+
+    .f1-submenu .f1-dropdown-item {
+        padding-left: 28px;
     }
 }
