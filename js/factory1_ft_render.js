@@ -167,9 +167,13 @@
             if (e.target.classList.contains('f1ft-input')) e.preventDefault();
         });
 
-        // 변경 감지
+        // 변경 감지 (★실제 사용자 직접 입력(e.isTrusted)이고 편집 모드 활성화인 상태에서만 변경 처리)
         App.elements.wrapper.addEventListener('input', e => {
-            if (e.target.classList.contains('f1ft-input')) App.state.isChanged = true;
+            if (e.target.classList.contains('f1ft-input') && e.isTrusted) {
+                if (App.elements.wrapper.classList.contains('edit-mode')) {
+                    App.state.isChanged = true;
+                }
+            }
         });
 
         // 방향키 / 엔터 이동
