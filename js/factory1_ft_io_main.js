@@ -8,10 +8,16 @@
     const Factory1FtIoModule = {
         // 콘텐츠 조각(Fragment)이 DOM에 삽입된 후 자동 호출
         init() {
-            App.elements.wrapper = document.querySelector('.f1ft-io-wrapper');
+            // 클래스명 일치 시킴 (f1ft-io-wrapper -> f1ftio-wrapper)
+            App.elements.wrapper = document.querySelector('.f1ftio-wrapper');
             if (!App.elements.wrapper) return;
 
             App.setReadOnlyMode(true); // 기본 보기모드 설정
+
+            // 렌더러(render.js)에 구현된 이벤트 및 스크롤 동기화 초기화 함수 실행
+            if (typeof App.initUI === 'function') {
+                App.initUI();
+            }
         },
 
         // 공통 라우터에서 날짜 변경 / 페이지 메뉴 선택 시 자동 호출

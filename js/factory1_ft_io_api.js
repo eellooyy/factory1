@@ -136,7 +136,12 @@
         App.state.compHasPrev = true;
         App.state.isInitialLoad = true;
 
-        await App.loadCompData('none');
+        // 좌측 4단 대조표 데이터 및 우측 카드 데이터 연쇄 로드 누락 해결
+        await Promise.all([
+            App.loadCompData('none'),
+            App.loadInbound(),
+            App.loadUsageDaily()
+        ]);
 
         App.state.isChanged = false;
     };
