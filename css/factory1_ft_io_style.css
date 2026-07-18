@@ -1,0 +1,384 @@
+/* factory1_ft_io_style.css
+   ────────────────────────────────────────────────────────────────
+   1공장 FT 재고 종합 페이지 전용 스타일.
+   제목/날짜 네비게이션은 공통 헤더(factory1_common_style.css)를
+   그대로 사용하므로, 이 파일에는 본문(좌측 4단 대조표 + 우측 2단
+   적층 카드) 관련 스타일만 둡니다.
+   반드시 factory1_common_style.css 보다 나중에 로드하세요.
+   ──────────────────────────────────────────────────────────────── */
+
+.f1ftio-wrapper {
+    margin-top: 16px;
+}
+
+/* 대시보드 좌우 분할 그리드 (좌측 1개 + 우측 2단 적층, 70:30 비중) */
+.f1ftio-dashboard-grid {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.f1ftio-main-panel {
+    flex: 70;
+    min-height: 520px;
+    display: flex;
+    flex-direction: column;
+}
+
+.f1ftio-side-wrapper {
+    flex: 30;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 카드 공통 스타일 */
+.f1ftio-panel {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e5ea;
+}
+
+.f1ftio-main-panel.f1ftio-panel {
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    border: none;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f5f5f7;
+    padding-bottom: 14px;
+}
+
+.panel-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1d1d1f;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mb-3 { margin-bottom: 12px; }
+.mb-4 { margin-bottom: 16px; }
+.mt-3 { margin-top: 12px; }
+.p-3 { padding: 12px; }
+.d-flex { display: flex; }
+.justify-content-between { justify-content: space-between; }
+.align-items-center { align-items: center; }
+.gap-1 { gap: 4px; }
+.gap-3 { gap: 12px; }
+.fw-bold { font-weight: 700; }
+.fw-semibold { font-weight: 600; }
+.text-dark { color: #1d1d1f; }
+.text-muted { color: #8e8e93; }
+.text-center { text-align: center; }
+.small { font-size: 12px; }
+.py-4 { padding-top: 16px; padding-bottom: 16px; }
+.m-0 { margin: 0; }
+
+/* 미니 네비게이션 버튼 (배경 없는 아이콘형) */
+.btn-nav-mini {
+    background: transparent;
+    border: none;
+    color: #86868b;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.btn-nav-mini:hover { color: #007aff; }
+.btn-nav-mini .material-symbols-outlined {
+    font-size: 16px !important;
+    font-weight: 700;
+}
+
+/* R/L Kg 단위 스위처 */
+.unit-switcher {
+    position: relative;
+    display: flex;
+    background: rgba(245, 245, 247, 0.7);
+    backdrop-filter: blur(12px);
+    border-radius: 15px;
+    padding: 2px;
+    width: 80px;
+    height: 22px;
+    align-items: center;
+    border: 1px solid rgba(210, 210, 215, 0.4);
+    overflow: hidden;
+    cursor: pointer;
+}
+.selection-bg {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: calc(50% - 2px); height: calc(100% - 4px);
+    background-color: #1d1d1f;
+    border-radius: 18px;
+    transition: transform 0.30s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    will-change: transform;
+    z-index: 1;
+}
+.selection-bg.mode-roll { transform: translateX(0); }
+.selection-bg.mode-kg { transform: translateX(100%); }
+.unit-btn {
+    position: relative; z-index: 2; flex: 1; border: none;
+    background: transparent !important; font-size: 10px;
+    font-weight: 600; color: #86868b; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.3s ease; outline: none;
+    height: 100%;
+    line-height: normal;
+}
+.unit-btn.active { color: #ffffff !important; }
+
+/* 합계 표시줄 (월별 출고 카드 하단) */
+.f1ftio-total-row {
+    background: #f5f5f7;
+    border-radius: 12px;
+    border: none;
+}
+.f1ftio-total-values {
+    display: flex;
+    gap: 14px;
+    align-items: baseline;
+}
+.f1ftio-total-item {
+    font-size: 13px;
+    color: #636366;
+}
+.f1ftio-total-item b {
+    color: #1d1d1f;
+    font-weight: 700;
+    margin-left: 2px;
+}
+.f1ftio-total-all {
+    font-size: 14px;
+    color: #1d1d1f;
+}
+.f1ftio-total-all b {
+    color: #007aff;
+    font-size: 15px;
+}
+
+/* 테이블 실선 최소화 (입고/월별출고 공통) */
+.custom-compact-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.custom-compact-table th, .custom-compact-table td {
+    border: none !important;
+    border-bottom: 1px solid #f2f2f7 !important;
+    padding: 10px 4px !important;
+}
+.custom-compact-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #ffffff !important;
+    color: #86868b !important;
+    font-weight: 600 !important;
+}
+
+/* 스크롤바 완전 숨김 (스크롤은 유지) */
+.table-scroll-wrapper {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.table-scroll-wrapper::-webkit-scrollbar { display: none; }
+
+/* ========================================
+   좌측 4단 대조 테이블 (comp-)
+   ======================================== */
+.comp-panels-outer {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    background: transparent;
+    overflow: visible;
+}
+
+.comp-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+    flex: 1;
+}
+
+/* 출고(패널1): 날짜 포함 + 충분한 폭 확보 / ERP재고·실재고 동일 폭 / 실재고-ERP는 약간 좁게 */
+.comp-panel:nth-child(1) { flex: 1.5; }
+.comp-panel:nth-child(2) { flex: 1.4; }
+.comp-panel:nth-child(3) { flex: 1.4; }
+.comp-panel:nth-child(4) { flex: 1.3; }
+
+.comp-scroll-area {
+    position: relative;
+    height: 580px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.comp-scroll-area::-webkit-scrollbar { display: none; }
+
+.comp-cursor {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.10), inset 0 0 8px rgba(255,255,255,0.5);
+    border-radius: 6px;
+    z-index: 8;
+    opacity: 0;
+    transition:
+        top 0.12s cubic-bezier(0.23, 1, 0.32, 1),
+        left 0.12s cubic-bezier(0.23, 1, 0.32, 1),
+        width 0.10s ease-out,
+        height 0.10s ease-out,
+        opacity 0.10s ease-out;
+}
+.comp-cursor.active { opacity: 1; }
+
+.comp-table-split {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+}
+.comp-table-split thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #fff;
+}
+.comp-thead-lv1 th {
+    padding: 10px 4px 6px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #1d1d1f;
+    text-align: center;
+    border-bottom: 1.5px solid #d8d8de;
+    background: #fff;
+    white-space: nowrap;
+}
+.comp-group-th {
+    background: #fff !important;
+    color: #1d1d1f !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    border-bottom: 1.5px solid #d8d8de !important;
+    letter-spacing: -0.2px;
+}
+.comp-thead-lv2 th {
+    padding: 7px 4px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #636366;
+    text-align: center;
+    border-bottom: 1.5px solid #d8d8de;
+    background: #fff;
+    white-space: nowrap;
+}
+.comp-table-split td {
+    padding: 9px 5px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px solid #f2f2f7;
+    color: #1d1d1f;
+    transition: background 0.12s;
+}
+.comp-date-th {
+    position: sticky;
+    left: 0;
+    background: #fff !important;
+    z-index: 11;
+    text-align: center;
+    min-width: 80px;
+    width: 80px;
+    border-right: 1.5px solid #dcdce4 !important;
+    border-bottom: 1.5px solid #d8d8de !important;
+    font-size: 13px;
+    font-weight: 800;
+    color: #1d1d1f;
+}
+.comp-date-th[rowspan] { vertical-align: middle; }
+.comp-date-td {
+    position: sticky;
+    left: 0;
+    background: #fff;
+    z-index: 5;
+    text-align: center;
+    white-space: nowrap;
+    border-right: 1.5px solid #dcdce4 !important;
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 80px;
+    width: 80px;
+}
+
+/* 오늘/선택 행 */
+.comp-row-today td { background: #e8f4fd !important; }
+.comp-row-today .comp-date-td { background: #bbdefb !important; }
+.comp-selected-row td { background: #f4f4f8 !important; }
+.comp-selected-row .comp-date-td { background: #ebebf0 !important; }
+.comp-row-today.comp-selected-row td { background: #daedf9 !important; }
+.comp-row-today.comp-selected-row .comp-date-td { background: #bbd8f0 !important; }
+
+/* 활성화된 헤더 */
+.comp-thead-lv1 th.comp-header-active,
+.comp-thead-lv2 th.comp-header-active,
+.comp-group-th.comp-header-active,
+.comp-leaf-th.comp-header-active {
+    background-color: rgba(255, 160, 50, 0.18) !important;
+    color: #c05a00 !important;
+}
+
+.comp-selected-cell {
+    position: relative;
+    z-index: 10;
+    font-weight: 900 !important;
+    color: #000 !important;
+}
+
+.comp-table-split tbody tr:not(.comp-selected-row):hover td { background: #f7f7fa; }
+.comp-data-cell { cursor: pointer; }
+
+/* 차이값 색상 */
+.comp-diff-positive { color: #34c759 !important; }
+.comp-diff-negative { color: #ff3b30 !important; }
+.comp-sat { color: #007aff !important; }
+.comp-sun { color: #ff3b30 !important; }
+.comp-empty { color: #aeaeb2; }
+
+.comp-leaf-th {
+    font-size: 12px;
+    font-weight: 700;
+    color: #636366;
+    text-align: center;
+}
+
+@media (max-width: 1100px) {
+    .comp-panels-outer { flex-direction: column; }
+    .comp-panel { flex: none !important; width: 100%; }
+}
+
+@media (max-width: 1024px) {
+    .f1ftio-dashboard-grid { flex-direction: column; }
+    .f1ftio-main-panel, .f1ftio-side-wrapper {
+        width: 100%;
+        flex: none;
+    }
+}
