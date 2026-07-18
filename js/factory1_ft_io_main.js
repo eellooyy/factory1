@@ -8,24 +8,25 @@
     const Factory1FtIoModule = {
         // 콘텐츠 조각(Fragment)이 DOM에 삽입된 후 자동 호출
         init() {
-            // 클래스명 일치 시킴 (f1ft-io-wrapper -> f1ftio-wrapper)
             App.elements.wrapper = document.querySelector('.f1ftio-wrapper');
             if (!App.elements.wrapper) return;
 
             App.setReadOnlyMode(true); // 기본 보기모드 설정
+            App.initUI();              // 스크롤 동기화 / 클릭 / 키보드 / 우측 네비게이션 바인딩
 
-            // 렌더러(render.js)에 구현된 이벤트 및 스크롤 동기화 초기화 함수 실행
-            if (typeof App.initUI === 'function') {
-                App.initUI();
-            }
+            // 우측 두 카드(입고 현황·월별 출고 현황)는 공통 헤더의 날짜와 무관하게
+            // 자체 연/월 상태를 가지므로 최초 진입 시 바로 로드합니다.
+            App.loadInbound();
+            App.loadUsageDaily();
         },
 
-        // 공통 라우터에서 날짜 변경 / 페이지 메뉴 선택 시 자동 호출
+        // 공통 라우터에서 날짜 변경(날짜 네비게이션/오늘 버튼/달력 선택) 시 자동 호출
+        // 좌측 4단 대조표를 해당 날짜 기준으로 다시 로드합니다.
         activate(dateStr) {
             return App.loadData(dateStr);
         },
 
-        // 공통 수정 버튼 제어 연동
+        // 공통 수정 버튼 제어 연동 (이 페이지는 편집 폼이 없어 실질적으로 no-op)
         setEditMode(isEdit) {
             App.setReadOnlyMode(!isEdit);
         },
