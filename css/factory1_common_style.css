@@ -21,9 +21,7 @@ body {
     box-sizing: inherit;
 }
 
-/* ── 전체 셸(헤더 + 하위 페이지 콘텐츠) 컨테이너 ──
-   페이지가 바뀌어도 헤더가 절대 움직이지 않도록, 폭을 페이지별로 바꾸지 않고
-   항상 고정합니다. 콘텐츠가 넓은 급지일지 기준으로 1260px 로 고정했습니다. */
+/* ── 전체 셸(헤더 + 하위 페이지 콘텐츠) 컨테이너 ── */
 .f1-shell {
     width: 100%;
     max-width: 1260px;
@@ -44,12 +42,21 @@ body {
     border: 1px solid #e5e5ea;
 }
 
-/* ── 제목 & 삼선 드롭다운 ── */
+/* ── 제목 & 삼선 드롭다운 영역 ── */
 .f1-title-area {
     display: flex;
     align-items: center;
     gap: 8px;
     position: relative;
+    cursor: pointer;          /* 👈 텍스트 영역을 포함해 컨테이너 전체에 마우스 포인터 추가 */
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+    user-select: none;
+}
+
+.f1-title-area:hover {
+    background: #f2f2f7;      /* 👈 제목 전체에 마우스 호버 시 배경 피드백 추가 */
 }
 
 .f1-menu-btn {
@@ -62,15 +69,7 @@ body {
     justify-content: center;
     color: #1d1d1f;
     border-radius: 6px;
-    transition: background 0.2s ease;
-}
-
-.f1-menu-btn:hover {
-    background: #f2f2f7;
-}
-
-.f1-menu-btn span {
-    font-size: 22px;
+    pointer-events: none;     /* 👈 부모 클릭 이벤트에 집중하기 위해 내부 자체 이벤트 비활성화 */
 }
 
 .f1-main-title {
@@ -81,11 +80,7 @@ body {
     white-space: nowrap;
 }
 
-.f1-main-title.clickable {
-    cursor: pointer;
-    user-select: none;
-}
-
+/* 드롭다운 메뉴 박스 규모 스타일 최적화 */
 .f1-dropdown-menu {
     display: none;
     position: absolute;
@@ -97,7 +92,8 @@ body {
     border-radius: 12px;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
     z-index: 1000;
-    min-width: 180px;
+    width: max-content;        /* 👈 내용 및 제목단 텍스트 규모 길이에 맞춤 */
+    min-width: 100%;           /* 👈 원래 크기보다 쪼그라들지 않도록 부모 너비를 최소 보장 */
     padding: 6px 0;
 }
 
@@ -126,23 +122,24 @@ body {
     background: #e8f4fd;
 }
 
-/* ── 2단계 우측 확장형 서브 메뉴 스타일 추가 ── */
+/* ── 2단계 우측 확장형 서브 메뉴 스타일 ── */
 .f1-dropdown-item.has-submenu {
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
+    gap: 12px;
 }
 
 .f1-dropdown-item.has-submenu .submenu-title-wrap {
     display: inline-flex;
     align-items: center;
+    white-space: nowrap;
 }
 
 .f1-dropdown-item.has-submenu .submenu-arrow {
     font-size: 16px;
     color: #8e8e93;
-    margin-left: 8px;
 }
 
 .f1-submenu {
@@ -155,23 +152,14 @@ body {
     border: 1px solid #e5e5ea;
     border-radius: 12px;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    width: max-content;
     min-width: 165px;
     padding: 6px 0;
     z-index: 1010;
 }
 
-/* 마우스 오버 시 우측 서브메뉴 표시 (데스크톱) */
-.f1-dropdown-item.has-submenu:hover {
-    background: #f5f5f7;
-}
-
 .f1-dropdown-item.has-submenu:hover .f1-submenu {
     display: block;
-}
-
-/* 클릭/탭으로 여는 서브메뉴 (모바일 등 호버가 없는 터치 기기 대응) */
-.f1-dropdown-item.has-submenu.submenu-open {
-    background: #f5f5f7;
 }
 
 .f1-dropdown-item.has-submenu.submenu-open .f1-submenu {
@@ -253,7 +241,7 @@ body {
     margin: 0;
 }
 
-/* ── 액션 버튼 (오늘 / 수정 / 저장 / 엑셀 출력) ── */
+/* ── 액션 버튼 ── */
 .f1-action-btn {
     display: inline-flex;
     align-items: center;
@@ -327,22 +315,14 @@ body {
         justify-content: flex-start;
     }
 
-    /* 화면 폭이 좁으면 옆으로 튀어나가는 캘린더 오프셋이 화면 밖으로
-       잘릴 수 있어 오프셋을 제거하고 자동 위치 지정에 맡깁니다. */
     .flatpickr-calendar {
         margin-left: 0;
     }
 
-    /* iOS Safari 는 폰트 크기가 16px 미만인 입력창에 포커스가 가면
-       화면을 자동으로 확대합니다. 드롭다운/캘린더 관련 입력 요소는
-       숨김 처리되어 있지만, 혹시 모를 확대를 막기 위해 기본값을 올려둡니다. */
     .f1-hidden-input {
         font-size: 16px;
     }
 
-    /* 사이드로 튀어나가는 서브메뉴가 좁은 화면에서 화면 밖으로 잘리는 것을
-       막기 위해, 옆으로 펼치는 대신 같은 목록 안에서 아래로 펼치는
-       방식으로 전환합니다. */
     .f1-submenu {
         position: static;
         display: none;
@@ -355,6 +335,7 @@ body {
         border: none;
         background: #fafafc;
         padding: 2px 0;
+        width: 100%;
     }
 
     .f1-dropdown-item.has-submenu:hover .f1-submenu {
