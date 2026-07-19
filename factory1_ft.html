@@ -14,6 +14,13 @@
     <link rel="stylesheet" href="css/factory1_common_style.css">
     <link rel="stylesheet" href="css/factory1_ft_style.css">
     <link rel="stylesheet" href="css/factory1_ilji_style.css">
+    <!-- ⚠ 이 줄이 누락되어 있었습니다: SPA 전환 시 <head>는 그대로 유지된 채
+         #f1PageRoot 콘텐츠만 fetch로 교체되므로, 이 페이지에서 드롭다운으로
+         ft_io 페이지로 들어가면 factory1_ft_io_style.css 가 로드된 적이 없어
+         대시보드 그리드/4단 대조표/사이드 카드가 스타일 없이 깨진 채로 보였고,
+         (사실상 안 열린 것처럼 보임) 새로고침해야만(= factory1_ft_io.html을
+         직접 로드해야만) 정상적으로 보였던 것입니다. -->
+    <link rel="stylesheet" href="css/factory1_ft_io_style.css">
 
     <!-- 캘린더 라이브러리 및 한국어 팩 -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
