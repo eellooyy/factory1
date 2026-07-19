@@ -349,7 +349,7 @@
     };
 
     /* ─────────────────────────────────────
-       우측 상단: 입고 현황
+       우측 카드 공통: 최근 항목으로 자동 스크롤
     ───────────────────────────────────── */
     function scrollToRecentDate(bodyEl) {
         requestAnimationFrame(() => {
@@ -375,6 +375,9 @@
         });
     }
 
+    /* ─────────────────────────────────────
+       우측 상단: 입고 현황 (연도별 목록)
+    ───────────────────────────────────── */
     App.loadInbound = async function () {
         const body = document.getElementById('in-body');
         const yearTxt = document.getElementById('in-year-txt');
@@ -403,16 +406,18 @@
     };
 
     /* ─────────────────────────────────────
-       우측 하단: 월별 출고 현황 (일자별 스크롤 목록)
+       우측 하단: 월별 출고 현황
+       ※ 일자별 목록이 아니라 "해당 연도의 월별 합계" 목록을 스크롤로 보여줍니다.
+         (입고 현황 카드와 동일하게 연도 단위 네비게이션만 사용)
     ───────────────────────────────────── */
-    App.loadUsageDaily = async function () {
+    App.loadUsageMonthly = async function () {
         const body = document.getElementById('out-body');
         const dateTxt = document.getElementById('out-date-txt');
-        if (dateTxt) dateTxt.textContent = `${state.outYear}년 ${state.outMonth}월`;
+        if (dateTxt) dateTxt.textContent = `${state.outYear}년`;
         if (!body) return;
 
         try {
-            const data = await App.fetchUsageDaily(state.outYear, state.outMonth);
+            const data = await App.fetchUsageMonthly(state.outYear);
             const rows = (data && data.rows) || [];
 
             if (rows.length > 0) {
@@ -446,7 +451,8 @@
     };
 
     /* ─────────────────────────────────────
-       우측 패널 네비게이션 바인딩 (연도 이동 / 월 이동 / 단위 스위처)
+       우측 패널 네비게이션 바인딩 (연도 이동 / 단위 스위처)
+       ※ 월별 출고 카드도 이제 연도 단위로만 이동합니다.
     ───────────────────────────────────── */
     function bindSidePanelEvents() {
         const inPrev = document.getElementById('in-prev');
@@ -462,16 +468,8 @@
         }
 
         if (outPrev && outNext) {
-            outPrev.addEventListener('click', () => {
-                state.outMonth--;
-                if (state.outMonth < 1) { state.outMonth = 12; state.outYear--; }
-                App.loadUsageDaily();
-            });
-            outNext.addEventListener('click', () => {
-                state.outMonth++;
-                if (state.outMonth > 12) { state.outMonth = 1; state.outYear++; }
-                App.loadUsageDaily();
-            });
+            outPrev.addEventListener('click', () => { state.outYear--; App.loadUsageMonthly(); });
+            outNext.addEventListener('click', () => { state.outYear++; App.loadUsageMonthly(); });
         }
 
         unitBtns.forEach(btn => {

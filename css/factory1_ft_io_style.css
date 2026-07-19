@@ -20,7 +20,7 @@
 
 .f1ftio-main-panel {
     flex: 70;
-    min-height: 520px;
+    min-height: 480px;
     display: flex;
     flex-direction: column;
 }
@@ -226,7 +226,9 @@
 
 .comp-scroll-area {
     position: relative;
-    height: 580px;
+    /* 헤더(2단, 약 63px) + 데이터 행 12줄(줄당 약 35px) ≈ 480px
+       줄 수를 늘리거나 줄이고 싶으면 이 값만 ±35px 단위로 조정하면 됩니다. */
+    height: 480px;
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: none;

@@ -2,7 +2,7 @@
    ────────────────────────────────────────────────────────────────
    ⚠ 현재는 DB(Supabase) 연동 전 단계로, 레이아웃/동작 확인을 위한
    임시 mock 데이터를 반환합니다. 추후 DB 연결 시 아래 3개 함수
-   (fetchComparisonData / fetchInboundList / fetchUsageDaily) 의
+   (fetchComparisonData / fetchInboundList / fetchUsageMonthly) 의
    "TODO" 표시된 내부 로직만 실제 Supabase 쿼리 / fetch 호출로
    교체하면 되고, 반환하는 데이터 형식(각 함수 하단 주석 참고)은
    그대로 유지해주세요. render.js 쪽 코드는 수정할 필요가 없습니다.
@@ -97,26 +97,28 @@
     };
 
     /* ─────────────────────────────────────────────
-       우측 하단: 월별 출고 현황 (해당 월의 일자별 목록 + 합계)
-       TODO: Supabase에서 해당 연/월의 일자별 출고량 조회로 교체
+       우측 하단: 월별 출고 현황 (해당 연도의 "월별 합계" 목록 + 연 합계)
+       ※ 일자별 목록이 아니라 월별로 묶은 합계 목록을 스크롤로 보여줍니다.
+       TODO: Supabase에서 해당 연도의 월별 출고 합계 조회로 교체
+             (예: GROUP BY 연,월 또는 월별 집계 테이블 조회)
        반환 형식: {
-           rows: [ { date_display: '03/15 (일)', A, C, D }, ... ],
-           byItem: { A, C, D }, total
+           rows: [ { date_display: '1월', A, C, D }, ... ],
+           byItem: { A, C, D }, total   // 해당 연도 전체 합계
        }
     ───────────────────────────────────────────── */
-    App.fetchUsageDaily = async function (year, month) {
-        const daysInMonth = new Date(year, month, 0).getDate();
+    App.fetchUsageMonthly = async function (year) {
+        const today = new Date();
+        const monthLimit = (year === today.getFullYear()) ? (today.getMonth() + 1) : 12;
         const rows = [];
         const byItem = { A: 0, C: 0, D: 0 };
 
-        for (let d = 1; d <= daysInMonth; d++) {
-            const dateStr = `${year}-${pad(month)}-${pad(d)}`;
-            const seedBase = hashSeed(dateStr + '-out');
-            const a = seededVal(seedBase, 30, 250);
-            const c = seededVal(seedBase + 1, 20, 200);
-            const dd = seededVal(seedBase + 2, 10, 150);
+        for (let m = 1; m <= monthLimit; m++) {
+            const seedBase = hashSeed(`${year}-${pad(m)}-out-month`);
+            const a  = seededVal(seedBase, 800, 6000);
+            const c  = seededVal(seedBase + 1, 600, 5000);
+            const dd = seededVal(seedBase + 2, 300, 4000);
             byItem.A += a; byItem.C += c; byItem.D += dd;
-            rows.push({ date_display: `${pad(month)}/${pad(d)} (${weekdayKr(dateStr)})`, A: a, C: c, D: dd });
+            rows.push({ date_display: `${m}월`, A: a, C: c, D: dd });
         }
         return { rows, byItem, total: byItem.A + byItem.C + byItem.D };
     };
@@ -136,11 +138,11 @@
         App.state.compHasPrev = true;
         App.state.isInitialLoad = true;
 
-        // 좌측 4단 대조표 데이터 및 우측 카드 데이터 연쇄 로드 누락 해결
+        // 좌측 4단 대조표 데이터 및 우측 카드 데이터 연쇄 로드
         await Promise.all([
             App.loadCompData('none'),
             App.loadInbound(),
-            App.loadUsageDaily()
+            App.loadUsageMonthly()
         ]);
 
         App.state.isChanged = false;

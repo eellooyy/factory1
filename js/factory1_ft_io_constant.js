@@ -34,9 +34,9 @@
             inYear: today.getFullYear(),
             unit: 'RL',
 
-            // 우측 하단: 월별 출고 현황 (연/월 단위 자체 네비게이션)
+            // 우측 하단: 월별 출고 현황 — 일자별이 아닌 "해당 연도의 월별 합계" 목록을
+            // 스크롤로 보여주므로 연도 단위 네비게이션만 필요합니다. (월 단위 상태 제거)
             outYear: today.getFullYear(),
-            outMonth: today.getMonth() + 1,
 
             isChanged: false
         },
