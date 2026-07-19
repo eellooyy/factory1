@@ -2,7 +2,7 @@
 
 /* 너무 퍼져 보이지 않도록 좌우 최대 폭을 기존 1200px에서 890px로 축소 */
 .f1ft-wrapper {
-    max-width: 890px;
+    max-width: 1100px;
     margin: 0 auto;
 }
 
