@@ -1,68 +1,31 @@
 /* factory1_ft_style.css — 1공장 FT 일지 "전용" 스타일 */
 
+/* 너무 퍼져 보이지 않도록 좌우 최대 폭을 기존 1200px에서 890px로 축소 */
 .f1ft-wrapper {
-    max-width: 1200px;
+    max-width: 890px;
     margin: 0 auto;
 }
 
-/* 좌측 메인 영역과 우측 지고재고 영역을 나란히 배치하기 위한 그리드 */
 .f1ft-layout {
-    display: grid;
-    grid-template-columns: 858px minmax(0, 1fr); /* 1층 레이아웃 본래 폭 고정 및 남는 공간 할당 */
+    display: flex;
+    flex-direction: column;
     gap: 16px;
     width: 100%;
     margin-top: 16px;
+}
+
+/* 1층: 본래의 표 크기에 맞게 채움 */
+.f1ft-row-1 {
+    width: 100%;
+}
+
+/* 2층: 두 개의 요약 표를 깔끔하게 분할 배치 (대조표 57% : 지고재고 41%) */
+.f1ft-row-2 {
+    display: grid;
+    grid-template-columns: 57% 41%;
+    gap: 2%;
+    width: 100%;
     align-items: start;
-}
-
-.f1ft-left-container {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    width: 100%;
-}
-
-.f1ft-right-container {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    width: 100%;
-}
-
-.f1ft-main-table-box {
-    width: 100%;
-    min-width: 0;
-    background: #fff;
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-    border: 1px solid #e5e5ea;
-}
-
-.f1ft-merged-summary-box {
-    width: 100%;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-    border: 1px solid #e5e5ea;
-}
-
-.f1ft-merged-summary-box .f1ft-box {
-    border: none;
-    box-shadow: none;
-}
-
-.f1ft-jigo-box {
-    width: 100%;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-    border: 1px solid #e5e5ea;
-}
-
-.f1ft-jigo-box .f1ft-box {
-    border: none;
-    box-shadow: none;
 }
 
 .f1ft-box {
@@ -119,24 +82,19 @@
     border: 2px solid #8e8e93 !important;
 }
 
-.f1ft-main-table-box .f1ft-table tr > *:nth-child(5),
-.f1ft-main-table-box .f1ft-table tr > *:nth-child(7),
-.f1ft-main-table-box .f1ft-table tr > *:nth-child(9) {
-    border-right: 2px solid #8e8e93 !important;
-}
-
-.f1ft-main-table-box .f1ft-table tr > *:first-child {
-    border-right: 2px solid #8e8e93 !important;
-}
-
-.border-top-thick th,
-.border-top-thick td {
-    border-top: 2px solid #8e8e93 !important;
-}
-
-.border-bottom-thick th,
-.border-bottom-thick td {
+.border-bottom-thick {
     border-bottom: 2px solid #8e8e93 !important;
+}
+
+/* 1층 급지 재고 표의 구분 굵은 선 유지 */
+.f1ft-row-1 .f1ft-table tr > *:nth-child(5),
+.f1ft-row-1 .f1ft-table tr > *:nth-child(7),
+.f1ft-row-1 .f1ft-table tr > *:nth-child(9) {
+    border-right: 2px solid #8e8e93 !important;
+}
+
+.f1ft-row-1 .f1ft-table tr > *:first-child {
+    border-right: 2px solid #8e8e93 !important;
 }
 
 .col-row-title {
@@ -202,20 +160,21 @@
     color: #c62828;
 }
 
-@media (max-width: 1100px) {
-    .f1ft-layout {
-        grid-template-columns: 1fr; /* 화면이 좁아지면 위아래로 적층 */
+@media (max-width: 850px) {
+    /* 화면 폭이 좁아질 경우 2층 레이아웃도 수직 적층으로 전환 */
+    .f1ft-row-2 {
+        grid-template-columns: 1fr;
+        gap: 16px;
     }
 }
 
 @media (max-width: 760px) {
-    .f1ft-main-table-box, .f1ft-merged-summary-box {
+    .f1ft-row-1 {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        padding: 12px;
     }
 
-    .f1ft-main-table-box .f1ft-table, .f1ft-merged-summary-box .f1ft-table {
+    .f1ft-row-1 .f1ft-table {
         min-width: 780px;
     }
 

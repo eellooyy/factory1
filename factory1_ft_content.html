@@ -1,9 +1,9 @@
 <div class="f1ft-wrapper" data-page-module="Factory1FtModule">
     <main class="f1ft-layout">
-        <!-- 왼쪽 영역 (1층 레이아웃 + 병합된 요약 표) -->
-        <div class="f1ft-left-container">
-            <!-- 1층 레이아웃 메인 테이블 -->
-            <section class="f1ft-main-table-box">
+        <!-- 1층: 급지 재고 (단독 배치) -->
+        <section class="f1ft-row-1">
+            <div class="f1ft-box">
+                <div class="f1ft-box-header">급지 재고</div>
                 <table class="f1ft-table border-outer">
                     <colgroup>
                         <col class="col-row-title">
@@ -59,95 +59,92 @@
                         </tr>
                     </tbody>
                 </table>
-            </section>
+            </div>
+        </section>
 
-            <!-- 병합된 사용량 및 재고 종합 테이블 -->
-            <section class="f1ft-merged-summary-box">
-                <div class="f1ft-box">
-                    <div class="f1ft-box-header">사용량 및 재고 종합</div>
-                    <table class="f1ft-table border-outer">
-                        <colgroup>
-                            <col style="width: 120px;">
-                            <col style="width: 1fr;">
-                            <col style="width: 1fr;">
-                            <col style="width: 1fr;">
-                            <col style="width: 1fr;">
-                        </colgroup>
-                        <thead class="border-bottom-thick">
-                            <tr>
-                                <th class="f1ft-th">구분</th>
-                                <th class="f1ft-th">실사용량</th>
-                                <th class="f1ft-th">ERP 입력량</th>
-                                <th class="f1ft-th">증감</th>
-                                <th class="f1ft-th">실재고 - ERP</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <th class="f1ft-th row-title">A</th>
-                                <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="real" data-group="A" readonly></td>
-                                <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="erp" data-group="A" inputmode="decimal" readonly></td>
-                                <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="delta" data-group="A" readonly></td>
-                                <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="diff" data-group="A" data-base="0" readonly></td>
-                            </tr>
-                            <tr>
-                                <th class="f1ft-th row-title">C</th>
-                                <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="real" data-group="C" readonly></td>
-                                <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="erp" data-group="C" inputmode="decimal" readonly></td>
-                                <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="delta" data-group="C" readonly></td>
-                                <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="diff" data-group="C" data-base="0" readonly></td>
-                            </tr>
-                            <tr>
-                                <th class="f1ft-th row-title">D</th>
-                                <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="real" data-group="D" readonly></td>
-                                <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="erp" data-group="D" inputmode="decimal" readonly></td>
-                                <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="delta" data-group="D" readonly></td>
-                                <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="diff" data-group="D" data-base="0" readonly></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
+        <!-- 2층: 대조 표 + 지고 재고 표 (좌우 병렬 배치) -->
+        <section class="f1ft-row-2">
+            <!-- 대조 테이블 영역 -->
+            <div class="f1ft-box">
+                <div class="f1ft-box-header">실사용량 및 ERP 사용량 대조</div>
+                <table class="f1ft-table border-outer">
+                    <colgroup>
+                        <col style="width: 60px;">
+                        <col style="width: 1fr;">
+                        <col style="width: 1fr;">
+                        <col style="width: 1fr;">
+                        <col style="width: 1fr;">
+                    </colgroup>
+                    <thead class="border-bottom-thick">
+                        <tr>
+                            <th class="f1ft-th">구분</th>
+                            <th class="f1ft-th">실사용량</th>
+                            <th class="f1ft-th">ERP 입력량</th>
+                            <th class="f1ft-th">증감</th>
+                            <th class="f1ft-th">실재고 - ERP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th class="f1ft-th row-title">A</th>
+                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="real" data-group="A" readonly></td>
+                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="erp" data-group="A" inputmode="decimal" readonly></td>
+                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="delta" data-group="A" readonly></td>
+                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="diff" data-group="A" data-base="0" readonly></td>
+                        </tr>
+                        <tr>
+                            <th class="f1ft-th row-title">C</th>
+                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="real" data-group="C" readonly></td>
+                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="erp" data-group="C" inputmode="decimal" readonly></td>
+                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="delta" data-group="C" readonly></td>
+                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="diff" data-group="C" data-base="0" readonly></td>
+                        </tr>
+                        <tr>
+                            <th class="f1ft-th row-title">D</th>
+                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input" data-field="real" data-group="D" readonly></td>
+                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="erp" data-group="D" inputmode="decimal" readonly></td>
+                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="delta" data-group="D" readonly></td>
+                            <td class="f1ft-td readonly"><input type="text" class="f1ft-input delta-input" data-field="diff" data-group="D" data-base="0" readonly></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-        <!-- 오른쪽 영역 (지고 재고 틀 구성) -->
-        <div class="f1ft-right-container">
-            <section class="f1ft-jigo-box">
-                <div class="f1ft-box">
-                    <div class="f1ft-box-header">지고 재고</div>
-                    <table class="f1ft-table border-outer">
-                        <colgroup>
-                            <col style="width: 80px;">
-                            <col style="width: 1fr;">
-                            <col style="width: 1fr;">
-                        </colgroup>
-                        <thead class="border-bottom-thick">
-                            <tr>
-                                <th class="f1ft-th">구분</th>
-                                <th class="f1ft-th">5층</th>
-                                <th class="f1ft-th">6층</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <th class="f1ft-th row-title">A</th>
-                                <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="jigo" data-floor="5" data-group="A" inputmode="decimal" readonly></td>
-                                <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="jigo" data-floor="6" data-group="A" inputmode="decimal" readonly></td>
-                            </tr>
-                            <tr>
-                                <th class="f1ft-th row-title">C</th>
-                                <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="jigo" data-floor="5" data-group="C" inputmode="decimal" readonly></td>
-                                <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="jigo" data-floor="6" data-group="C" inputmode="decimal" readonly></td>
-                            </tr>
-                            <tr>
-                                <th class="f1ft-th row-title">D</th>
-                                <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="jigo" data-floor="5" data-group="D" inputmode="decimal" readonly></td>
-                                <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="jigo" data-floor="6" data-group="D" inputmode="decimal" readonly></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
+            <!-- 지고 재고 테이블 영역 -->
+            <div class="f1ft-box">
+                <div class="f1ft-box-header">지고 재고</div>
+                <table class="f1ft-table border-outer">
+                    <colgroup>
+                        <col style="width: 60px;">
+                        <col style="width: 1fr;">
+                        <col style="width: 1fr;">
+                    </colgroup>
+                    <thead class="border-bottom-thick">
+                        <tr>
+                            <th class="f1ft-th">구분</th>
+                            <th class="f1ft-th">5층</th>
+                            <th class="f1ft-th">6층</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th class="f1ft-th row-title">A</th>
+                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="jigo" data-floor="5" data-group="A" inputmode="decimal" readonly></td>
+                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="jigo" data-floor="6" data-group="A" inputmode="decimal" readonly></td>
+                        </tr>
+                        <tr>
+                            <th class="f1ft-th row-title">C</th>
+                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="jigo" data-floor="5" data-group="C" inputmode="decimal" readonly></td>
+                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="jigo" data-floor="6" data-group="C" inputmode="decimal" readonly></td>
+                        </tr>
+                        <tr>
+                            <th class="f1ft-th row-title">D</th>
+                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="jigo" data-floor="5" data-group="D" inputmode="decimal" readonly></td>
+                            <td class="f1ft-td editable"><input type="text" class="f1ft-input numeric-input" data-field="jigo" data-floor="6" data-group="D" inputmode="decimal" readonly></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </main>
 </div>
