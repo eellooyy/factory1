@@ -1,25 +1,32 @@
-/* factory1_ft_style.css — 1공장 FT 일지 "전용" 스타일
-   ────────────────────────────────────────────────────────────────
-   헤더(제목/삼선메뉴/드롭다운/날짜네비/버튼) 스타일은 이제
-   factory1_common_style.css 로 이전되어 공통으로 사용됩니다.
-   이 파일에는 FT 페이지의 표/레이아웃 스타일만 남아 있습니다.
-   반드시 factory1_common_style.css 다음에 로드하세요.
-   ──────────────────────────────────────────────────────────────── */
+/* factory1_ft_style.css — 1공장 FT 일지 "전용" 스타일 */
 
-/* 공통 헤더(셸)는 이제 항상 1260px 로 고정이지만, FT 콘텐츠는 기존 디자인 그대로
-   1200px 을 유지하고 싶으므로 여기서 폭을 다시 캡을 씌우고 중앙 정렬합니다.
-   (좌우로 남는 여백은 자동으로 균등하게 생깁니다) */
 .f1ft-wrapper {
     max-width: 1200px;
     margin: 0 auto;
 }
 
+/* 좌측 메인 영역과 우측 지고재고 영역을 나란히 배치하기 위한 그리드 */
 .f1ft-layout {
+    display: grid;
+    grid-template-columns: 858px minmax(0, 1fr); /* 1층 레이아웃 본래 폭 고정 및 남는 공간 할당 */
+    gap: 16px;
+    width: 100%;
+    margin-top: 16px;
+    align-items: start;
+}
+
+.f1ft-left-container {
     display: flex;
     flex-direction: column;
     gap: 16px;
     width: 100%;
-    margin-top: 16px;
+}
+
+.f1ft-right-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
 }
 
 .f1ft-main-table-box {
@@ -32,23 +39,30 @@
     border: 1px solid #e5e5ea;
 }
 
-.f1ft-summary-row {
-    display: grid;
-    grid-template-columns: minmax(210px, 1fr) minmax(210px, 1fr) minmax(170px, 0.72fr) minmax(210px, 1fr);
-    gap: 16px;
+.f1ft-merged-summary-box {
     width: 100%;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e5ea;
 }
 
-.f1ft-side-panel {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+.f1ft-merged-summary-box .f1ft-box {
+    border: none;
+    box-shadow: none;
 }
 
-.f1ft-side-panel-compact .f1ft-box {
-    padding-left: 14px;
-    padding-right: 14px;
+.f1ft-jigo-box {
+    width: 100%;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e5e5ea;
+}
+
+.f1ft-jigo-box .f1ft-box {
+    border: none;
+    box-shadow: none;
 }
 
 .f1ft-box {
@@ -105,10 +119,6 @@
     border: 2px solid #8e8e93 !important;
 }
 
-.border-right-thick {
-    border-right: 2px solid #8e8e93 !important;
-}
-
 .f1ft-main-table-box .f1ft-table tr > *:nth-child(5),
 .f1ft-main-table-box .f1ft-table tr > *:nth-child(7),
 .f1ft-main-table-box .f1ft-table tr > *:nth-child(9) {
@@ -139,36 +149,6 @@
 
 .col-memo {
     width: 140px;
-}
-
-.side-col-label {
-    width: 30%;
-}
-
-.side-col-value {
-    width: 70%;
-}
-
-.mini-table .row-title {
-    width: 30%;
-}
-
-.mini-table td {
-    width: 70%;
-}
-
-.mini-table {
-    flex: 1 1 auto;
-    min-height: 0;
-    height: 100%;
-}
-
-.mini-table tbody {
-    height: 100%;
-}
-
-.mini-table tbody tr {
-    height: 33.333%;
 }
 
 .f1ft-td.readonly {
@@ -222,41 +202,23 @@
     color: #c62828;
 }
 
-.mini-table th {
-    font-size: 12px;
-    height: 30px;
-}
-
-.mini-table td {
-    height: 34px;
-}
-
-@media (max-width: 980px) {
-    .f1ft-summary-row {
-        grid-template-columns: repeat(2, minmax(220px, 1fr));
+@media (max-width: 1100px) {
+    .f1ft-layout {
+        grid-template-columns: 1fr; /* 화면이 좁아지면 위아래로 적층 */
     }
 }
 
 @media (max-width: 760px) {
-    .f1ft-summary-row {
-        grid-template-columns: 1fr;
-    }
-
-    /* 표의 실제 폭(약 826px)이 모바일 화면보다 넓으므로, 페이지 전체가
-       옆으로 밀리는 대신 표 영역 안에서만 가로 스크롤 되도록 합니다. */
-    .f1ft-main-table-box {
+    .f1ft-main-table-box, .f1ft-merged-summary-box {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         padding: 12px;
     }
 
-    .f1ft-main-table-box .f1ft-table {
+    .f1ft-main-table-box .f1ft-table, .f1ft-merged-summary-box .f1ft-table {
         min-width: 780px;
     }
 
-    /* iOS Safari 는 폰트 크기가 16px 미만인 입력창에 포커스가 가면
-       화면을 자동으로 확대해버려 표가 틀어져 보이는 문제가 있었습니다.
-       모바일에서는 입력창 글자 크기를 16px 이상으로 올려 확대를 막습니다. */
     .f1ft-input {
         font-size: 16px;
     }
