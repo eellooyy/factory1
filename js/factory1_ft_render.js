@@ -48,7 +48,7 @@
         if (!App.elements.wrapper) return;
         App.elements.wrapper.classList.toggle('edit-mode', !isReadOnly);
         App.elements.wrapper
-            .querySelectorAll('.f1ft-input[data-field="start"], .f1ft-input[data-field="end"], .f1ft-input[data-field="memo"], .f1ft-input[data-field="erp"]')
+            .querySelectorAll('.f1ft-input[data-field="start"], .f1ft-input[data-field="end"], .f1ft-input[data-field="memo"], .f1ft-input[data-field="erp"], .f1ft-input[data-field="jigo"]')
             .forEach(input => { input.readOnly = isReadOnly; });
     };
 
@@ -137,15 +137,27 @@
     App.bindInputFormatters = function () {
         if (!App.elements.wrapper) return;
         App.elements.wrapper.querySelectorAll('.numeric-input').forEach(input => {
+            const isJigo = input.dataset.field === 'jigo';
+
             input.addEventListener('focus', function () {
                 if (this.readOnly) return;
-                this.value = this.value.replace(/,/g, '');
+                if (isJigo) {
+                    // 'R/L' 표시 접미사를 떼어내고 순수 숫자만 남겨 편집하기 쉽게 함
+                    if (this.value.trim() !== '') {
+                        this.value = String(App.utils.parseJigoNum(this.value));
+                    }
+                } else {
+                    this.value = this.value.replace(/,/g, '');
+                }
                 this.select();
             });
             input.addEventListener('input', App.calculateFields);
             input.addEventListener('blur', function () {
                 if (this.value.trim() === '') {
                     this.value = '';
+                } else if (isJigo) {
+                    const value = App.utils.parseJigoNum(this.value);
+                    this.value = `${App.utils.formatNum(value)} R/L`;
                 } else {
                     const value = App.utils.parseNum(this.value);
                     this.value = App.utils.formatNum(value);

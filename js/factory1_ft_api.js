@@ -16,6 +16,13 @@
         return wrapper.querySelector(`.f1ft-input[data-field="${field}"][data-${attr}="${key}"]`);
     }
 
+    // ── 헬퍼: 지고 재고 input 요소 조회 (층 + 품목 기준) ─────────────────────
+    function getJigoInput(floor, group) {
+        const wrapper = App.elements.wrapper;
+        if (!wrapper) return null;
+        return wrapper.querySelector(`.f1ft-input[data-field="jigo"][data-floor="${floor}"][data-group="${group}"]`);
+    }
+
     // ── 데이터 불러오기 ───────────────────────────────────────────────────────
     App.loadData = async function (dateStr) {
         // 편집 모드 해제
@@ -84,6 +91,21 @@
             ? App.elements.wrapper.querySelector('.f1ft-input[data-field="memo"]')
             : null;
         if (memoInput && todayData.memo) memoInput.value = todayData.memo;
+
+        // 지고 재고 (날짜와 무관하게 항상 현재 스냅샷을 그대로 표시)
+        const { data: jigoRows, error: jigoLoadError } = await supabase
+            .from(App.JIGO_TABLE)
+            .select('location, item_name, stock_qty');
+
+        if (jigoLoadError) {
+            console.error('[factory1_ft] 지고 재고 조회 실패:', jigoLoadError.message);
+        } else {
+            (jigoRows || []).forEach(row => {
+                const floor = row.location ? String(row.location).replace(/F$/i, '') : '';
+                const input = getJigoInput(floor, row.item_name);
+                if (input) input.value = `${App.utils.formatNum(row.stock_qty) || '0'} R/L`;
+            });
+        }
 
         App.calculateFields();
         if (editBtn) editBtn.disabled = false;
@@ -160,14 +182,39 @@
             }
         };
 
-        const { error } = await supabase
-            .from(App.TABLE)
-            .upsert(payload, { onConflict: 'log_date' });
+        // 5. 지고 재고 payload 구성 (location + item_name 기준, 날짜와 무관하게 항상 덮어씀)
+        //    stock_weight = 입력한 롤 수 × 품목별 롤당 무게(A:1337, C:1003, D:669)
+        const jigoPayload = [];
+        App.GROUPS.forEach(group => {
+            ['5', '6'].forEach(floor => {
+                const input = getJigoInput(floor, group);
+                if (!input || input.value.trim() === '') return;
+                const qty = App.utils.parseJigoNum(input.value);
+                jigoPayload.push({
+                    location: `${floor}F`,
+                    item_name: group,
+                    stock_qty: qty,
+                    stock_weight: qty * (App.JIGO_WEIGHT_MULTIPLIER[group] || 0)
+                });
+            });
+        });
+
+        const [{ error }, jigoResult] = await Promise.all([
+            supabase.from(App.TABLE).upsert(payload, { onConflict: 'log_date' }),
+            jigoPayload.length > 0
+                ? supabase.from(App.JIGO_TABLE).upsert(jigoPayload, { onConflict: 'location,item_name' })
+                : Promise.resolve({ error: null })
+        ]);
 
         if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '저장'; }
 
         if (error) {
             alert('저장에 실패했습니다: ' + error.message);
+            return;
+        }
+
+        if (jigoResult && jigoResult.error) {
+            alert('지고 재고 저장에 실패했습니다: ' + jigoResult.error.message);
             return;
         }
 

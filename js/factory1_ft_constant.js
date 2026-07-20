@@ -14,6 +14,12 @@
     // DB 테이블명
     App.TABLE = 'factory1_ft_real';
 
+    // 지고 재고 테이블명 (날짜와 무관하게 항상 현재값을 덮어쓰는 스냅샷 테이블)
+    App.JIGO_TABLE = 'factory1_ft_jigo';
+
+    // 지고 재고 품목별 롤당 무게(kg) — stock_weight 자동 계산용
+    App.JIGO_WEIGHT_MULTIPLIER = { A: 1337, C: 1003, D: 669 };
+
     // 컬럼 목록 (그룹 매핑 포함)
     App.COLUMNS = ['A1', 'A2', 'A3', 'A4', 'C1', 'C2', 'D1', 'D2'];
     App.GROUP_KEYS = { A: ['A1', 'A2', 'A3', 'A4'], C: ['C1', 'C2'], D: ['D1', 'D2'] };
@@ -48,6 +54,13 @@
             return Number.isInteger(num)
                 ? num.toLocaleString()
                 : num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+        },
+        // '1 R/L', '1,234 R/L' 등 지고 재고 표시 형식에서 숫자만 추출
+        parseJigoNum(value) {
+            if (value === undefined || value === null || value === '') return 0;
+            const cleaned = String(value).replace(/R\/L/gi, '').replace(/,/g, '').trim();
+            const parsed = Number(cleaned);
+            return isNaN(parsed) ? 0 : parsed;
         },
         formatSignedNum(value) {
             if (!value) return '';
