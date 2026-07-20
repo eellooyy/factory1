@@ -1,4 +1,4 @@
-/* factory1_ft_api.js — 1공장 FT Supabase DB 연동1 (load / save) */
+/* factory1_ft_api.js — 1공장 FT Supabase DB 연동 (load / save) */
 (function () {
     'use strict';
 
@@ -92,10 +92,11 @@
             : null;
         if (memoInput && todayData.memo) memoInput.value = todayData.memo;
 
-        // 지고 재고 (날짜와 무관하게 항상 현재 스냅샷을 그대로 표시)
+        // 지고 재고 (날짜별로 저장되는 스냅샷 — 해당 날짜의 값만 조회)
         const { data: jigoRows, error: jigoLoadError } = await supabase
             .from(App.JIGO_TABLE)
-            .select('location, item_name, stock_qty');
+            .select('location, item_name, stock_qty')
+            .eq('date', dateStr);
 
         if (jigoLoadError) {
             console.error('[factory1_ft] 지고 재고 조회 실패:', jigoLoadError.message);
@@ -182,7 +183,7 @@
             }
         };
 
-        // 5. 지고 재고 payload 구성 (location + item_name 기준, 날짜와 무관하게 항상 덮어씀)
+        // 5. 지고 재고 payload 구성 (location + item_name + date 기준, 해당 날짜의 데이터를 덮어씀)
         //    stock_weight = 입력한 롤 수 × 품목별 롤당 무게(A:1337, C:1003, D:669)
         const jigoPayload = [];
         App.GROUPS.forEach(group => {
@@ -193,6 +194,7 @@
                 jigoPayload.push({
                     location: `${floor}F`,
                     item_name: group,
+                    date: App.state.currentDate,
                     stock_qty: qty,
                     stock_weight: qty * (App.JIGO_WEIGHT_MULTIPLIER[group] || 0)
                 });
@@ -202,7 +204,7 @@
         const [{ error }, jigoResult] = await Promise.all([
             supabase.from(App.TABLE).upsert(payload, { onConflict: 'log_date' }),
             jigoPayload.length > 0
-                ? supabase.from(App.JIGO_TABLE).upsert(jigoPayload, { onConflict: 'location,item_name' })
+                ? supabase.from(App.JIGO_TABLE).upsert(jigoPayload, { onConflict: 'location,item_name,date' })
                 : Promise.resolve({ error: null })
         ]);
 
