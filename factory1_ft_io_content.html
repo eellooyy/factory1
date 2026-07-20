@@ -1,165 +1,152 @@
 <div class="f1ftio-wrapper" data-page-module="Factory1FtIoModule">
-    <div class="f1ftio-dashboard-grid">
-        <!-- 1. 좌측 영역: FT 실재고 및 ERP 대조 (4단 비교표) -->
-        <div class="f1ftio-panel f1ftio-main-panel">
-            <div class="comp-panels-outer">
-                <!-- 패널 1: 출고 -->
-                <div class="comp-panel">
-                    <div class="comp-scroll-area" id="compScrollPanel1">
-                        <div id="compCursor1" class="comp-cursor"></div>
-                        <table class="comp-table-split">
-                            <thead>
-                                <tr class="comp-thead-lv1">
-                                    <th class="comp-date-th" rowspan="2">날짜</th>
-                                    <th colspan="3" class="comp-group-th">출고</th>
-                                </tr>
-                                <tr class="comp-thead-lv2">
-                                    <th class="comp-leaf-th" data-col="1">A</th>
-                                    <th class="comp-leaf-th" data-col="2">C</th>
-                                    <th class="comp-leaf-th" data-col="3">D</th>
-                                </tr>
-                            </thead>
-                            <tbody id="compBody1"></tbody>
-                        </table>
-                    </div>
+    <!-- 1층: FT 실재고 및 ERP 대조 (4단 비교표) -->
+    <div class="f1ftio-panel f1ftio-main-panel mb-4">
+        <div class="comp-panels-outer">
+            <!-- 패널 1: 출고 -->
+            <div class="comp-panel">
+                <div class="comp-scroll-area" id="compScrollPanel1">
+                    <div id="compCursor1" class="comp-cursor"></div>
+                    <table class="comp-table-split">
+                        <thead>
+                            <tr class="comp-thead-lv1">
+                                <th class="comp-date-th" rowspan="2">날짜</th>
+                                <th colspan="3" class="comp-group-th">출고</th>
+                            </tr>
+                            <tr class="comp-thead-lv2">
+                                <th class="comp-leaf-th" data-col="1">A</th>
+                                <th class="comp-leaf-th" data-col="2">C</th>
+                                <th class="comp-leaf-th" data-col="3">D</th>
+                            </tr>
+                        </thead>
+                        <tbody id="compBody1"></tbody>
+                    </table>
                 </div>
+            </div>
 
-                <!-- 패널 2: ERP 재고 -->
-                <div class="comp-panel">
-                    <div class="comp-scroll-area" id="compScrollPanel2">
-                        <div id="compCursor2" class="comp-cursor"></div>
-                        <table class="comp-table-split comp-no-date">
-                            <thead>
-                                <tr class="comp-thead-lv1">
-                                    <th colspan="3" class="comp-group-th">ERP 재고</th>
-                                </tr>
-                                <tr class="comp-thead-lv2">
-                                    <th class="comp-leaf-th" data-col="1">A</th>
-                                    <th class="comp-leaf-th" data-col="2">C</th>
-                                    <th class="comp-leaf-th" data-col="3">D</th>
-                                </tr>
-                            </thead>
-                            <tbody id="compBody2"></tbody>
-                        </table>
-                    </div>
+            <!-- 패널 2: ERP 재고 -->
+            <div class="comp-panel">
+                <div class="comp-scroll-area" id="compScrollPanel2">
+                    <div id="compCursor2" class="comp-cursor"></div>
+                    <table class="comp-table-split comp-no-date">
+                        <thead>
+                            <tr class="comp-thead-lv1">
+                                <th colspan="3" class="comp-group-th">ERP 재고</th>
+                            </tr>
+                            <tr class="comp-thead-lv2">
+                                <th class="comp-leaf-th" data-col="1">A</th>
+                                <th class="comp-leaf-th" data-col="2">C</th>
+                                <th class="comp-leaf-th" data-col="3">D</th>
+                            </tr>
+                        </thead>
+                        <tbody id="compBody2"></tbody>
+                    </table>
                 </div>
+            </div>
 
-                <!-- 패널 3: 실재고 -->
-                <div class="comp-panel">
-                    <div class="comp-scroll-area" id="compScrollPanel3">
-                        <div id="compCursor3" class="comp-cursor"></div>
-                        <table class="comp-table-split comp-no-date">
-                            <thead>
-                                <tr class="comp-thead-lv1">
-                                    <th colspan="3" class="comp-group-th">실재고</th>
-                                </tr>
-                                <tr class="comp-thead-lv2">
-                                    <th class="comp-leaf-th" data-col="1">A</th>
-                                    <th class="comp-leaf-th" data-col="2">C</th>
-                                    <th class="comp-leaf-th" data-col="3">D</th>
-                                </tr>
-                            </thead>
-                            <tbody id="compBody3"></tbody>
-                        </table>
-                    </div>
+            <!-- 패널 3: 실재고 -->
+            <div class="comp-panel">
+                <div class="comp-scroll-area" id="compScrollPanel3">
+                    <div id="compCursor3" class="comp-cursor"></div>
+                    <table class="comp-table-split comp-no-date">
+                        <thead>
+                            <tr class="comp-thead-lv1">
+                                <th colspan="3" class="comp-group-th">실재고</th>
+                            </tr>
+                            <tr class="comp-thead-lv2">
+                                <th class="comp-leaf-th" data-col="1">A</th>
+                                <th class="comp-leaf-th" data-col="2">C</th>
+                                <th class="comp-leaf-th" data-col="3">D</th>
+                            </tr>
+                        </thead>
+                        <tbody id="compBody3"></tbody>
+                    </table>
                 </div>
+            </div>
 
-                <!-- 패널 4: 실재고 - ERP -->
-                <div class="comp-panel">
-                    <div class="comp-scroll-area" id="compScrollPanel4">
-                        <div id="compCursor4" class="comp-cursor"></div>
-                        <table class="comp-table-split comp-no-date">
-                            <thead>
-                                <tr class="comp-thead-lv1">
-                                    <th colspan="3" class="comp-group-th">실재고-ERP</th>
-                                </tr>
-                                <tr class="comp-thead-lv2">
-                                    <th class="comp-leaf-th" data-col="1">A</th>
-                                    <th class="comp-leaf-th" data-col="2">C</th>
-                                    <th class="comp-leaf-th" data-col="3">D</th>
-                                </tr>
-                            </thead>
-                            <tbody id="compBody4"></tbody>
-                        </table>
-                    </div>
+            <!-- 패널 4: 실재고 - ERP -->
+            <div class="comp-panel">
+                <div class="comp-scroll-area" id="compScrollPanel4">
+                    <div id="compCursor4" class="comp-cursor"></div>
+                    <table class="comp-table-split comp-no-date">
+                        <thead>
+                            <tr class="comp-thead-lv1">
+                                <th colspan="3" class="comp-group-th">실재고-ERP</th>
+                            </tr>
+                            <tr class="comp-thead-lv2">
+                                <th class="comp-leaf-th" data-col="1">A</th>
+                                <th class="comp-leaf-th" data-col="2">C</th>
+                                <th class="comp-leaf-th" data-col="3">D</th>
+                            </tr>
+                        </thead>
+                        <tbody id="compBody4"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- 2. 우측 영역: 서브 카드 2단 적층 -->
-        <div class="f1ftio-side-wrapper">
-            <!-- 2-1층: 입고 현황 카드 (연도별 목록) -->
-            <div class="f1ftio-panel side-card mb-4">
-                <div class="panel-header mb-3 d-flex justify-content-between align-items-center">
-                    <span class="panel-title">입고 현황</span>
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="unit-switcher shadow-sm" id="unitToggle">
-                            <div class="selection-bg mode-roll" id="switcherBg"></div>
-                            <button class="unit-btn active" id="btnRoll" data-unit="RL" type="button"> R/L </button>
-                            <button class="unit-btn" id="btnKg" data-unit="KG" type="button"> Kg </button>
-                        </div>
-                        <div class="d-flex align-items-center gap-1">
-                            <button class="btn-nav-mini" id="in-prev" type="button"><span class="material-symbols-outlined">chevron_left</span></button>
-                            <span class="fw-bold text-dark" id="in-year-txt" style="font-size: 13px; min-width: 45px; text-align: center;"></span>
-                            <button class="btn-nav-mini" id="in-next" type="button"><span class="material-symbols-outlined">chevron_right</span></button>
-                        </div>
+    <!-- 2층: 하단 서브 카드 좌우 배치 (좌: 입고 현황 / 우: 월별 출고 현황) -->
+    <div class="f1ftio-bottom-grid">
+        <!-- 2-1: 입고 현황 카드 -->
+        <div class="f1ftio-panel side-card">
+            <div class="panel-header mb-3 d-flex justify-content-between align-items-center">
+                <span class="panel-title">입고 현황</span>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="unit-switcher shadow-sm" id="unitToggle">
+                        <div class="selection-bg mode-roll" id="switcherBg"></div>
+                        <button class="unit-btn active" id="btnRoll" data-unit="RL" type="button"> R/L </button>
+                        <button class="unit-btn" id="btnKg" data-unit="KG" type="button"> Kg </button>
                     </div>
-                </div>
-
-                <div class="table-scroll-wrapper" style="max-height: 190px; min-height: 190px; overflow-y: auto;">
-                    <table class="custom-compact-table text-center m-0">
-                        <thead>
-                            <tr>
-                                <th style="width: 34%; text-align: center;">일자</th>
-                                <th style="width: 22%; text-align: center;">A</th>
-                                <th style="width: 22%; text-align: center;">C</th>
-                                <th style="width: 22%; text-align: center;">D</th>
-                            </tr>
-                        </thead>
-                        <tbody id="in-body">
-                            <tr><td colspan="4" class="py-4 text-center text-muted small">불러오는 중...</td></tr>
-                        </tbody>
-                    </table>
+                    <div class="d-flex align-items-center gap-1">
+                        <button class="btn-nav-mini" id="in-prev" type="button"><span class="material-symbols-outlined">chevron_left</span></button>
+                        <span class="fw-bold text-dark" id="in-year-txt" style="font-size: 13px; min-width: 45px; text-align: center;"></span>
+                        <button class="btn-nav-mini" id="in-next" type="button"><span class="material-symbols-outlined">chevron_right</span></button>
+                    </div>
                 </div>
             </div>
 
-            <!-- 2-2층: 월별 출고 현황 카드 (연도별 월합계 스크롤 목록) -->
-            <div class="f1ftio-panel side-card">
-                <div class="panel-header mb-3 d-flex justify-content-between align-items-center">
-                    <span class="panel-title">월별 출고 현황</span>
-                    <div class="d-flex align-items-center gap-1">
-                        <button class="btn-nav-mini" id="out-prev" type="button"><span class="material-symbols-outlined">chevron_left</span></button>
-                        <span class="fw-semibold text-dark" id="out-date-txt" style="font-size: 13px;"></span>
-                        <button class="btn-nav-mini" id="out-next" type="button"><span class="material-symbols-outlined">chevron_right</span></button>
-                    </div>
-                </div>
+            <div class="table-scroll-wrapper" style="max-height: 210px; min-height: 210px; overflow-y: auto;">
+                <table class="custom-compact-table text-center m-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 34%; text-align: center;">일자</th>
+                            <th style="width: 22%; text-align: center;">A</th>
+                            <th style="width: 22%; text-align: center;">C</th>
+                            <th style="width: 22%; text-align: center;">D</th>
+                        </tr>
+                    </thead>
+                    <tbody id="in-body">
+                        <tr><td colspan="4" class="py-4 text-center text-muted small">불러오는 중...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-                <div class="table-scroll-wrapper" style="max-height: 190px; min-height: 190px; overflow-y: auto;">
-                    <table class="custom-compact-table text-center m-0">
-                        <thead>
-                            <tr>
-                                <th style="width: 34%; text-align: center;">월</th>
-                                <th style="width: 22%; text-align: center;">A</th>
-                                <th style="width: 22%; text-align: center;">C</th>
-                                <th style="width: 22%; text-align: center;">D</th>
-                            </tr>
-                        </thead>
-                        <tbody id="out-body">
-                            <tr><td colspan="4" class="py-4 text-center text-muted small">불러오는 중...</td></tr>
-                        </tbody>
-                    </table>
+        <!-- 2-2: 월별 출고 현황 카드 -->
+        <div class="f1ftio-panel side-card">
+            <div class="panel-header mb-3 d-flex justify-content-between align-items-center">
+                <span class="panel-title">월별 출고 현황</span>
+                <div class="d-flex align-items-center gap-1">
+                    <button class="btn-nav-mini" id="out-prev" type="button"><span class="material-symbols-outlined">chevron_left</span></button>
+                    <span class="fw-semibold text-dark" id="out-date-txt" style="font-size: 13px;"></span>
+                    <button class="btn-nav-mini" id="out-next" type="button"><span class="material-symbols-outlined">chevron_right</span></button>
                 </div>
+            </div>
 
-                <!-- 연 합계 -->
-                <div class="f1ftio-total-row mt-3 p-3 d-flex justify-content-between align-items-center">
-                    <span class="fw-bold text-dark">합계</span>
-                    <div class="f1ftio-total-values">
-                        <span class="f1ftio-total-item">A <b id="out-total-a">0</b></span>
-                        <span class="f1ftio-total-item">C <b id="out-total-c">0</b></span>
-                        <span class="f1ftio-total-item">D <b id="out-total-d">0</b></span>
-                        <span class="f1ftio-total-item f1ftio-total-all">총 <b id="out-total-all">0</b> kg</span>
-                    </div>
-                </div>
+            <div class="table-scroll-wrapper" style="max-height: 210px; min-height: 210px; overflow-y: auto;">
+                <table class="custom-compact-table text-center m-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 34%; text-align: center;"></th>
+                            <th style="width: 22%; text-align: center;">A</th>
+                            <th style="width: 22%; text-align: center;">C</th>
+                            <th style="width: 22%; text-align: center;">D</th>
+                        </tr>
+                    </thead>
+                    <tbody id="out-body">
+                        <tr><td colspan="4" class="py-4 text-center text-muted small">불러오는 중...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

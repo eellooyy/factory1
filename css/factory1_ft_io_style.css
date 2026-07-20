@@ -1,50 +1,37 @@
-/* factory1_ft_io_style.css
-   ────────────────────────────────────────────────────────────────
-   1공장 FT 재고 종합 페이지 전용 스타일.
-   제목/날짜 네비게이션은 공통 헤더(factory1_common_style.css)를
-   그대로 사용하므로, 이 파일에는 본문(좌측 4단 대조표 + 우측 2단
-   적층 카드) 관련 스타일만 둡니다.
-   반드시 factory1_common_style.css 보다 나중에 로드하세요.
-   ──────────────────────────────────────────────────────────────── */
+/* factory1_ft_io_style.css */
 
 .f1ftio-wrapper {
     margin-top: 16px;
 }
 
-/* 대시보드 좌우 분할 그리드 (좌측 1개 + 우측 2단 적층, 70:30 비중) */
-.f1ftio-dashboard-grid {
+/* 1층: 메인 대조표 영역 (전체 폭 사용) */
+.f1ftio-main-panel.f1ftio-panel {
+    width: 100%;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    border: none;
+}
+
+/* 2층: 하단 2단 카드 좌우 배치 그리드 */
+.f1ftio-bottom-grid {
     display: flex;
     gap: 20px;
-    align-items: flex-start;
+    align-items: stretch;
 }
 
-.f1ftio-main-panel {
-    flex: 70;
-    min-height: 480px;
-    display: flex;
-    flex-direction: column;
-}
-
-.f1ftio-side-wrapper {
-    flex: 30;
-    display: flex;
-    flex-direction: column;
+.f1ftio-bottom-grid .side-card {
+    flex: 1;
+    min-width: 0;
 }
 
 /* 카드 공통 스타일 */
 .f1ftio-panel {
     background: #ffffff;
     border-radius: 20px;
-    padding: 24px;
+    padding: 20px 24px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
     border: 1px solid #e5e5ea;
-}
-
-.f1ftio-main-panel.f1ftio-panel {
-    padding: 0;
-    background: transparent;
-    box-shadow: none;
-    border: none;
 }
 
 .panel-header {
@@ -52,7 +39,7 @@
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #f5f5f7;
-    padding-bottom: 14px;
+    padding-bottom: 12px;
 }
 
 .panel-title {
@@ -83,7 +70,7 @@
 .py-4 { padding-top: 16px; padding-bottom: 16px; }
 .m-0 { margin: 0; }
 
-/* 미니 네비게이션 버튼 (배경 없는 아이콘형) */
+/* 미니 네비게이션 버튼 */
 .btn-nav-mini {
     background: transparent;
     border: none;
@@ -139,36 +126,7 @@
 }
 .unit-btn.active { color: #ffffff !important; }
 
-/* 합계 표시줄 (월별 출고 카드 하단) */
-.f1ftio-total-row {
-    background: #f5f5f7;
-    border-radius: 12px;
-    border: none;
-}
-.f1ftio-total-values {
-    display: flex;
-    gap: 14px;
-    align-items: baseline;
-}
-.f1ftio-total-item {
-    font-size: 13px;
-    color: #636366;
-}
-.f1ftio-total-item b {
-    color: #1d1d1f;
-    font-weight: 700;
-    margin-left: 2px;
-}
-.f1ftio-total-all {
-    font-size: 14px;
-    color: #1d1d1f;
-}
-.f1ftio-total-all b {
-    color: #007aff;
-    font-size: 15px;
-}
-
-/* 테이블 실선 최소화 (입고/월별출고 공통) */
+/* 테이블 실선 최소화 */
 .custom-compact-table {
     width: 100%;
     border-collapse: collapse;
@@ -177,7 +135,7 @@
 .custom-compact-table th, .custom-compact-table td {
     border: none !important;
     border-bottom: 1px solid #f2f2f7 !important;
-    padding: 10px 4px !important;
+    padding: 9px 4px !important;
 }
 .custom-compact-table thead th {
     position: sticky;
@@ -188,7 +146,7 @@
     font-weight: 600 !important;
 }
 
-/* 스크롤바 완전 숨김 (스크롤은 유지) */
+/* 스크롤바 숨김 */
 .table-scroll-wrapper {
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -196,7 +154,7 @@
 .table-scroll-wrapper::-webkit-scrollbar { display: none; }
 
 /* ========================================
-   좌측 4단 대조 테이블 (comp-)
+   1층 4단 대조 테이블 (comp-)
    ======================================== */
 .comp-panels-outer {
     display: flex;
@@ -218,7 +176,6 @@
     flex: 1;
 }
 
-/* 출고(패널1): 날짜 포함 + 충분한 폭 확보 / ERP재고·실재고 동일 폭 / 실재고-ERP는 약간 좁게 */
 .comp-panel:nth-child(1) { flex: 1.5; }
 .comp-panel:nth-child(2) { flex: 1.4; }
 .comp-panel:nth-child(3) { flex: 1.4; }
@@ -226,9 +183,8 @@
 
 .comp-scroll-area {
     position: relative;
-    /* 헤더(2단, 약 63px) + 데이터 행 12줄(줄당 약 35px) ≈ 480px
-       줄 수를 늘리거나 줄이고 싶으면 이 값만 ±35px 단위로 조정하면 됩니다. */
-    height: 480px;
+    /* 6~7일 분량에 맞게 상하 폭 축소 (약 290px) */
+    height: 290px;
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: none;
@@ -236,13 +192,14 @@
 }
 .comp-scroll-area::-webkit-scrollbar { display: none; }
 
+/* 커서 z-index 조정 (sticky thead 보다 아래인 5) */
 .comp-cursor {
     position: absolute;
     pointer-events: none;
     background: rgba(255, 255, 255, 0.35);
     box-shadow: 0 4px 14px rgba(0,0,0,0.10), inset 0 0 8px rgba(255,255,255,0.5);
     border-radius: 6px;
-    z-index: 8;
+    z-index: 5;
     opacity: 0;
     transition:
         top 0.12s cubic-bezier(0.23, 1, 0.32, 1),
@@ -259,14 +216,20 @@
     border-spacing: 0;
     table-layout: fixed;
 }
+
+/* sticky thead z-index 상향 (30)으로 스크롤 시 커서/셀이 헤더 위로 튀어나오는 문제 해결 */
 .comp-table-split thead {
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 30 !important;
     background: #fff;
 }
+
+/* 4개 패널 thead 높이 엄격 고정으로 행 배경색 높이 엇갈림 해결 */
 .comp-thead-lv1 th {
-    padding: 10px 4px 6px;
+    height: 30px;
+    padding: 6px 4px;
+    box-sizing: border-box;
     font-size: 13px;
     font-weight: 800;
     color: #1d1d1f;
@@ -284,7 +247,9 @@
     letter-spacing: -0.2px;
 }
 .comp-thead-lv2 th {
-    padding: 7px 4px 8px;
+    height: 28px;
+    padding: 5px 4px;
+    box-sizing: border-box;
     font-size: 12px;
     font-weight: 700;
     color: #636366;
@@ -294,19 +259,20 @@
     white-space: nowrap;
 }
 .comp-table-split td {
-    padding: 9px 5px;
+    padding: 8px 5px;
     font-size: 13px;
     font-weight: 600;
     text-align: center;
     border-bottom: 1px solid #f2f2f7;
     color: #1d1d1f;
     transition: background 0.12s;
+    box-sizing: border-box;
 }
 .comp-date-th {
     position: sticky;
     left: 0;
     background: #fff !important;
-    z-index: 11;
+    z-index: 35 !important;
     text-align: center;
     min-width: 80px;
     width: 80px;
@@ -331,7 +297,7 @@
     width: 80px;
 }
 
-/* 오늘/선택 행 */
+/* 오늘/선택 행 강조 */
 .comp-row-today td { background: #e8f4fd !important; }
 .comp-row-today .comp-date-td { background: #bbdefb !important; }
 .comp-selected-row td { background: #f4f4f8 !important; }
@@ -350,7 +316,7 @@
 
 .comp-selected-cell {
     position: relative;
-    z-index: 10;
+    z-index: 6;
     font-weight: 900 !important;
     color: #000 !important;
 }
@@ -372,15 +338,8 @@
     text-align: center;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 900px) {
     .comp-panels-outer { flex-direction: column; }
     .comp-panel { flex: none !important; width: 100%; }
-}
-
-@media (max-width: 1024px) {
-    .f1ftio-dashboard-grid { flex-direction: column; }
-    .f1ftio-main-panel, .f1ftio-side-wrapper {
-        width: 100%;
-        flex: none;
-    }
+    .f1ftio-bottom-grid { flex-direction: column; }
 }

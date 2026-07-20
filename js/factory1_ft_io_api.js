@@ -1,12 +1,4 @@
-/* factory1_ft_io_api.js — 1공장 FT 재고 종합 데이터 연동
-   ────────────────────────────────────────────────────────────────
-   ⚠ 현재는 DB(Supabase) 연동 전 단계로, 레이아웃/동작 확인을 위한
-   임시 mock 데이터를 반환합니다. 추후 DB 연결 시 아래 3개 함수
-   (fetchComparisonData / fetchInboundList / fetchUsageMonthly) 의
-   "TODO" 표시된 내부 로직만 실제 Supabase 쿼리 / fetch 호출로
-   교체하면 되고, 반환하는 데이터 형식(각 함수 하단 주석 참고)은
-   그대로 유지해주세요. render.js 쪽 코드는 수정할 필요가 없습니다.
-   ──────────────────────────────────────────────────────────────── */
+/* factory1_ft_io_api.js — 1공장 FT 재고 종합 데이터 연동 */
 (function () {
     'use strict';
 
@@ -31,12 +23,12 @@
         return App.WD_KR[d.getDay()];
     }
 
-    // 날짜 문자열 기반의 결정론적 의사 난수 (매번 같은 날짜는 같은 값을 반환 → 스크롤/네비게이션 시 값이 안 바뀜)
     function hashSeed(str) {
         let h = 0;
         for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
         return h;
     }
+
     function seededVal(seed, min, max) {
         const x = Math.sin(seed) * 10000;
         const frac = x - Math.floor(x);
@@ -44,15 +36,10 @@
     }
 
     /* ─────────────────────────────────────────────
-       좌측 4단 대조표 데이터
-       TODO: Supabase에서 baseDateStr 기준 앞뒤 날짜 범위의
-             출고/ERP재고/실재고 데이터를 조회하도록 교체
-       반환 형식: { status: 'success', dates: [
-           { date: 'YYYY-MM-DD', weekday: '월', usage:[A,C,D], erp:[A,C,D], real:[A,C,D], diff:[A,C,D] }, ...
-       ] }
+       1층 4단 대조표 데이터
     ───────────────────────────────────────────── */
     App.fetchComparisonData = async function (baseDateStr, direction) {
-        const RANGE = 15; // 기준일 앞뒤로 15일씩 mock 생성
+        const RANGE = 15;
         const dates = [];
         for (let i = -RANGE; i <= RANGE; i++) {
             const dateStr = addDays(baseDateStr, i);
@@ -69,11 +56,7 @@
     };
 
     /* ─────────────────────────────────────────────
-       우측 상단: 입고 현황 (연도별 목록)
-       TODO: Supabase에서 해당 연도의 입고 이벤트 목록 조회로 교체
-       반환 형식: [
-           { date_display: '2026.03.15', A_rl, A_kg, C_rl, C_kg, D_rl, D_kg }, ...
-       ]
+       하단 좌측: 입고 현황 (날짜 형식: MM/DD (요일))
     ───────────────────────────────────────────── */
     App.fetchInboundList = async function (year) {
         const today = new Date();
@@ -81,13 +64,21 @@
         const rows = [];
 
         for (let m = 1; m <= monthLimit; m++) {
-            const dateStr = `${year}-${pad(m)}-15`;
+            const dayNum = 15;
+            const dateStr = `${year}-${pad(m)}-${pad(dayNum)}`;
+            const d = new Date(dateStr + 'T00:00:00');
+            const dayName = App.WD_KR[d.getDay()];
+            
+            // requested format: 07/25 (토)
+            const dateDisplay = `${pad(m)}/${pad(dayNum)} (${dayName})`;
+
             const seedBase = hashSeed(dateStr + '-in');
             const aRl = seededVal(seedBase, 0, 20);
             const cRl = seededVal(seedBase + 1, 0, 15);
             const dRl = seededVal(seedBase + 2, 0, 10);
+
             rows.push({
-                date_display: `${year}.${pad(m)}.15`,
+                date_display: dateDisplay,
                 A_rl: aRl, A_kg: aRl * 25,
                 C_rl: cRl, C_kg: cRl * 25,
                 D_rl: dRl, D_kg: dRl * 25
@@ -97,36 +88,25 @@
     };
 
     /* ─────────────────────────────────────────────
-       우측 하단: 월별 출고 현황 (해당 연도의 "월별 합계" 목록 + 연 합계)
-       ※ 일자별 목록이 아니라 월별로 묶은 합계 목록을 스크롤로 보여줍니다.
-       TODO: Supabase에서 해당 연도의 월별 출고 합계 조회로 교체
-             (예: GROUP BY 연,월 또는 월별 집계 테이블 조회)
-       반환 형식: {
-           rows: [ { date_display: '1월', A, C, D }, ... ],
-           byItem: { A, C, D }, total   // 해당 연도 전체 합계
-       }
+       하단 우측: 월별 출고 현황
     ───────────────────────────────────────────── */
     App.fetchUsageMonthly = async function (year) {
         const today = new Date();
         const monthLimit = (year === today.getFullYear()) ? (today.getMonth() + 1) : 12;
         const rows = [];
-        const byItem = { A: 0, C: 0, D: 0 };
 
         for (let m = 1; m <= monthLimit; m++) {
             const seedBase = hashSeed(`${year}-${pad(m)}-out-month`);
             const a  = seededVal(seedBase, 800, 6000);
             const c  = seededVal(seedBase + 1, 600, 5000);
             const dd = seededVal(seedBase + 2, 300, 4000);
-            byItem.A += a; byItem.C += c; byItem.D += dd;
             rows.push({ date_display: `${m}월`, A: a, C: c, D: dd });
         }
-        return { rows, byItem, total: byItem.A + byItem.C + byItem.D };
+        return { rows };
     };
 
     /* ─────────────────────────────────────────────
-       공통 라우터(factory1_common.js) 연동 훅
-       - 헤더의 날짜 네비게이션/오늘 버튼/달력에서 날짜가 바뀔 때마다
-         Factory1FtIoModule.activate(dateStr) → App.loadData(dateStr) 순으로 호출됨
+       공통 라우터 훅
     ───────────────────────────────────────────── */
     App.loadData = async function (dateStr) {
         if (App.headerApi && App.headerApi.isEditMode && App.headerApi.isEditMode()) {
@@ -138,7 +118,6 @@
         App.state.compHasPrev = true;
         App.state.isInitialLoad = true;
 
-        // 좌측 4단 대조표 데이터 및 우측 카드 데이터 연쇄 로드
         await Promise.all([
             App.loadCompData('none'),
             App.loadInbound(),
@@ -148,7 +127,6 @@
         App.state.isChanged = false;
     };
 
-    // 이 페이지는 편집 폼이 없는 조회 전용 요약 화면이라 저장할 내용이 없습니다.
     App.saveData = async function () {
         App.state.isChanged = false;
         if (App.headerApi && App.headerApi.toggleEditMode) App.headerApi.toggleEditMode();

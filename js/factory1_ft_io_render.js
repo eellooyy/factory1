@@ -42,8 +42,6 @@
 
     /* ─────────────────────────────────────
        보기 모드 / 편집 모드
-       (이 페이지는 조회 전용 요약 화면이라 별도 잠금 UI가 없습니다.
-        입력 폼이 추가될 경우 이 자리에 확장하세요.)
     ───────────────────────────────────── */
     App.setReadOnlyMode = function (isReadOnly) {
         const wrapper = App.elements.wrapper;
@@ -82,7 +80,7 @@
     }
 
     /* ─────────────────────────────────────
-       커서 & 하이라이트
+       커서 & 하이라이트 (위치 오차 보정)
     ───────────────────────────────────── */
     function hideCursors() {
         [1, 2, 3, 4].forEach(i => {
@@ -91,18 +89,28 @@
         });
     }
 
+    // 부모 패널 기준 정밀한 offset 오프셋 계산 함수
+    function getOffsetRelativeToPanel(el, panelEl) {
+        let top = 0, left = 0;
+        let current = el;
+        while (current && current !== panelEl) {
+            top += current.offsetTop;
+            left += current.offsetLeft;
+            current = current.offsetParent;
+        }
+        return { top, left };
+    }
+
     function showCursor(panelIdx, td) {
         const cursorEl = document.getElementById(`compCursor${panelIdx}`);
         const panelEl = document.getElementById(`compScrollPanel${panelIdx}`);
         if (!cursorEl || !panelEl || !td) return;
 
-        const panelRect = panelEl.getBoundingClientRect();
-        const tdRect = td.getBoundingClientRect();
-
-        cursorEl.style.width = tdRect.width + 'px';
-        cursorEl.style.height = tdRect.height + 'px';
-        cursorEl.style.left = (tdRect.left - panelRect.left + panelEl.scrollLeft) + 'px';
-        cursorEl.style.top = (tdRect.top - panelRect.top + panelEl.scrollTop) + 'px';
+        const pos = getOffsetRelativeToPanel(td, panelEl);
+        cursorEl.style.width = td.offsetWidth + 'px';
+        cursorEl.style.height = td.offsetHeight + 'px';
+        cursorEl.style.left = pos.left + 'px';
+        cursorEl.style.top = pos.top + 'px';
         cursorEl.classList.add('active');
     }
 
@@ -318,7 +326,6 @@
         if (row) applyHighlight(1, row.getAttribute('data-date'), '1');
     }
 
-    // 공통 라우터에서 날짜가 바뀔 때(App.loadData) 호출되는 실제 조회+렌더 함수
     App.loadCompData = async function (direction) {
         if (state.compLoading) return;
         if (direction === 'next' && !state.compHasNext) return;
@@ -349,7 +356,7 @@
     };
 
     /* ─────────────────────────────────────
-       우측 카드 공통: 최근 항목으로 자동 스크롤
+       하단 카드 공통: 최근 항목 자동 스크롤
     ───────────────────────────────────── */
     function scrollToRecentDate(bodyEl) {
         requestAnimationFrame(() => {
@@ -376,7 +383,7 @@
     }
 
     /* ─────────────────────────────────────
-       우측 상단: 입고 현황 (연도별 목록)
+       하단 좌측: 입고 현황 (날짜 포맷: 07/25 (토))
     ───────────────────────────────────── */
     App.loadInbound = async function () {
         const body = document.getElementById('in-body');
@@ -406,9 +413,7 @@
     };
 
     /* ─────────────────────────────────────
-       우측 하단: 월별 출고 현황
-       ※ 일자별 목록이 아니라 "해당 연도의 월별 합계" 목록을 스크롤로 보여줍니다.
-         (입고 현황 카드와 동일하게 연도 단위 네비게이션만 사용)
+       하단 우측: 월별 출고 현황 (합계 제거됨)
     ───────────────────────────────────── */
     App.loadUsageMonthly = async function () {
         const body = document.getElementById('out-body');
@@ -433,17 +438,6 @@
                 body.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-muted small">기록된 출고 이벤트가 없습니다.</td></tr>`;
             }
 
-            const byItem = (data && data.byItem) || { A: 0, C: 0, D: 0 };
-            const total = (data && data.total) || 0;
-            const outA = document.getElementById('out-total-a');
-            const outC = document.getElementById('out-total-c');
-            const outD = document.getElementById('out-total-d');
-            const outAll = document.getElementById('out-total-all');
-            if (outA) outA.textContent = byItem.A.toLocaleString();
-            if (outC) outC.textContent = byItem.C.toLocaleString();
-            if (outD) outD.textContent = byItem.D.toLocaleString();
-            if (outAll) outAll.textContent = total.toLocaleString();
-
             scrollToRecentDate(body);
         } catch (err) {
             console.error('월별 출고 조회 실패:', err);
@@ -451,8 +445,7 @@
     };
 
     /* ─────────────────────────────────────
-       우측 패널 네비게이션 바인딩 (연도 이동 / 단위 스위처)
-       ※ 월별 출고 카드도 이제 연도 단위로만 이동합니다.
+       하단 패널 네비게이션 바인딩
     ───────────────────────────────────── */
     function bindSidePanelEvents() {
         const inPrev = document.getElementById('in-prev');
@@ -483,9 +476,6 @@
         });
     }
 
-    /* ─────────────────────────────────────
-       모듈 UI 초기화 (main.js init()에서 1회 호출)
-    ───────────────────────────────────── */
     App.initUI = function () {
         bindScrollSync();
         bindBodyClicks();
