@@ -1,4 +1,4 @@
-/* factory1_ft_render.js — 1공장 FT UI 계산 · 렌더링 · 입력 이벤트 바인딩 */
+/* factory1_ft_render.js — 1공장 FT UI 계산 · 렌더링 · 입력 이벤트 바인딩1 */
 (function () {
     'use strict';
 

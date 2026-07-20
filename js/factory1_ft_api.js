@@ -1,4 +1,4 @@
-/* factory1_ft_api.js — 1공장 FT Supabase DB 연동 (load / save) */
+/* factory1_ft_api.js — 1공장 FT Supabase DB 연동1 (load / save) */
 (function () {
     'use strict';
 

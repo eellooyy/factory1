@@ -1,4 +1,4 @@
-/* factory1_ft_constant.js — 1공장 FT 공통 상수 · 유틸 · 상태 */
+/* factory1_ft_constant.js — 1공장 FT 공통 상수 · 유틸 · 상태1 */
 (function () {
     'use strict';
 
