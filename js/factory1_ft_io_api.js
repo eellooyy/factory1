@@ -35,9 +35,7 @@
         return Math.floor(frac * (max - min + 1)) + min;
     }
 
-    /* ─────────────────────────────────────────────
-       1층 4단 대조표 데이터
-    ───────────────────────────────────────────── */
+    /* 1층 4단 대조표 데이터 */
     App.fetchComparisonData = async function (baseDateStr, direction) {
         const RANGE = 15;
         const dates = [];
@@ -55,27 +53,25 @@
         return { status: 'success', dates };
     };
 
-    /* ─────────────────────────────────────────────
-       하단 좌측: 입고 현황 (날짜 형식: MM/DD (요일))
-    ───────────────────────────────────────────── */
+    /* 하단 좌측: 입고 현황 (최근 4일치 생성) */
     App.fetchInboundList = async function (year) {
         const today = new Date();
-        const monthLimit = (year === today.getFullYear()) ? (today.getMonth() + 1) : 12;
         const rows = [];
 
-        for (let m = 1; m <= monthLimit; m++) {
-            const dayNum = 15;
-            const dateStr = `${year}-${pad(m)}-${pad(dayNum)}`;
-            const d = new Date(dateStr + 'T00:00:00');
+        // 최근 4일간 데이터 생성
+        for (let i = 3; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+
+            const m = d.getMonth() + 1;
+            const dayNum = d.getDate();
             const dayName = App.WD_KR[d.getDay()];
-            
-            // requested format: 07/25 (토)
             const dateDisplay = `${pad(m)}/${pad(dayNum)} (${dayName})`;
 
-            const seedBase = hashSeed(dateStr + '-in');
-            const aRl = seededVal(seedBase, 0, 20);
-            const cRl = seededVal(seedBase + 1, 0, 15);
-            const dRl = seededVal(seedBase + 2, 0, 10);
+            const seedBase = hashSeed(`${year}-${pad(m)}-${pad(dayNum)}-in`);
+            const aRl = seededVal(seedBase, 5, 20);
+            const cRl = seededVal(seedBase + 1, 3, 18);
+            const dRl = seededVal(seedBase + 2, 2, 12);
 
             rows.push({
                 date_display: dateDisplay,
@@ -87,27 +83,32 @@
         return rows;
     };
 
-    /* ─────────────────────────────────────────────
-       하단 우측: 월별 출고 현황
-    ───────────────────────────────────────────── */
+    /* 하단 우측: 월별 출고 현황 (최근 4개월치 생성) */
     App.fetchUsageMonthly = async function (year) {
         const today = new Date();
-        const monthLimit = (year === today.getFullYear()) ? (today.getMonth() + 1) : 12;
+        const currentMonth = today.getMonth() + 1;
         const rows = [];
 
-        for (let m = 1; m <= monthLimit; m++) {
-            const seedBase = hashSeed(`${year}-${pad(m)}-out-month`);
-            const a  = seededVal(seedBase, 800, 6000);
-            const c  = seededVal(seedBase + 1, 600, 5000);
-            const dd = seededVal(seedBase + 2, 300, 4000);
+        // 최근 4개월간 데이터 생성
+        for (let i = 3; i >= 0; i--) {
+            let m = currentMonth - i;
+            let y = year;
+            if (m <= 0) {
+                m += 12;
+                y -= 1;
+            }
+
+            const seedBase = hashSeed(`${y}-${pad(m)}-out-month`);
+            const a  = seededVal(seedBase, 1500, 6000);
+            const c  = seededVal(seedBase + 1, 1200, 5000);
+            const dd = seededVal(seedBase + 2, 800, 4000);
+
             rows.push({ date_display: `${m}월`, A: a, C: c, D: dd });
         }
         return { rows };
     };
 
-    /* ─────────────────────────────────────────────
-       공통 라우터 훅
-    ───────────────────────────────────────────── */
+    /* 공통 라우터 훅 */
     App.loadData = async function (dateStr) {
         if (App.headerApi && App.headerApi.isEditMode && App.headerApi.isEditMode()) {
             App.headerApi.toggleEditMode();

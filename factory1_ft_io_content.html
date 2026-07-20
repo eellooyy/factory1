@@ -89,64 +89,75 @@
     <div class="f1ftio-bottom-grid">
         <!-- 2-1: 입고 현황 카드 -->
         <div class="f1ftio-panel side-card">
-            <div class="panel-header mb-3 d-flex justify-content-between align-items-center">
-                <span class="panel-title">입고 현황</span>
-                <div class="d-flex align-items-center gap-3">
+            <div class="panel-header-grid mb-3">
+                <div class="header-left d-flex align-items-center">
                     <div class="unit-switcher shadow-sm" id="unitToggle">
                         <div class="selection-bg mode-roll" id="switcherBg"></div>
                         <button class="unit-btn active" id="btnRoll" data-unit="RL" type="button"> R/L </button>
                         <button class="unit-btn" id="btnKg" data-unit="KG" type="button"> Kg </button>
                     </div>
-                    <div class="d-flex align-items-center gap-1">
-                        <button class="btn-nav-mini" id="in-prev" type="button"><span class="material-symbols-outlined">chevron_left</span></button>
-                        <span class="fw-bold text-dark" id="in-year-txt" style="font-size: 13px; min-width: 45px; text-align: center;"></span>
-                        <button class="btn-nav-mini" id="in-next" type="button"><span class="material-symbols-outlined">chevron_right</span></button>
-                    </div>
+                </div>
+                <div class="header-center text-center">
+                    <span class="panel-title">입고 현황</span>
+                </div>
+                <div class="header-right d-flex align-items-center justify-content-end gap-1">
+                    <button class="btn-nav-mini" id="in-prev" type="button"><span class="material-symbols-outlined">chevron_left</span></button>
+                    <span class="fw-bold text-dark" id="in-year-txt" style="font-size: 13px; min-width: 45px; text-align: center;"></span>
+                    <button class="btn-nav-mini" id="in-next" type="button"><span class="material-symbols-outlined">chevron_right</span></button>
                 </div>
             </div>
 
-            <div class="table-scroll-wrapper" style="max-height: 210px; min-height: 210px; overflow-y: auto;">
-                <table class="custom-compact-table text-center m-0">
-                    <thead>
-                        <tr>
-                            <th style="width: 34%; text-align: center;">일자</th>
-                            <th style="width: 22%; text-align: center;">A</th>
-                            <th style="width: 22%; text-align: center;">C</th>
-                            <th style="width: 22%; text-align: center;">D</th>
-                        </tr>
-                    </thead>
-                    <tbody id="in-body">
-                        <tr><td colspan="4" class="py-4 text-center text-muted small">불러오는 중...</td></tr>
-                    </tbody>
-                </table>
+            <!-- 레이아웃 안의 레이아웃 프레임 -->
+            <div class="inner-layout-card">
+                <div class="table-scroll-wrapper" style="max-height: 180px; min-height: 180px; overflow: hidden;">
+                    <table class="custom-compact-table text-center m-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 34%; text-align: center;">일자</th>
+                                <th style="width: 22%; text-align: center;">A</th>
+                                <th style="width: 22%; text-align: center;">C</th>
+                                <th style="width: 22%; text-align: center;">D</th>
+                            </tr>
+                        </thead>
+                        <tbody id="in-body">
+                            <tr><td colspan="4" class="py-4 text-center text-muted small">불러오는 중...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- 2-2: 월별 출고 현황 카드 -->
         <div class="f1ftio-panel side-card">
-            <div class="panel-header mb-3 d-flex justify-content-between align-items-center">
-                <span class="panel-title">월별 출고 현황</span>
-                <div class="d-flex align-items-center gap-1">
+            <div class="panel-header-grid mb-3">
+                <div class="header-left"></div>
+                <div class="header-center text-center">
+                    <span class="panel-title">월별 출고 현황</span>
+                </div>
+                <div class="header-right d-flex align-items-center justify-content-end gap-1">
                     <button class="btn-nav-mini" id="out-prev" type="button"><span class="material-symbols-outlined">chevron_left</span></button>
-                    <span class="fw-semibold text-dark" id="out-date-txt" style="font-size: 13px;"></span>
+                    <span class="fw-bold text-dark" id="out-date-txt" style="font-size: 13px;"></span>
                     <button class="btn-nav-mini" id="out-next" type="button"><span class="material-symbols-outlined">chevron_right</span></button>
                 </div>
             </div>
 
-            <div class="table-scroll-wrapper" style="max-height: 210px; min-height: 210px; overflow-y: auto;">
-                <table class="custom-compact-table text-center m-0">
-                    <thead>
-                        <tr>
-                            <th style="width: 34%; text-align: center;"></th>
-                            <th style="width: 22%; text-align: center;">A</th>
-                            <th style="width: 22%; text-align: center;">C</th>
-                            <th style="width: 22%; text-align: center;">D</th>
-                        </tr>
-                    </thead>
-                    <tbody id="out-body">
-                        <tr><td colspan="4" class="py-4 text-center text-muted small">불러오는 중...</td></tr>
-                    </tbody>
-                </table>
+            <!-- 레이아웃 안의 레이아웃 프레임 -->
+            <div class="inner-layout-card">
+                <div class="table-scroll-wrapper" style="max-height: 180px; min-height: 180px; overflow: hidden;">
+                    <table class="custom-compact-table text-center m-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 34%; text-align: center;">월</th>
+                                <th style="width: 22%; text-align: center;">A</th>
+                                <th style="width: 22%; text-align: center;">C</th>
+                                <th style="width: 22%; text-align: center;">D</th>
+                            </tr>
+                        </thead>
+                        <tbody id="out-body">
+                            <tr><td colspan="4" class="py-4 text-center text-muted small">불러오는 중...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

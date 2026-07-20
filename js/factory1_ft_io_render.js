@@ -8,9 +8,6 @@
     const state = App.state;
     const PANEL_IDS = App.PANEL_IDS;
 
-    /* ─────────────────────────────────────
-       날짜/숫자 헬퍼
-    ───────────────────────────────────── */
     function pad(n) { return String(n).padStart(2, '0'); }
 
     function fmtDateShort(dateStr) {
@@ -40,17 +37,11 @@
         return n.toLocaleString();
     }
 
-    /* ─────────────────────────────────────
-       보기 모드 / 편집 모드
-    ───────────────────────────────────── */
     App.setReadOnlyMode = function (isReadOnly) {
         const wrapper = App.elements.wrapper;
         if (!wrapper) return;
     };
 
-    /* ─────────────────────────────────────
-       좌측 4단 대조표: 스크롤 동기화
-    ───────────────────────────────────── */
     function bindScrollSync() {
         PANEL_IDS.forEach(id => {
             const el = document.getElementById(id);
@@ -79,9 +70,6 @@
         });
     }
 
-    /* ─────────────────────────────────────
-       커서 & 하이라이트 (위치 오차 보정)
-    ───────────────────────────────────── */
     function hideCursors() {
         [1, 2, 3, 4].forEach(i => {
             const c = document.getElementById(`compCursor${i}`);
@@ -89,7 +77,6 @@
         });
     }
 
-    // 부모 패널 기준 정밀한 offset 오프셋 계산 함수
     function getOffsetRelativeToPanel(el, panelEl) {
         let top = 0, left = 0;
         let current = el;
@@ -155,9 +142,6 @@
         }
     }
 
-    /* ─────────────────────────────────────
-       키보드 네비게이션
-    ───────────────────────────────────── */
     function bindKeyboardNav() {
         document.addEventListener('keydown', e => {
             if (!state.selectedDate || !state.selectedPanel) return;
@@ -192,9 +176,6 @@
         });
     }
 
-    /* ─────────────────────────────────────
-       클릭 이벤트 바인딩
-    ───────────────────────────────────── */
     function bindBodyClicks() {
         [1, 2, 3, 4].forEach(panelIdx => {
             const body = document.getElementById(`compBody${panelIdx}`);
@@ -209,9 +190,6 @@
         });
     }
 
-    /* ─────────────────────────────────────
-       좌측 4단 대조표 렌더링
-    ───────────────────────────────────── */
     function generateRowsHTML(dates) {
         let html1 = '', html2 = '', html3 = '', html4 = '';
 
@@ -355,21 +333,6 @@
         }
     };
 
-    /* ─────────────────────────────────────
-       하단 카드 공통: 최근 항목 자동 스크롤
-    ───────────────────────────────────── */
-    function scrollToRecentDate(bodyEl) {
-        requestAnimationFrame(() => {
-            const wrapper = bodyEl.closest('.table-scroll-wrapper');
-            if (!wrapper) return;
-            const rows = bodyEl.querySelectorAll('tr');
-            if (!rows.length) return;
-            const lastRow = rows[rows.length - 1];
-            const target = lastRow.offsetTop - (wrapper.clientHeight / 2) + (lastRow.offsetHeight / 2);
-            wrapper.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
-        });
-    }
-
     function updateDisplay() {
         document.querySelectorAll('.unit-cell').forEach(td => {
             const rl = parseFloat(td.getAttribute('data-rl')) || 0;
@@ -382,9 +345,7 @@
         });
     }
 
-    /* ─────────────────────────────────────
-       하단 좌측: 입고 현황 (날짜 포맷: 07/25 (토))
-    ───────────────────────────────────── */
+    /* 입고 현황 (최근 4일치 표시) */
     App.loadInbound = async function () {
         const body = document.getElementById('in-body');
         const yearTxt = document.getElementById('in-year-txt');
@@ -396,7 +357,7 @@
             if (data && data.length > 0) {
                 body.innerHTML = data.map(r => `
                     <tr>
-                        <td class="fw-semibold">${r.date_display}</td>
+                        <td class="fw-bold">${r.date_display}</td>
                         <td class="unit-cell text-center" data-rl="${r.A_rl}" data-kg="${r.A_kg}"></td>
                         <td class="unit-cell text-center" data-rl="${r.C_rl}" data-kg="${r.C_kg}"></td>
                         <td class="unit-cell text-center" data-rl="${r.D_rl}" data-kg="${r.D_kg}"></td>
@@ -406,15 +367,12 @@
                 body.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-muted small">기록된 입고 이벤트가 없습니다.</td></tr>`;
             }
             updateDisplay();
-            scrollToRecentDate(body);
         } catch (err) {
             console.error('입고 조회 실패:', err);
         }
     };
 
-    /* ─────────────────────────────────────
-       하단 우측: 월별 출고 현황 (합계 제거됨)
-    ───────────────────────────────────── */
+    /* 월별 출고 현황 (최근 4개월치 표시) */
     App.loadUsageMonthly = async function () {
         const body = document.getElementById('out-body');
         const dateTxt = document.getElementById('out-date-txt');
@@ -428,7 +386,7 @@
             if (rows.length > 0) {
                 body.innerHTML = rows.map(r => `
                     <tr>
-                        <td class="fw-semibold">${r.date_display}</td>
+                        <td class="fw-bold">${r.date_display}</td>
                         <td class="text-center">${fmtVal(r.A)}</td>
                         <td class="text-center">${fmtVal(r.C)}</td>
                         <td class="text-center">${fmtVal(r.D)}</td>
@@ -437,16 +395,11 @@
             } else {
                 body.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-muted small">기록된 출고 이벤트가 없습니다.</td></tr>`;
             }
-
-            scrollToRecentDate(body);
         } catch (err) {
             console.error('월별 출고 조회 실패:', err);
         }
     };
 
-    /* ─────────────────────────────────────
-       하단 패널 네비게이션 바인딩
-    ───────────────────────────────────── */
     function bindSidePanelEvents() {
         const inPrev = document.getElementById('in-prev');
         const inNext = document.getElementById('in-next');
