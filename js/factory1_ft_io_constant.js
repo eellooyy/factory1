@@ -19,13 +19,15 @@
         PANEL_IDS: ['compScrollPanel1', 'compScrollPanel2', 'compScrollPanel3', 'compScrollPanel4'],
 
         // 2층 하단 카드 — 한 번에 불러오는 개수 / 과거로 조회 가능한 최대치
-        // (추후 실제 DB 연동 시에도 이 값 기준으로 페이징하면 됩니다)
         INBOUND_BATCH: 4,
         INBOUND_MAX_DAYS: 90,      // 입고 현황: 최근 90일까지 과거 스크롤 허용
         OUTBOUND_BATCH: 4,
         OUTBOUND_MAX_MONTHS: 36,   // 월별 출고 현황: 최근 36개월까지 과거 스크롤 허용
 
         state: {
+            // 과거 DB 스크롤 허용 여부 (기본 OFF: 잠금 상태)
+            isScrollUnlocked: false,
+
             // 좌측 4단 대조표 (날짜는 공통 헤더의 날짜 네비게이션과 동기화됨)
             compBaseDate: null,
             compLoading: false,

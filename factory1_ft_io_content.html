@@ -1,10 +1,25 @@
 <div class="f1ftio-wrapper" data-page-module="Factory1FtIoModule">
     <!-- 1층: FT 실재고 및 ERP 대조 (4단 비교표) -->
     <div class="f1ftio-panel f1ftio-main-panel mb-4">
+        <!-- 대조표 카드 상단 헤더 & 스크롤 ON/OFF 스위치 -->
+        <div class="panel-header-grid mb-3" style="padding: 0 4px;">
+            <div class="header-left"></div>
+            <div class="header-center text-center">
+                <span class="panel-title">FT 실재고 및 ERP 대조</span>
+            </div>
+            <div class="header-right d-flex align-items-center justify-content-end gap-2">
+                <span class="small fw-bold text-dark me-1">과거 스크롤</span>
+                <label class="f1-toggle-switch" title="과거 DB 스크롤 ON/OFF">
+                    <input type="checkbox" id="compScrollToggle">
+                    <span class="f1-toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
         <div class="comp-panels-outer">
             <!-- 패널 1: 출고 -->
             <div class="comp-panel">
-                <div class="comp-scroll-area" id="compScrollPanel1">
+                <div class="comp-scroll-area locked" id="compScrollPanel1">
                     <div id="compCursor1" class="comp-cursor"></div>
                     <table class="comp-table-split">
                         <thead>
@@ -25,7 +40,7 @@
 
             <!-- 패널 2: ERP 재고 -->
             <div class="comp-panel">
-                <div class="comp-scroll-area" id="compScrollPanel2">
+                <div class="comp-scroll-area locked" id="compScrollPanel2">
                     <div id="compCursor2" class="comp-cursor"></div>
                     <table class="comp-table-split comp-no-date">
                         <thead>
@@ -45,7 +60,7 @@
 
             <!-- 패널 3: 실재고 -->
             <div class="comp-panel">
-                <div class="comp-scroll-area" id="compScrollPanel3">
+                <div class="comp-scroll-area locked" id="compScrollPanel3">
                     <div id="compCursor3" class="comp-cursor"></div>
                     <table class="comp-table-split comp-no-date">
                         <thead>
@@ -65,7 +80,7 @@
 
             <!-- 패널 4: 실재고 - ERP -->
             <div class="comp-panel">
-                <div class="comp-scroll-area" id="compScrollPanel4">
+                <div class="comp-scroll-area locked" id="compScrollPanel4">
                     <div id="compCursor4" class="comp-cursor"></div>
                     <table class="comp-table-split comp-no-date">
                         <thead>

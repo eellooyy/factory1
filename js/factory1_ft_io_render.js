@@ -42,11 +42,45 @@
         if (!wrapper) return;
     };
 
+    function updateScrollLockUI() {
+        PANEL_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (state.isScrollUnlocked) {
+                el.classList.remove('locked');
+            } else {
+                el.classList.add('locked');
+            }
+        });
+    }
+
+    function bindScrollToggle() {
+        const toggle = document.getElementById('compScrollToggle');
+        if (!toggle) return;
+
+        toggle.checked = !!state.isScrollUnlocked;
+        updateScrollLockUI();
+
+        toggle.addEventListener('change', (e) => {
+            state.isScrollUnlocked = e.target.checked;
+            updateScrollLockUI();
+        });
+    }
+
     function bindScrollSync() {
         PANEL_IDS.forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
+
+            // 스크롤 잠금 상태 시 마우스 휠 동작 차단
+            el.addEventListener('wheel', (e) => {
+                if (!state.isScrollUnlocked) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
             el.addEventListener('scroll', () => {
+                if (!state.isScrollUnlocked) return; // 잠금 상태 시 동기화 및 로드 차단
                 if (state.syncLock) return;
                 state.syncLock = true;
                 const srcTop = el.scrollTop;
@@ -137,7 +171,6 @@
         if (scrollPanel && colNum !== null) {
             const groupTh = scrollPanel.querySelector('.comp-group-th');
             if (groupTh) groupTh.classList.add('comp-header-active');
-            // 레벨2 헤더(A/C/D 3칸)를 전부 채워서 레벨1 헤더와 폭이 정확히 일치하도록(틈 없이) 처리
             scrollPanel.querySelectorAll('.comp-leaf-th').forEach(th => th.classList.add('comp-header-active'));
         }
     }
@@ -250,8 +283,6 @@
             bodies[3].innerHTML = htmls.html4;
 
             if (panel1) {
-                // 최초 진입 시 "어제" 날짜 행이 스크롤 영역 맨 아래에 오도록 위치시킴
-                // (패널 높이는 기존과 동일하게 유지되어 화면에는 이전과 같은 줄 수가 보입니다)
                 let targetRow = bodies[0].querySelector(`tr[data-date="${yesterdayStr()}"]`);
                 if (!targetRow) targetRow = bodies[0].querySelector('.comp-row-today');
                 if (!targetRow) targetRow = bodies[0].querySelector(`tr[data-date="${state.compBaseDate}"]`);
@@ -362,7 +393,6 @@
             </tr>`;
     }
 
-    /* 최초 로드 (또는 연도 이동) — 최근 데이터를 불러와 스크롤을 맨 아래로 위치시킴 */
     App.loadInbound = async function () {
         const body = document.getElementById('in-body');
         const yearTxt = document.getElementById('in-year-txt');
@@ -377,14 +407,13 @@
             const data = await App.fetchInboundList(0, App.INBOUND_BATCH);
             if (data && data.length > 0) {
                 body.innerHTML = data.map(rowHtmlInbound).join('');
-                state.inOffset = App.INBOUND_BATCH; // 다음에 더 과거를 불러올 시작 offset
+                state.inOffset = App.INBOUND_BATCH;
             } else {
                 body.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-muted small">기록된 입고 이벤트가 없습니다.</td></tr>`;
                 state.inHasMore = false;
             }
             updateDisplay();
 
-            // 스크롤 영역을 맨 아래(최근 데이터 위치)로 이동
             const wrapper = body.closest('.table-scroll-wrapper');
             if (wrapper) {
                 requestAnimationFrame(() => {
@@ -396,7 +425,6 @@
         }
     };
 
-    /* 위로 스크롤 시 더 과거 데이터를 앞쪽(위)에 이어붙임 (스크롤 위치는 유지) */
     async function loadMoreInbound() {
         if (state.inLoading || !state.inHasMore) return;
         if (state.inOffset >= App.INBOUND_MAX_DAYS) { state.inHasMore = false; return; }
@@ -465,7 +493,6 @@
                 state.outHasMore = false;
             }
 
-            // 스크롤 영역을 맨 아래(최근 데이터 위치)로 이동
             const wrapper = body.closest('.table-scroll-wrapper');
             if (wrapper) {
                 requestAnimationFrame(() => {
@@ -510,7 +537,6 @@
         }
     }
 
-    /* 2층 두 카드의 스크롤 영역 상단 근처에 도달하면 과거 데이터를 추가 로드 */
     function bindHistoryScroll() {
         const inWrapper = document.getElementById('in-body') && document.getElementById('in-body').closest('.table-scroll-wrapper');
         const outWrapper = document.getElementById('out-body') && document.getElementById('out-body').closest('.table-scroll-wrapper');
@@ -558,6 +584,7 @@
     }
 
     App.initUI = function () {
+        bindScrollToggle();
         bindScrollSync();
         bindBodyClicks();
         bindKeyboardNav();
