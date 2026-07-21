@@ -345,7 +345,7 @@
         });
     }
 
-    /* 입고 현황 (최근 4일치 표시) */
+    /* 입고 현황 (렌더링 후 스크롤을 맨 아래로 위치시켜 최신 데이터 표시) */
     App.loadInbound = async function () {
         const body = document.getElementById('in-body');
         const yearTxt = document.getElementById('in-year-txt');
@@ -367,12 +367,20 @@
                 body.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-muted small">기록된 입고 이벤트가 없습니다.</td></tr>`;
             }
             updateDisplay();
+
+            // 스크롤 영역을 맨 아래(최근 데이터 위치)로 이동
+            const wrapper = body.closest('.table-scroll-wrapper');
+            if (wrapper) {
+                requestAnimationFrame(() => {
+                    wrapper.scrollTop = wrapper.scrollHeight;
+                });
+            }
         } catch (err) {
             console.error('입고 조회 실패:', err);
         }
     };
 
-    /* 월별 출고 현황 (최근 4개월치 표시) */
+    /* 월별 출고 현황 (렌더링 후 스크롤을 맨 아래로 위치시켜 최신 데이터 표시) */
     App.loadUsageMonthly = async function () {
         const body = document.getElementById('out-body');
         const dateTxt = document.getElementById('out-date-txt');
@@ -394,6 +402,14 @@
                 `).join('');
             } else {
                 body.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-muted small">기록된 출고 이벤트가 없습니다.</td></tr>`;
+            }
+
+            // 스크롤 영역을 맨 아래(최근 데이터 위치)로 이동
+            const wrapper = body.closest('.table-scroll-wrapper');
+            if (wrapper) {
+                requestAnimationFrame(() => {
+                    wrapper.scrollTop = wrapper.scrollHeight;
+                });
             }
         } catch (err) {
             console.error('월별 출고 조회 실패:', err);

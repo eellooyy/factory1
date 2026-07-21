@@ -74,7 +74,19 @@
 .py-4 { padding-top: 16px; padding-bottom: 16px; }
 .m-0 { margin: 0; }
 
-/* 미니 네비게이션 버튼 */
+/* 미니 네비게이션 버튼 및 년도 텍스트 수직 완벽 정렬 보정 */
+.f1ftio-year-text {
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    color: #000000 !important;
+    min-width: 52px;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
 .btn-nav-mini {
     background: transparent;
     border: none;
@@ -85,11 +97,15 @@
     justify-content: center;
     cursor: pointer;
     transition: color 0.2s;
+    height: 22px;
+    width: 22px;
 }
 .btn-nav-mini:hover { color: #007aff; }
 .btn-nav-mini .material-symbols-outlined {
-    font-size: 18px !important;
+    font-size: 20px !important;
     font-weight: 700;
+    display: block;
+    line-height: 1;
 }
 
 /* R/L Kg 단위 스위처 */
@@ -160,7 +176,7 @@
     border-bottom: none !important;
 }
 
-/* 스크롤바 숨김 */
+/* 스크롤바 숨김 및 세로 스크롤 허용 */
 .table-scroll-wrapper {
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -318,12 +334,14 @@
 .comp-selected-row .comp-date-td { background: #e5e5ea !important; }
 .comp-row-today.comp-selected-row td { background: #daedf9 !important; }
 
+/* 1레벨-2레벨 헤더 활성화 시 경계선 틈 제거 보정 */
 .comp-thead-lv1 th.comp-header-active,
 .comp-thead-lv2 th.comp-header-active,
 .comp-group-th.comp-header-active,
 .comp-leaf-th.comp-header-active {
     background-color: rgba(255, 160, 50, 0.2) !important;
     color: #b04a00 !important;
+    border-bottom-color: rgba(255, 160, 50, 0.2) !important;
 }
 
 .comp-selected-cell {
