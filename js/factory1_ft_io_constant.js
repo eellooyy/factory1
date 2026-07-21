@@ -18,6 +18,13 @@
         WD_KR: ['일', '월', '화', '수', '목', '금', '토'],
         PANEL_IDS: ['compScrollPanel1', 'compScrollPanel2', 'compScrollPanel3', 'compScrollPanel4'],
 
+        // 2층 하단 카드 — 한 번에 불러오는 개수 / 과거로 조회 가능한 최대치
+        // (추후 실제 DB 연동 시에도 이 값 기준으로 페이징하면 됩니다)
+        INBOUND_BATCH: 4,
+        INBOUND_MAX_DAYS: 90,      // 입고 현황: 최근 90일까지 과거 스크롤 허용
+        OUTBOUND_BATCH: 4,
+        OUTBOUND_MAX_MONTHS: 36,   // 월별 출고 현황: 최근 36개월까지 과거 스크롤 허용
+
         state: {
             // 좌측 4단 대조표 (날짜는 공통 헤더의 날짜 네비게이션과 동기화됨)
             compBaseDate: null,
@@ -30,13 +37,18 @@
             selectedCol: null,
             syncLock: false,
 
-            // 우측 상단: 입고 현황 (연도 단위 자체 네비게이션)
+            // 우측 상단: 입고 현황 (연도 단위 자체 네비게이션 + 과거 스크롤 페이징)
             inYear: today.getFullYear(),
             unit: 'RL',
+            inOffset: 0,       // 현재까지 불러온 "오늘 기준 며칠 전"까지의 offset (다음 로드 시작점)
+            inLoading: false,
+            inHasMore: true,
 
-            // 우측 하단: 월별 출고 현황 — 일자별이 아닌 "해당 연도의 월별 합계" 목록을
-            // 스크롤로 보여주므로 연도 단위 네비게이션만 필요합니다. (월 단위 상태 제거)
+            // 우측 하단: 월별 출고 현황 — 연도 단위 네비게이션 + 과거 스크롤 페이징
             outYear: today.getFullYear(),
+            outOffset: 0,      // 현재까지 불러온 "이번달 기준 몇 개월 전"까지의 offset
+            outLoading: false,
+            outHasMore: true,
 
             isChanged: false
         },

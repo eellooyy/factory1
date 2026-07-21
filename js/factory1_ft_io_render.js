@@ -137,8 +137,8 @@
         if (scrollPanel && colNum !== null) {
             const groupTh = scrollPanel.querySelector('.comp-group-th');
             if (groupTh) groupTh.classList.add('comp-header-active');
-            const leafTh = scrollPanel.querySelector(`.comp-leaf-th[data-col="${colNum}"]`);
-            if (leafTh) leafTh.classList.add('comp-header-active');
+            // 레벨2 헤더(A/C/D 3칸)를 전부 채워서 레벨1 헤더와 폭이 정확히 일치하도록(틈 없이) 처리
+            scrollPanel.querySelectorAll('.comp-leaf-th').forEach(th => th.classList.add('comp-header-active'));
         }
     }
 
@@ -250,12 +250,16 @@
             bodies[3].innerHTML = htmls.html4;
 
             if (panel1) {
-                let targetRow = bodies[0].querySelector(`tr[data-date="${state.compBaseDate}"]`);
+                // 최초 진입 시 "어제" 날짜 행이 스크롤 영역 맨 아래에 오도록 위치시킴
+                // (패널 높이는 기존과 동일하게 유지되어 화면에는 이전과 같은 줄 수가 보입니다)
+                let targetRow = bodies[0].querySelector(`tr[data-date="${yesterdayStr()}"]`);
                 if (!targetRow) targetRow = bodies[0].querySelector('.comp-row-today');
+                if (!targetRow) targetRow = bodies[0].querySelector(`tr[data-date="${state.compBaseDate}"]`);
+
                 if (targetRow) {
                     requestAnimationFrame(() => {
                         const wrapH = panel1.clientHeight;
-                        const top = targetRow.offsetTop - (wrapH / 2) + (targetRow.offsetHeight / 2);
+                        const top = targetRow.offsetTop + targetRow.offsetHeight - wrapH;
                         PANEL_IDS.forEach(id => {
                             const p = document.getElementById(id);
                             if (p) p.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
@@ -345,26 +349,38 @@
         });
     }
 
-    /* 입고 현황 (렌더링 후 스크롤을 맨 아래로 위치시켜 최신 데이터 표시) */
+    /* ────────────────────────────────────────────────────────────
+       2층 좌측: 입고 현황
+       ──────────────────────────────────────────────────────────── */
+    function rowHtmlInbound(r) {
+        return `
+            <tr data-offset="${r.day_offset}">
+                <td class="fw-bold">${r.date_display}</td>
+                <td class="unit-cell text-center" data-rl="${r.A_rl}" data-kg="${r.A_kg}"></td>
+                <td class="unit-cell text-center" data-rl="${r.C_rl}" data-kg="${r.C_kg}"></td>
+                <td class="unit-cell text-center" data-rl="${r.D_rl}" data-kg="${r.D_kg}"></td>
+            </tr>`;
+    }
+
+    /* 최초 로드 (또는 연도 이동) — 최근 데이터를 불러와 스크롤을 맨 아래로 위치시킴 */
     App.loadInbound = async function () {
         const body = document.getElementById('in-body');
         const yearTxt = document.getElementById('in-year-txt');
         if (yearTxt) yearTxt.textContent = `${state.inYear}년`;
         if (!body) return;
 
+        state.inOffset = 0;
+        state.inHasMore = true;
+        state.inLoading = false;
+
         try {
-            const data = await App.fetchInboundList(state.inYear);
+            const data = await App.fetchInboundList(0, App.INBOUND_BATCH);
             if (data && data.length > 0) {
-                body.innerHTML = data.map(r => `
-                    <tr>
-                        <td class="fw-bold">${r.date_display}</td>
-                        <td class="unit-cell text-center" data-rl="${r.A_rl}" data-kg="${r.A_kg}"></td>
-                        <td class="unit-cell text-center" data-rl="${r.C_rl}" data-kg="${r.C_kg}"></td>
-                        <td class="unit-cell text-center" data-rl="${r.D_rl}" data-kg="${r.D_kg}"></td>
-                    </tr>
-                `).join('');
+                body.innerHTML = data.map(rowHtmlInbound).join('');
+                state.inOffset = App.INBOUND_BATCH; // 다음에 더 과거를 불러올 시작 offset
             } else {
                 body.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-muted small">기록된 입고 이벤트가 없습니다.</td></tr>`;
+                state.inHasMore = false;
             }
             updateDisplay();
 
@@ -380,28 +396,73 @@
         }
     };
 
-    /* 월별 출고 현황 (렌더링 후 스크롤을 맨 아래로 위치시켜 최신 데이터 표시) */
+    /* 위로 스크롤 시 더 과거 데이터를 앞쪽(위)에 이어붙임 (스크롤 위치는 유지) */
+    async function loadMoreInbound() {
+        if (state.inLoading || !state.inHasMore) return;
+        if (state.inOffset >= App.INBOUND_MAX_DAYS) { state.inHasMore = false; return; }
+
+        state.inLoading = true;
+        const body = document.getElementById('in-body');
+        const wrapper = body ? body.closest('.table-scroll-wrapper') : null;
+        const prevScrollHeight = wrapper ? wrapper.scrollHeight : 0;
+        const prevScrollTop = wrapper ? wrapper.scrollTop : 0;
+
+        try {
+            const batchSize = Math.min(App.INBOUND_BATCH, App.INBOUND_MAX_DAYS - state.inOffset);
+            const data = await App.fetchInboundList(state.inOffset, batchSize);
+            if (data && data.length > 0 && body) {
+                body.insertAdjacentHTML('afterbegin', data.map(rowHtmlInbound).join(''));
+                state.inOffset += batchSize;
+                updateDisplay();
+
+                if (wrapper) {
+                    requestAnimationFrame(() => {
+                        const diff = wrapper.scrollHeight - prevScrollHeight;
+                        wrapper.scrollTop = prevScrollTop + diff;
+                    });
+                }
+            }
+            if (state.inOffset >= App.INBOUND_MAX_DAYS) state.inHasMore = false;
+        } catch (err) {
+            console.error('입고 과거 데이터 조회 실패:', err);
+        } finally {
+            state.inLoading = false;
+        }
+    }
+
+    /* ────────────────────────────────────────────────────────────
+       2층 우측: 월별 출고 현황
+       ──────────────────────────────────────────────────────────── */
+    function rowHtmlOutbound(r) {
+        return `
+            <tr data-offset="${r.month_offset}">
+                <td class="fw-bold">${r.date_display}</td>
+                <td class="text-center">${fmtVal(r.A)}</td>
+                <td class="text-center">${fmtVal(r.C)}</td>
+                <td class="text-center">${fmtVal(r.D)}</td>
+            </tr>`;
+    }
+
     App.loadUsageMonthly = async function () {
         const body = document.getElementById('out-body');
         const dateTxt = document.getElementById('out-date-txt');
         if (dateTxt) dateTxt.textContent = `${state.outYear}년`;
         if (!body) return;
 
+        state.outOffset = 0;
+        state.outHasMore = true;
+        state.outLoading = false;
+
         try {
-            const data = await App.fetchUsageMonthly(state.outYear);
+            const data = await App.fetchUsageMonthly(0, App.OUTBOUND_BATCH);
             const rows = (data && data.rows) || [];
 
             if (rows.length > 0) {
-                body.innerHTML = rows.map(r => `
-                    <tr>
-                        <td class="fw-bold">${r.date_display}</td>
-                        <td class="text-center">${fmtVal(r.A)}</td>
-                        <td class="text-center">${fmtVal(r.C)}</td>
-                        <td class="text-center">${fmtVal(r.D)}</td>
-                    </tr>
-                `).join('');
+                body.innerHTML = rows.map(rowHtmlOutbound).join('');
+                state.outOffset = App.OUTBOUND_BATCH;
             } else {
                 body.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-muted small">기록된 출고 이벤트가 없습니다.</td></tr>`;
+                state.outHasMore = false;
             }
 
             // 스크롤 영역을 맨 아래(최근 데이터 위치)로 이동
@@ -415,6 +476,57 @@
             console.error('월별 출고 조회 실패:', err);
         }
     };
+
+    async function loadMoreOutbound() {
+        if (state.outLoading || !state.outHasMore) return;
+        if (state.outOffset >= App.OUTBOUND_MAX_MONTHS) { state.outHasMore = false; return; }
+
+        state.outLoading = true;
+        const body = document.getElementById('out-body');
+        const wrapper = body ? body.closest('.table-scroll-wrapper') : null;
+        const prevScrollHeight = wrapper ? wrapper.scrollHeight : 0;
+        const prevScrollTop = wrapper ? wrapper.scrollTop : 0;
+
+        try {
+            const batchSize = Math.min(App.OUTBOUND_BATCH, App.OUTBOUND_MAX_MONTHS - state.outOffset);
+            const data = await App.fetchUsageMonthly(state.outOffset, batchSize);
+            const rows = (data && data.rows) || [];
+            if (rows.length > 0 && body) {
+                body.insertAdjacentHTML('afterbegin', rows.map(rowHtmlOutbound).join(''));
+                state.outOffset += batchSize;
+
+                if (wrapper) {
+                    requestAnimationFrame(() => {
+                        const diff = wrapper.scrollHeight - prevScrollHeight;
+                        wrapper.scrollTop = prevScrollTop + diff;
+                    });
+                }
+            }
+            if (state.outOffset >= App.OUTBOUND_MAX_MONTHS) state.outHasMore = false;
+        } catch (err) {
+            console.error('월별 출고 과거 데이터 조회 실패:', err);
+        } finally {
+            state.outLoading = false;
+        }
+    }
+
+    /* 2층 두 카드의 스크롤 영역 상단 근처에 도달하면 과거 데이터를 추가 로드 */
+    function bindHistoryScroll() {
+        const inWrapper = document.getElementById('in-body') && document.getElementById('in-body').closest('.table-scroll-wrapper');
+        const outWrapper = document.getElementById('out-body') && document.getElementById('out-body').closest('.table-scroll-wrapper');
+        const threshold = 30;
+
+        if (inWrapper) {
+            inWrapper.addEventListener('scroll', () => {
+                if (inWrapper.scrollTop <= threshold) loadMoreInbound();
+            });
+        }
+        if (outWrapper) {
+            outWrapper.addEventListener('scroll', () => {
+                if (outWrapper.scrollTop <= threshold) loadMoreOutbound();
+            });
+        }
+    }
 
     function bindSidePanelEvents() {
         const inPrev = document.getElementById('in-prev');
@@ -450,6 +562,7 @@
         bindBodyClicks();
         bindKeyboardNav();
         bindSidePanelEvents();
+        bindHistoryScroll();
     };
 
 })();

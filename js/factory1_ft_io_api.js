@@ -53,28 +53,34 @@
         return { status: 'success', dates };
     };
 
-    /* 하단 좌측: 입고 현황 (최근 4일치 생성) */
-    App.fetchInboundList = async function (year) {
-        const today = new Date();
+    /* ────────────────────────────────────────────────────────────
+       하단 좌측: 입고 현황
+       offsetStart : "오늘" 기준 며칠 전부터 데이터를 만들지 (0 = 오늘)
+       count       : 몇 건 생성할지
+       결과는 과거→최신(오름차순) 순으로 반환되어 화면 아래쪽에 최신이 오도록 렌더링됩니다.
+       추후 실제 DB 연동 시에는 이 함수 내부만 실제 쿼리(offset/limit)로 교체하면 됩니다.
+       ──────────────────────────────────────────────────────────── */
+    App.fetchInboundList = async function (offsetStart, count) {
         const rows = [];
-
-        // 최근 4일간 데이터 생성
-        for (let i = 3; i >= 0; i--) {
-            const d = new Date(today);
+        const startI = offsetStart + count - 1; // 가장 과거 offset부터
+        for (let i = startI; i >= offsetStart; i--) {
+            const d = new Date();
             d.setDate(d.getDate() - i);
 
+            const y = d.getFullYear();
             const m = d.getMonth() + 1;
             const dayNum = d.getDate();
             const dayName = App.WD_KR[d.getDay()];
             const dateDisplay = `${pad(m)}/${pad(dayNum)} (${dayName})`;
 
-            const seedBase = hashSeed(`${year}-${pad(m)}-${pad(dayNum)}-in`);
+            const seedBase = hashSeed(`${y}-${pad(m)}-${pad(dayNum)}-in`);
             const aRl = seededVal(seedBase, 5, 20);
             const cRl = seededVal(seedBase + 1, 3, 18);
             const dRl = seededVal(seedBase + 2, 2, 12);
 
             rows.push({
                 date_display: dateDisplay,
+                day_offset: i,
                 A_rl: aRl, A_kg: aRl * 25,
                 C_rl: cRl, C_kg: cRl * 25,
                 D_rl: dRl, D_kg: dRl * 25
@@ -83,17 +89,22 @@
         return rows;
     };
 
-    /* 하단 우측: 월별 출고 현황 (최근 4개월치 생성) */
-    App.fetchUsageMonthly = async function (year) {
+    /* ────────────────────────────────────────────────────────────
+       하단 우측: 월별 출고 현황
+       offsetStart : "이번달" 기준 몇 개월 전부터 데이터를 만들지 (0 = 이번달)
+       count       : 몇 건 생성할지
+       ──────────────────────────────────────────────────────────── */
+    App.fetchUsageMonthly = async function (offsetStart, count) {
         const today = new Date();
         const currentMonth = today.getMonth() + 1;
+        const currentYear = today.getFullYear();
         const rows = [];
 
-        // 최근 4개월간 데이터 생성
-        for (let i = 3; i >= 0; i--) {
+        const startI = offsetStart + count - 1;
+        for (let i = startI; i >= offsetStart; i--) {
             let m = currentMonth - i;
-            let y = year;
-            if (m <= 0) {
+            let y = currentYear;
+            while (m <= 0) {
                 m += 12;
                 y -= 1;
             }
@@ -103,7 +114,7 @@
             const c  = seededVal(seedBase + 1, 1200, 5000);
             const dd = seededVal(seedBase + 2, 800, 4000);
 
-            rows.push({ date_display: `${m}월`, A: a, C: c, D: dd });
+            rows.push({ date_display: `${y}년 ${m}월`, month_offset: i, A: a, C: c, D: dd });
         }
         return { rows };
     };
