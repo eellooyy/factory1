@@ -463,7 +463,7 @@
        ──────────────────────────────────────────────────────────── */
     function rowHtmlOutbound(r) {
         return `
-            <tr data-offset="${r.month_offset}">
+            <tr data-month="${r.month}">
                 <td class="fw-bold">${r.date_display}</td>
                 <td class="text-center">${fmtVal(r.A)}</td>
                 <td class="text-center">${fmtVal(r.C)}</td>
@@ -471,26 +471,33 @@
             </tr>`;
     }
 
+    // 다음 연도 버튼은 올해를 넘어가지 않도록 잠금 (공통 헤더의 날짜 버튼과 동일한 규칙)
+    function updateOutNavState() {
+        const nextBtn = document.getElementById('out-next');
+        if (!nextBtn) return;
+        const isMax = state.outYear >= new Date().getFullYear();
+        nextBtn.disabled = isMax;
+    }
+
     App.loadUsageMonthly = async function () {
         const body = document.getElementById('out-body');
         const dateTxt = document.getElementById('out-date-txt');
         if (dateTxt) dateTxt.textContent = `${state.outYear}년`;
+        updateOutNavState();
         if (!body) return;
 
-        state.outOffset = 0;
-        state.outHasMore = true;
-        state.outLoading = false;
+        if (state.outLoading) return;
+        state.outLoading = true;
+        body.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-muted small">불러오는 중...</td></tr>`;
 
         try {
-            const data = await App.fetchUsageMonthly(0, App.OUTBOUND_BATCH);
+            const data = await App.fetchUsageMonthly(state.outYear);
             const rows = (data && data.rows) || [];
 
             if (rows.length > 0) {
                 body.innerHTML = rows.map(rowHtmlOutbound).join('');
-                state.outOffset = App.OUTBOUND_BATCH;
             } else {
-                body.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-muted small">기록된 출고 이벤트가 없습니다.</td></tr>`;
-                state.outHasMore = false;
+                body.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-muted small">${state.outYear}년 출고 기록이 없습니다.</td></tr>`;
             }
 
             const wrapper = body.closest('.table-scroll-wrapper');
@@ -501,55 +508,20 @@
             }
         } catch (err) {
             console.error('월별 출고 조회 실패:', err);
-        }
-    };
-
-    async function loadMoreOutbound() {
-        if (state.outLoading || !state.outHasMore) return;
-        if (state.outOffset >= App.OUTBOUND_MAX_MONTHS) { state.outHasMore = false; return; }
-
-        state.outLoading = true;
-        const body = document.getElementById('out-body');
-        const wrapper = body ? body.closest('.table-scroll-wrapper') : null;
-        const prevScrollHeight = wrapper ? wrapper.scrollHeight : 0;
-        const prevScrollTop = wrapper ? wrapper.scrollTop : 0;
-
-        try {
-            const batchSize = Math.min(App.OUTBOUND_BATCH, App.OUTBOUND_MAX_MONTHS - state.outOffset);
-            const data = await App.fetchUsageMonthly(state.outOffset, batchSize);
-            const rows = (data && data.rows) || [];
-            if (rows.length > 0 && body) {
-                body.insertAdjacentHTML('afterbegin', rows.map(rowHtmlOutbound).join(''));
-                state.outOffset += batchSize;
-
-                if (wrapper) {
-                    requestAnimationFrame(() => {
-                        const diff = wrapper.scrollHeight - prevScrollHeight;
-                        wrapper.scrollTop = prevScrollTop + diff;
-                    });
-                }
-            }
-            if (state.outOffset >= App.OUTBOUND_MAX_MONTHS) state.outHasMore = false;
-        } catch (err) {
-            console.error('월별 출고 과거 데이터 조회 실패:', err);
+            body.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-muted small">조회에 실패했습니다.</td></tr>`;
         } finally {
             state.outLoading = false;
         }
-    }
+    };
 
     function bindHistoryScroll() {
+        // 월별 출고 현황은 연도 단위(1~12월)로 한 번에 조회되므로 과거 페이징이 없습니다.
         const inWrapper = document.getElementById('in-body') && document.getElementById('in-body').closest('.table-scroll-wrapper');
-        const outWrapper = document.getElementById('out-body') && document.getElementById('out-body').closest('.table-scroll-wrapper');
         const threshold = 30;
 
         if (inWrapper) {
             inWrapper.addEventListener('scroll', () => {
                 if (inWrapper.scrollTop <= threshold) loadMoreInbound();
-            });
-        }
-        if (outWrapper) {
-            outWrapper.addEventListener('scroll', () => {
-                if (outWrapper.scrollTop <= threshold) loadMoreOutbound();
             });
         }
     }
@@ -569,7 +541,11 @@
 
         if (outPrev && outNext) {
             outPrev.addEventListener('click', () => { state.outYear--; App.loadUsageMonthly(); });
-            outNext.addEventListener('click', () => { state.outYear++; App.loadUsageMonthly(); });
+            outNext.addEventListener('click', () => {
+                if (state.outYear >= new Date().getFullYear()) return;
+                state.outYear++;
+                App.loadUsageMonthly();
+            });
         }
 
         unitBtns.forEach(btn => {
