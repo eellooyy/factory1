@@ -172,11 +172,10 @@
             ? App.elements.wrapper.querySelector('.f1ft-input[data-field="memo"]')
             : null;
 
-        // 4. 급지 재고 합계 KG 계산 (사용 후 잔량 기준)
+        // 4. 급지 재고 합계 KG 계산 (사용 후 잔량 기준, 값 그대로 합산)
         const geupjiTotal = {};
         App.GROUPS.forEach(group => {
-            const totalRolls = App.GROUP_KEYS[group].reduce((sum, col) => sum + (sortedEndData[col] || 0), 0);
-            geupjiTotal[group] = totalRolls * (App.JIGO_WEIGHT_MULTIPLIER[group] || 0);
+            geupjiTotal[group] = App.GROUP_KEYS[group].reduce((sum, col) => sum + (sortedEndData[col] || 0), 0);
         });
 
         // 5. DB Payload

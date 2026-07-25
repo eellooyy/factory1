@@ -145,17 +145,17 @@
                 : null;
             if (!span) return;
             const cols = App.GROUP_KEYS[group];
-            let totalRolls = 0;
+            let totalKg = 0;
             let hasValue = false;
             cols.forEach(col => {
                 const val = endValues ? endValues[col] : undefined;
                 if (val !== undefined && val !== null && val !== '') {
-                    totalRolls += App.utils.parseNum(val);
+                    totalKg += App.utils.parseNum(val);
                     hasValue = true;
                 }
             });
             span.textContent = hasValue
-                ? `${App.utils.formatNum(totalRolls * App.JIGO_WEIGHT_MULTIPLIER[group])} KG`
+                ? `${App.utils.formatNum(totalKg)} KG`
                 : '-';
         });
     };
