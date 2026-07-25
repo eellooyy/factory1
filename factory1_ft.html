@@ -213,9 +213,13 @@
 
             <!-- 지고 재고 테이블 영역 -->
             <div class="f1ft-box">
-                <div class="f1ft-box-header">
-                    지고 재고
-                    <button class="f1ft-unit-toggle" id="f1FtJigoUnitToggle" type="button">KG</button>
+                <div class="f1ft-box-header with-toggle">
+                    <div class="unit-switcher" id="f1FtJigoUnitToggle">
+                        <div class="selection-bg mode-roll" id="f1FtJigoSwitcherBg"></div>
+                        <button class="unit-btn active" data-unit="RL" type="button"> R/L </button>
+                        <button class="unit-btn" data-unit="KG" type="button"> Kg </button>
+                    </div>
+                    <span>지고 재고</span>
                 </div>
                 <table class="f1ft-table border-outer">
                     <colgroup>

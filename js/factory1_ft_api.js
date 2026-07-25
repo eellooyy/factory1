@@ -98,7 +98,7 @@
         // 지고 재고 (날짜별로 저장되는 스냅샷 — 해당 날짜의 값만 조회)
         const { data: jigoRows, error: jigoLoadError } = await supabase
             .from(App.JIGO_TABLE)
-            .select('location, item_name, stock_qty')
+            .select('location, item_name, stock_qty, stock_weight')
             .eq('date', dateStr);
 
         if (jigoLoadError) {
@@ -106,10 +106,11 @@
         } else {
             (jigoRows || []).forEach(row => {
                 const floor = row.location ? String(row.location).replace(/F$/i, '') : '';
-                const input = getJigoInput(floor, row.item_name);
-                if (input) input.value = `${App.utils.formatNum(row.stock_qty) || '0'} R/L`;
+                // DB에 저장된 롤 수/무게를 그대로 보관 — 단위 전환 시 재연산 없이 표시만 바꿈
+                App.setJigoValue(getJigoInput(floor, row.item_name), row.stock_qty, row.stock_weight);
             });
         }
+        App.updateJigoDisplay();
 
         App.calculateFields();
         if (editBtn) editBtn.disabled = false;
@@ -199,14 +200,13 @@
         App.GROUPS.forEach(group => {
             ['5', '6'].forEach(floor => {
                 const input = getJigoInput(floor, group);
-                if (!input || input.value.trim() === '') return;
-                const qty = App.utils.parseJigoNum(input.value);
+                if (!input || input.dataset.qty === undefined) return;
                 jigoPayload.push({
                     location: `${floor}F`,
                     item_name: group,
                     date: App.state.currentDate,
-                    stock_qty: qty,
-                    stock_weight: qty * (App.JIGO_WEIGHT_MULTIPLIER[group] || 0)
+                    stock_qty: App.utils.parseNum(input.dataset.qty),
+                    stock_weight: App.utils.parseNum(input.dataset.weight)
                 });
             });
         });

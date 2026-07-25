@@ -56,10 +56,14 @@
             App.bindInputFormatters();
             App.bindKeyboardNavigation();
 
-            // 지고 재고 단위 토글 버튼 바인딩
-            const jigoToggleBtn = document.getElementById('f1FtJigoUnitToggle');
-            if (jigoToggleBtn) {
-                jigoToggleBtn.addEventListener('click', App.toggleJigoUnit);
+            // 지고 재고 R/L ↔ Kg 단위 스위처 바인딩
+            const jigoSwitcher = document.getElementById('f1FtJigoUnitToggle');
+            if (jigoSwitcher) {
+                jigoSwitcher.querySelectorAll('.unit-btn').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        App.setJigoUnit(this.dataset.unit);
+                    });
+                });
             }
 
             App.setReadOnlyMode(true); // 페이지 진입 시 항상 보기 모드로 시작

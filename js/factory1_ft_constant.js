@@ -55,13 +55,6 @@
                 ? num.toLocaleString()
                 : num.toLocaleString(undefined, { maximumFractionDigits: 2 });
         },
-        // '1 R/L', '1,234 R/L' 등 지고 재고 표시 형식에서 숫자만 추출
-        parseJigoNum(value) {
-            if (value === undefined || value === null || value === '') return 0;
-            const cleaned = String(value).replace(/R\/L/gi, '').replace(/,/g, '').trim();
-            const parsed = Number(cleaned);
-            return isNaN(parsed) ? 0 : parsed;
-        },
         formatSignedNum(value) {
             if (!value) return '';
             const formatted = App.utils.formatNum(Math.abs(value));

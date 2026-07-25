@@ -39,6 +39,10 @@
             input.value = '';
             if (input.dataset.base !== undefined) input.dataset.base = '0';
             if (input.dataset.saved !== undefined) input.dataset.saved = '';
+            if (input.dataset.field === 'jigo') {
+                delete input.dataset.qty;
+                delete input.dataset.weight;
+            }
         });
         App.state.isChanged = false;
     };
@@ -137,36 +141,52 @@
 
     };
 
-    // ── 지고 재고 단위 토글 (R/L ↔ KG) ──────────────────────────────────────
-    App.toggleJigoUnit = function () {
-        App.state.jigoUnit = App.state.jigoUnit === 'RL' ? 'KG' : 'RL';
-        App.updateJigoDisplay();
-
-        const btn = App.elements.wrapper
-            ? App.elements.wrapper.querySelector('#f1FtJigoUnitToggle')
-            : null;
-        if (btn) {
-            btn.textContent = App.state.jigoUnit === 'KG' ? 'R/L' : 'KG';
-            btn.classList.toggle('active', App.state.jigoUnit === 'KG');
+    // ── 지고 재고: 롤 수 / 무게를 dataset에 보관 (표시 단위와 무관하게 원본 유지) ──
+    //    qty = stock_qty(R/L), weight = stock_weight(KG) — DB 컬럼과 1:1 대응
+    App.setJigoValue = function (input, qty, weight) {
+        if (!input) return;
+        if (qty === null || qty === undefined || qty === '') {
+            delete input.dataset.qty;
+            delete input.dataset.weight;
+            return;
         }
+        const qtyNum = App.utils.parseNum(qty);
+        input.dataset.qty = qtyNum;
+        input.dataset.weight = (weight === null || weight === undefined || weight === '')
+            ? qtyNum * (App.JIGO_WEIGHT_MULTIPLIER[input.dataset.group] || 0)
+            : App.utils.parseNum(weight);
     };
 
-    // ── 지고 재고 값 표시 업데이트 ────────────────────────────────────────────
+    // ── 지고 재고 단위 토글 (R/L ↔ KG) ──────────────────────────────────────
+    App.setJigoUnit = function (unit) {
+        App.state.jigoUnit = unit === 'KG' ? 'KG' : 'RL';
+
+        const switcher = document.getElementById('f1FtJigoUnitToggle');
+        const switcherBg = document.getElementById('f1FtJigoSwitcherBg');
+        if (switcher) {
+            switcher.querySelectorAll('.unit-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.unit === App.state.jigoUnit);
+            });
+        }
+        if (switcherBg) {
+            switcherBg.className = App.state.jigoUnit === 'KG' ? 'selection-bg mode-kg' : 'selection-bg mode-roll';
+        }
+
+        App.updateJigoDisplay();
+    };
+
+    // ── 지고 재고 값 표시 업데이트 (dataset 원본값 → 현재 단위로 렌더링) ─────
     App.updateJigoDisplay = function () {
         if (!App.elements.wrapper) return;
 
         App.elements.wrapper.querySelectorAll('.f1ft-input[data-field="jigo"]').forEach(input => {
-            if (!input.value.trim()) return;
-            const group = input.dataset.group;
-            const rawValue = App.utils.parseJigoNum(input.value);
-
-            if (App.state.jigoUnit === 'KG') {
-                const multiplier = App.JIGO_WEIGHT_MULTIPLIER[group] || 0;
-                const kgValue = rawValue * multiplier;
-                input.value = `${App.utils.formatNum(kgValue)} KG`;
-            } else {
-                input.value = `${App.utils.formatNum(rawValue)} R/L`;
+            if (input.dataset.qty === undefined) {
+                input.value = '';
+                return;
             }
+            input.value = App.state.jigoUnit === 'KG'
+                ? `${App.utils.formatNum(input.dataset.weight)} KG`
+                : `${App.utils.formatNum(input.dataset.qty)} R/L`;
         });
     };
 
@@ -202,10 +222,9 @@
             input.addEventListener('focus', function () {
                 if (this.readOnly) return;
                 if (isJigo) {
-                    // 'R/L' 표시 접미사를 떼어내고 순수 숫자만 남겨 편집하기 쉽게 함
-                    if (this.value.trim() !== '') {
-                        this.value = String(App.utils.parseJigoNum(this.value));
-                    }
+                    // 단위 접미사를 떼어내고 현재 단위 기준의 순수 숫자만 남겨 편집하기 쉽게 함
+                    const raw = App.state.jigoUnit === 'KG' ? this.dataset.weight : this.dataset.qty;
+                    this.value = raw === undefined ? '' : String(raw);
                 } else {
                     this.value = this.value.replace(/,/g, '');
                 }
@@ -214,10 +233,18 @@
             input.addEventListener('input', App.calculateFields);
             input.addEventListener('blur', function () {
                 if (this.value.trim() === '') {
+                    if (isJigo) App.setJigoValue(this, '');
                     this.value = '';
                 } else if (isJigo) {
-                    const value = App.utils.parseJigoNum(this.value);
-                    this.value = `${App.utils.formatNum(value)} R/L`;
+                    // 입력한 단위를 기준으로 나머지 단위를 환산해 dataset에 함께 보관
+                    const typed = App.utils.parseNum(this.value);
+                    const multiplier = App.JIGO_WEIGHT_MULTIPLIER[this.dataset.group] || 0;
+                    if (App.state.jigoUnit === 'KG') {
+                        App.setJigoValue(this, multiplier ? typed / multiplier : 0, typed);
+                    } else {
+                        App.setJigoValue(this, typed, typed * multiplier);
+                    }
+                    App.updateJigoDisplay();
                 } else {
                     const value = App.utils.parseNum(this.value);
                     this.value = App.utils.formatNum(value);
