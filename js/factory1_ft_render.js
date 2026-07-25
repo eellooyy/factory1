@@ -131,6 +131,27 @@
                 }
             }
         });
+
+        // 급지 재고 합계 업데이트 (사용 후 잔량 기준 KG)
+        App.GROUPS.forEach(group => {
+            const span = App.elements.wrapper
+                ? App.elements.wrapper.querySelector(`.f1ft-geupji-total[data-group="${group}"]`)
+                : null;
+            if (!span) return;
+            const cols = App.GROUP_KEYS[group];
+            let totalRolls = 0;
+            let hasValue = false;
+            cols.forEach(col => {
+                const endInput = getInput('end', col);
+                if (endInput && endInput.value.trim() !== '') {
+                    totalRolls += App.utils.parseNum(endInput.value);
+                    hasValue = true;
+                }
+            });
+            span.textContent = hasValue
+                ? `${App.utils.formatNum(totalRolls * App.JIGO_WEIGHT_MULTIPLIER[group])} KG`
+                : '-';
+        });
     };
 
     // ── 숫자 입력 포맷터 바인딩 ───────────────────────────────────────────────

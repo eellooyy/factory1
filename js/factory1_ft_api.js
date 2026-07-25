@@ -169,7 +169,14 @@
             ? App.elements.wrapper.querySelector('.f1ft-input[data-field="memo"]')
             : null;
 
-        // 4. DB Payload
+        // 4. 급지 재고 합계 KG 계산 (사용 후 잔량 기준)
+        const geupjiTotal = {};
+        App.GROUPS.forEach(group => {
+            const totalRolls = App.GROUP_KEYS[group].reduce((sum, col) => sum + (sortedEndData[col] || 0), 0);
+            geupjiTotal[group] = totalRolls * (App.JIGO_WEIGHT_MULTIPLIER[group] || 0);
+        });
+
+        // 5. DB Payload
         const payload = {
             log_date: App.state.currentDate,
             start_values: sortedStartData,
@@ -180,10 +187,11 @@
                 A: App.utils.parseNum(getInput('diff', 'A', 'group')?.value) || 0,
                 C: App.utils.parseNum(getInput('diff', 'C', 'group')?.value) || 0,
                 D: App.utils.parseNum(getInput('diff', 'D', 'group')?.value) || 0
-            }
+            },
+            geupji_ft_total: geupjiTotal
         };
 
-        // 5. 지고 재고 payload 구성 (location + item_name + date 기준, 해당 날짜의 데이터를 덮어씀)
+        // 6. 지고 재고 payload 구성 (location + item_name + date 기준, 해당 날짜의 데이터를 덮어씀)
         //    stock_weight = 입력한 롤 수 × 품목별 롤당 무게(A:1337, C:1003, D:669)
         const jigoPayload = [];
         App.GROUPS.forEach(group => {
