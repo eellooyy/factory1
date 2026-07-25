@@ -25,6 +25,9 @@
 
     // ── 데이터 불러오기 ───────────────────────────────────────────────────────
     App.loadData = async function (dateStr) {
+        // 조회 중인 날짜를 모듈 state에도 동기화 (날짜는 CommonHeader가 소유)
+        App.state.currentDate = dateStr;
+
         // 편집 모드 해제
         if (App.headerApi && App.headerApi.isEditMode && App.headerApi.isEditMode()) {
             App.headerApi.toggleEditMode();
@@ -119,6 +122,14 @@
 
     // ── 데이터 저장하기 ───────────────────────────────────────────────────────
     App.saveData = async function () {
+        // 저장 기준 날짜: 날짜 state의 원본은 CommonHeader이므로 항상 여기서 읽어온다.
+        const currentDate = (App.headerApi && App.headerApi.getCurrentDate()) || App.state.currentDate;
+        if (!currentDate) {
+            alert('저장할 날짜를 확인할 수 없습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.');
+            return;
+        }
+        App.state.currentDate = currentDate;
+
         const columns = App.COLUMNS;
         let autoFilledCols = [];
 
@@ -181,7 +192,7 @@
 
         // 5. DB Payload
         const payload = {
-            log_date: App.state.currentDate,
+            log_date: currentDate,
             start_values: sortedStartData,
             end_values: sortedEndData,
             erp_usage: App.collectInputData('erp', true),
@@ -204,7 +215,7 @@
                 jigoPayload.push({
                     location: `${floor}F`,
                     item_name: group,
-                    date: App.state.currentDate,
+                    date: currentDate,
                     stock_qty: App.utils.parseNum(input.dataset.qty),
                     stock_weight: App.utils.parseNum(input.dataset.weight)
                 });
@@ -235,13 +246,13 @@
 
         // 4일 이상 과거 데이터 수정 경고
         const fourDaysAgo = App.utils.addDays(App.utils.getTodayStr(), -4);
-        if (App.state.currentDate < fourDaysAgo) {
+        if (currentDate < fourDaysAgo) {
             alert('[주의] 4일 이상 경과된 과거 데이터를 수정하셨습니다.\n수정하신 내역이 이후 날짜의 이월 및 누적 계산에 연쇄적으로 영향을 미칩니다.\n\n반드시 오늘 날짜까지 차례대로 확인하시고 재저장해 주세요.');
         }
 
         // 편집 모드 종료 후 데이터 리로드
         if (App.headerApi && App.headerApi.toggleEditMode) App.headerApi.toggleEditMode();
-        await App.loadData(App.state.currentDate);
+        await App.loadData(currentDate);
     };
 
 })();

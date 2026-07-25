@@ -69,7 +69,8 @@
         });
 
         return {
-            log_date: App.state.currentDate,
+            // 날짜 state의 원본은 CommonHeader이므로 우선 거기서 읽는다 (null 저장 방지)
+            log_date: (App.headerApi && App.headerApi.getCurrentDate()) || App.state.currentDate,
             machines,
             issue,
             erp

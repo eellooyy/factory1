@@ -15,6 +15,9 @@
 
     // ── 데이터 불러오기 ───────────────────────────────────────────────────────
     App.loadData = async function (dateStr) {
+        // 조회 중인 날짜를 모듈 state에도 동기화 (날짜는 CommonHeader가 소유)
+        App.state.currentDate = dateStr;
+
         // 편집 모드 해제
         if (App.headerApi && App.headerApi.isEditMode && App.headerApi.isEditMode()) {
             App.headerApi.toggleEditMode();
