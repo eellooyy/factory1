@@ -11,9 +11,11 @@
    2) (급지 일지 등) 셀 안의 입력값이 셀 위쪽에 붙어서 캡쳐되던 문제
       → html2canvas는 <input>/<select> 안의 텍스트를 실제 브라우저
         렌더링과 다르게(위쪽 정렬로) 그리는 고질적인 버그가 있습니다.
-        캡쳐 직전에 모든 input/select를 "정확히 같은 위치·크기의
-        가운데 정렬 <span>"으로 잠깐 오버레이해서 캡쳐하고, 캡쳐가
-        끝나면 바로 제거합니다. (원본 DOM 값은 전혀 건드리지 않음)
+        캡쳐 직전에 모든 input/select의 line-height를 자기 높이에
+        맞춰 잠깐 조정해서 세로 중앙에 그려지도록 유도하고, 캡쳐가
+        끝나면 즉시 원복합니다. (화면에는 아무 변화도 보이지 않고,
+        새 DOM 요소를 만들지 않으므로 캡쳐 범위 밖으로 빠져서 내용이
+        비어버리는 일도 없습니다)
 
    3) 대용량 PDF 문제 (io 페이지는 압축 없는 PNG를 그대로 저장하고 있었음)
       → PNG 대신 JPEG(quality 0.72)로 인코딩 + jsPDF compress 옵션으로
@@ -22,58 +24,30 @@
 window.CommonPdf = (function () {
     'use strict';
 
-    // input/select 요소를 화면에 보이는 그대로의 값을 가진 가운데 정렬 <span>으로 임시 오버레이
-    function overlayFormFields(root) {
-        const overlays = [];
+    // input/select 안의 값이 셀 위쪽에 붙어서 캡쳐되는 html2canvas의 고질적인 버그 보정.
+    // (이전 버전은 화면에 새 <span>을 잠깐 겹쳐 그리는 방식이었는데, 캡쳐 범위가
+    //  document.body 전체가 아닐 때 그 span이 캡쳐 대상 바깥에 생겨서 해당 부분이
+    //  통째로 비어버리고, 화면에도 잠깐 보이는 부작용이 있었습니다.
+    //  지금은 새 요소를 전혀 만들지 않고, 각 입력칸 자신의 line-height만
+    //  자기 높이에 맞춰 잠깐 조정합니다 — 화면에는 아무 변화도 보이지 않고,
+    //  html2canvas가 텍스트를 세로 중앙에 그리도록 유도만 합니다.)
+    function fixInputVerticalAlign(root) {
+        const patched = [];
 
         root.querySelectorAll('input, select').forEach(function (el) {
-            const rect = el.getBoundingClientRect();
-            if (rect.width === 0 || rect.height === 0) return;
+            const h = el.getBoundingClientRect().height;
+            if (h <= 0) return;
 
-            const cs = getComputedStyle(el);
-            const isSelect = el.tagName === 'SELECT';
-            const text = isSelect
-                ? (el.options[el.selectedIndex] ? el.options[el.selectedIndex].text : '')
-                : el.value;
-
-            const justify = cs.textAlign === 'center' ? 'center'
-                : cs.textAlign === 'right' ? 'flex-end'
-                : 'flex-start';
-
-            const span = document.createElement('span');
-            span.textContent = text;
-            span.style.cssText = [
-                'position: fixed',
-                'left: ' + rect.left + 'px',
-                'top: ' + rect.top + 'px',
-                'width: ' + rect.width + 'px',
-                'height: ' + rect.height + 'px',
-                'display: flex',
-                'align-items: center',
-                'justify-content: ' + justify,
-                'font: ' + cs.font,
-                'color: ' + cs.color,
-                'background: transparent',
-                'box-sizing: border-box',
-                'padding: ' + cs.padding,
-                'pointer-events: none',
-                'white-space: nowrap',
-                'overflow: hidden',
-                'z-index: 99999'
-            ].join(';');
-
-            document.body.appendChild(span);
-            el.style.visibility = 'hidden';
-            overlays.push({ el: el, span: span });
+            patched.push({ el: el, prevLineHeight: el.style.lineHeight });
+            el.style.lineHeight = h + 'px';
         });
 
-        return overlays;
+        return patched;
     }
 
-    function restoreFormFields(overlays) {
-        overlays.forEach(function (o) {
-            o.el.style.visibility = '';
-            o.span.remove();
+    function restoreInputVerticalAlign(patched) {
+        patched.forEach(function (p) {
+            p.el.style.lineHeight = p.prevLineHeight;
         });
     }
 
@@ -121,7 +95,7 @@ window.CommonPdf = (function () {
         // display:none이 레이아웃에 반영될 시간을 살짝 준 뒤 캡쳐 시작
         await new Promise(function (resolve) { setTimeout(resolve, 80); });
 
-        const overlays = overlayFormFields(target);
+        const patchedInputs = fixInputVerticalAlign(target);
 
         try {
             const canvas = await html2canvas(target, {
@@ -130,7 +104,7 @@ window.CommonPdf = (function () {
                 backgroundColor: backgroundColor
             });
 
-            restoreFormFields(overlays);
+            restoreInputVerticalAlign(patchedInputs);
             restoreHidden();
             if (options.onDone) options.onDone();
 
@@ -151,7 +125,7 @@ window.CommonPdf = (function () {
             pdf.addImage(imgData, 'JPEG', 0, 0, pageWidthMm, pageHeightMm, undefined, 'FAST');
             pdf.save(filename);
         } catch (err) {
-            restoreFormFields(overlays);
+            restoreInputVerticalAlign(patchedInputs);
             restoreHidden();
             if (options.onDone) options.onDone();
             alert('PDF 생성 중 오류가 발생했습니다: ' + err.message);
