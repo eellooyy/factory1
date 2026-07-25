@@ -165,10 +165,16 @@
             </section>
 
             <aside class="f1il-side-panels">
+                <!-- 2적층 유지. 두 카드가 flex:1 로 좌측 3적층 높이를 균등하게 나눠 갖고,
+                     표의 행도 같은 비율로 신축해 상하폭이 좌측과 정확히 맞는다. -->
                 <!-- 1층: 급지 재고 및 급지 출고 롤 병합 표 -->
                 <div class="f1il-panel-box f1il-tier1">
                     <div class="f1il-box-header">급지 재고 / 출고 롤</div>
                     <table class="f1il-table f1il-panel-table border-outer">
+                        <colgroup>
+                            <col class="f1il-col-title">
+                            <col><col>
+                        </colgroup>
                         <thead>
                             <tr>
                                 <th class="f1il-th f1il-row-title">용지</th>
@@ -210,6 +216,10 @@
                 <div class="f1il-panel-box f1il-tier2">
                     <div class="f1il-box-header">사용량 상세 내역</div>
                     <table class="f1il-table f1il-panel-table border-outer">
+                        <colgroup>
+                            <col class="f1il-col-title">
+                            <col><col><col>
+                        </colgroup>
                         <thead>
                             <tr>
                                 <th class="f1il-th f1il-row-title">용지</th>

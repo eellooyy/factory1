@@ -13,24 +13,28 @@
     zoom: 1;
 }
 
-/* ── 메인 레이아웃 (좌측 테이블 / 우측 패널) ── */
+/* ── 메인 레이아웃 (좌측 테이블 / 우측 패널) ──
+   좌측 호기 박스는 표 폭(601px)에 맞춰 631px 고정, 우측은 남은 폭을 전부 차지해
+   레이아웃 전체 폭이 헤더(.gf3-wrapper max-width: 1200px)와 정확히 일치한다.
+   align-items: stretch 덕분에 우측 카드 높이는 좌측 3적층 높이를 자동으로 따라간다. */
 .f1il-layout {
     display: flex;
     flex-direction: row; /* 좌우 배치 설정 */
-    align-items: flex-start;
+    align-items: stretch;
     gap: 16px;
     width: 100%;
 }
 
 .f1il-machines {
-    flex: 0 0 auto;
+    flex: 0 0 631px; /* 601(표) + 14*2(패딩) + 1*2(보더) */
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
 .f1il-side-panels {
-    flex: 0 0 340px;
+    flex: 1 1 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -40,10 +44,12 @@
 .f1il-machine-box {
     background: #fff;
     border-radius: 12px;
-    padding: 10px 14px;
+    /* 상하 패딩을 10 → 8px 로 줄여 좌측 3적층 총높이를 낮춘다.
+       그만큼 우측 2적층의 신축량이 줄어 좌우 행 높이가 거의 같아진다. */
+    padding: 8px 14px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     border: 1px solid #e5e5ea;
-    width: fit-content;
+    width: auto; /* 부모(.f1il-machines)의 631px 를 그대로 채운다 */
 }
 
 .f1il-box-header {
@@ -142,12 +148,33 @@ select.f1il-cell.type-pp { background: #e8f5e9; }
 }
 
 /* ── 우측 패널 (통합 테이블) ── */
+/* 2적층 균등 신축: 두 카드가 좌측 3적층 높이를 절반씩 나눠 갖고,
+   표는 카드 내부의 남은 높이를 전부 채운다. 행 높이(.f1il-td 의 34px)는
+   최소값으로만 작용하고 실제 높이는 남는 공간을 6개 행이 균등 분배한다. */
 .f1il-panel-box {
     background: #fff;
     border-radius: 12px;
     padding: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     border: 1px solid #e5e5ea;
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.f1il-panel-table {
+    flex: 1 1 auto;
+    height: 100%;
+}
+
+/* 콜그룹 폭: 용지명 컬럼만 넓게 잡고 나머지 데이터 컬럼이 남은 폭을 균등 분할 */
+.f1il-col-title { width: 132px; }
+.f1il-panel-table .f1il-row-title { width: auto; }
+
+/* 용지명 컬럼 뒤 굵은 구분선 — 좌측 호기 표와 동일한 규칙 */
+.f1il-panel-table tr > *:first-child {
+    border-right: 2px solid #8e8e93 !important;
 }
 
 .f1il-panel-table td {
@@ -182,23 +209,34 @@ input.f1il-panel-cell {
 .f1il-panel-total-row th,
 .f1il-panel-total-row td { background: #f5f5f7; font-weight: 700; }
 
-/* 통합테이블의 오차(실사용-ERP) 색상 클래스 */
-.delta-positive { background: #e8f7e8 !important; color: #218739; }
-.delta-negative { background: #fdeaea !important; color: #c62828; }
+/* 오차(실사용-ERP) 색상 클래스 — 배경 없이 글자색만 */
+.delta-positive { color: #218739; }
+.delta-negative { color: #c62828; }
 
-/* ── 반응형 미디어 쿼리 ── */
-@media (max-width: 1350px) {
-    /* 폭이 좁아지면 좌우 배치 -> 상하 배치로 전환 */
+/* ── 반응형 미디어 쿼리 ──
+   좌우 배치에 필요한 폭은 631(좌) + 16(gap) + 440(우측 6컬럼 최소) + 40(body 좌우 패딩) ≈ 1127 CSS px.
+   body 에 zoom: 115% (common_header.css) 가 걸려 있고 미디어쿼리는 zoom 이전 뷰포트 기준이므로
+   1127 * 1.15 ≈ 1296 → 1300px 를 경계로 상하 배치로 전환한다. */
+@media (max-width: 1300px) {
     .f1il-layout {
         flex-direction: column;
+        align-items: flex-start;
     }
+    .f1il-machines {
+        flex: 0 0 auto;
+    }
+    /* 상하 배치에서는 좌측 호기 박스와 같은 폭으로 맞춰 좌우 정렬선을 유지 */
     .f1il-side-panels {
-        flex: 1 1 auto;
-        width: 100%;
+        flex: 0 0 auto;
+        width: 631px;
+        max-width: 100%;
     }
-    /* 폭이 넓어진 만큼 최대폭 제한 */
-    .f1il-tier1,
-    .f1il-tier2 {
-        max-width: 640px;
+    /* 맞출 상대 높이가 없어지므로 신축을 끄고 표 원래 높이로 복귀 */
+    .f1il-panel-box {
+        flex: 0 0 auto;
+    }
+    .f1il-panel-table {
+        flex: 0 0 auto;
+        height: auto;
     }
 }
