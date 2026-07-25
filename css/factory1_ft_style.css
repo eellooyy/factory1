@@ -55,7 +55,7 @@
     border-bottom: 1px solid #f2f2f7;
 }
 
-/* 단위 스위처를 좌측에 겹쳐 배치해 제목은 카드 정중앙을 유지 */
+/* 단위 스위처를 우측에 겹쳐 배치해 제목은 카드 정중앙을 유지 */
 .f1ft-box-header.with-toggle {
     position: relative;
     min-height: 24px;
@@ -65,7 +65,7 @@
 .f1ft-box-header.with-toggle .unit-switcher {
     position: absolute;
     top: 0;
-    left: 0;
+    right: 0;
 }
 
 /* R/L Kg 단위 스위처 (factory1_ft_io 페이지와 동일 디자인) */
