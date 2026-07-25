@@ -70,11 +70,13 @@
 
 <div class="gf3-wrapper f1ip-wrapper" data-page-module="Factory1IpgoModule" style="padding-top: 16px;">
 
-    <!-- 1층: 1공장 입고 대장 (3공장 입출고 대장 좌측 패널 규격) -->
-    <div class="f1ip-floor-container">
+    <!-- 1층: 좌측 7 (입고 및 별쇄 계획표) : 우측 3 (추가 영역) -->
+    <div class="f1ip-top-grid">
+
+    <div class="f1ip-floor-container f1ip-main-card">
         <div class="panel-header-grid mb-3">
             <div class="header-left">
-                <span class="panel-title">입고 대장</span>
+                <span class="panel-title">입고 및 별쇄 계획표</span>
             </div>
             <div class="header-center text-center"></div>
             <div class="header-right d-flex align-items-center justify-content-end gap-2">
@@ -150,6 +152,23 @@
             </div>
         </div>
     </div>
+
+    <!-- 우측 3 영역: 표시할 내용 미정 (추후 채울 자리) -->
+    <div class="f1ip-floor-container f1ip-side-card" id="f1ipSideCard">
+        <div class="panel-header-grid mb-3">
+            <div class="header-left">
+                <span class="panel-title">추가 영역</span>
+            </div>
+            <div class="header-center text-center"></div>
+            <div class="header-right d-flex align-items-center justify-content-end gap-2"></div>
+        </div>
+
+        <div class="f1ip-inner-card" id="f1ipSideBody">
+            <span class="f1ip-placeholder-text">표시할 내용을 정하시면 채워 넣겠습니다.</span>
+        </div>
+    </div>
+
+    </div><!-- /f1ip-top-grid -->
 </div>
 
 <div id="f3iNoticeModal" class="f3i-nmodal-overlay">

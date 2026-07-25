@@ -125,6 +125,14 @@
         });
     }
 
+    /* 레이아웃이 확정된 뒤 위치를 다시 잡아야 하지만, 백그라운드 탭에서는
+       requestAnimationFrame 이 실행되지 않아 위치 지정이 누락됩니다.
+       → 즉시 한 번 적용하고, rAF에서 한 번 더 보정합니다. */
+    function applyScrollTwice(computeTop, smooth) {
+        scrollAllPanels(computeTop(), smooth);
+        requestAnimationFrame(() => scrollAllPanels(computeTop(), smooth));
+    }
+
     /* ────────────────────────────────────────────────────────────
        셀 선택 커서 / 강조
        ──────────────────────────────────────────────────────────── */
@@ -386,12 +394,11 @@
             // (오늘 아래로 FUTURE_ROWS_BELOW_TODAY 만큼의 행이 남습니다)
             const todayRow = ledgerBody.querySelector(`tr[data-date="${today}"]`) || ledgerBody.lastElementChild;
             if (todayRow) {
-                requestAnimationFrame(() => {
+                applyScrollTwice(() => {
                     const rowH = todayRow.offsetHeight;
                     const keepBelow = App.FUTURE_ROWS_BELOW_TODAY * rowH;
-                    const top = todayRow.offsetTop + rowH + keepBelow - ledgerPanel.clientHeight;
-                    scrollAllPanels(top, true);
-                });
+                    return todayRow.offsetTop + rowH + keepBelow - ledgerPanel.clientHeight;
+                }, true);
             }
 
             if (state.isInitialLoad) {
@@ -414,10 +421,7 @@
                 if (body) body.insertAdjacentHTML('afterbegin', htmlFor(p.idx, rows));
             });
 
-            requestAnimationFrame(() => {
-                const diff = ledgerPanel.scrollHeight - prevScrollHeight;
-                scrollAllPanels(prevScrollTop + diff, false);
-            });
+            applyScrollTwice(() => prevScrollTop + (ledgerPanel.scrollHeight - prevScrollHeight), false);
         }
 
         state.loading = false;

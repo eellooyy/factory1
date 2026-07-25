@@ -16,11 +16,66 @@
       [날짜 열 너비 옵션]
       좌측 고정(sticky) 날짜 열의 너비입니다.
     */
-    --ipgo-date-col-width: 80px;
+    --ipgo-date-col-width: 72px;
+
+    /*
+      [표 높이 옵션]
+      입고/별쇄 스크롤 영역과 우측 추가 영역의 높이를 함께 맞춥니다.
+    */
+    --ipgo-scroll-height: 396px;
+
+    /*
+      [좌우 레이아웃 비율 옵션]
+      좌측(입고 및 별쇄 계획표) : 우측(추가 영역) = 7 : 3 입니다.
+      비율을 바꾸려면 두 값의 합이 100%가 되도록 함께 수정하세요.
+    */
+    --ipgo-main-width: 70%;
+    --ipgo-side-width: 30%;
+    --ipgo-grid-gap: 14px;
 }
 
 .f1ip-wrapper {
     gap: 14px;
+}
+
+/* 1층 좌우 분할 — 좌측 입고/별쇄(7) : 우측 추가 영역(3) */
+.f1ip-top-grid {
+    display: flex;
+    gap: var(--ipgo-grid-gap);
+    align-items: stretch;
+}
+
+/* 내부 콘텐츠의 min-content 폭에 밀리지 않도록 비율을 flex-basis로 고정 */
+.f1ip-main-card {
+    flex: 0 0 calc(var(--ipgo-main-width) - var(--ipgo-grid-gap) / 2);
+    min-width: 0;
+}
+.f1ip-side-card {
+    flex: 0 0 calc(var(--ipgo-side-width) - var(--ipgo-grid-gap) / 2);
+    min-width: 0;
+}
+
+/* 우측 추가 영역 내부 프레임 (내용 미정 — 자리만 확보) */
+.f1ip-inner-card {
+    background: #ffffff;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+    height: var(--ipgo-scroll-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    text-align: center;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.f1ip-placeholder-text {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #aeaeb2;
+    line-height: 1.5;
 }
 
 /* 층(레이아웃) 외곽 프레임 — 이 안에 개별 패널(레이아웃 안의 레이아웃)이 들어갑니다 */
@@ -172,16 +227,18 @@
     box-shadow: 0 2px 12px rgba(0,0,0,0.03);
 }
 
-/* 패널 비율 — 좌측 입고 대장(12열) : 우측 별쇄 계획표(3열) */
-.f1ip-panel-ledger { flex: 4; }
-.f1ip-panel-plan   { flex: 1.2; }
+/* 패널 비율 — 좌측 입고 대장(12열) : 우측 별쇄 계획표(3열)
+   입력값이 두 자리 숫자 기준이라 열 폭을 좁게 잡고, 두 패널의 열 폭이
+   비슷해지도록 12열 : 3열 비율에 맞췄습니다. */
+.f1ip-panel-ledger { flex: 4.3; }
+.f1ip-panel-plan   { flex: 1; }
 
 /* ================================================
    스크롤 영역
    ================================================ */
 .f1ip-scroll-area {
     position: relative;
-    height: 396px;
+    height: var(--ipgo-scroll-height);
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: none;
@@ -242,10 +299,10 @@
     background: #ffffff;
 }
 
-/* ─ 1레벨 헤더 행 ─ */
+/* ─ 1레벨 헤더 행 ─ (좁은 열 폭에 맞춰 축소) */
 .f1ip-thead-lv1 th {
-    padding: 10px 4px 6px;
-    font-size: 13px;
+    padding: 8px 2px 5px;
+    font-size: 11.5px;
     font-weight: 800;
     color: #1d1d1f;
     text-align: center;
@@ -258,27 +315,28 @@
 
 /* ─ 그룹 헤더 (1레벨) ─ */
 .f1ip-group-th {
-    font-size: 12.5px;
+    font-size: 11.5px;
     font-weight: 800;
     color: #1d1d1f;
-    padding: 10px 4px 6px;
+    padding: 8px 2px 5px;
     background: #ffffff;
-    letter-spacing: -0.2px;
+    letter-spacing: -0.3px;
 }
 
 /* ─ 하위 구분이 없어 두 행을 병합한 1레벨 헤더 (예: 페이퍼 코리아) ─ */
 .f1ip-single-th {
     vertical-align: middle;
     white-space: normal !important;
-    line-height: 1.25;
-    font-size: 12px;
-    padding: 4px 2px !important;
+    line-height: 1.2;
+    font-size: 10.5px;
+    letter-spacing: -0.4px;
+    padding: 4px 1px !important;
 }
 
-/* ─ 2레벨 헤더 행 ─ */
+/* ─ 2레벨 헤더 행 ─ (좁은 열 폭에 맞춰 축소) */
 .f1ip-thead-lv2 th {
-    padding: 7px 2px 8px;
-    font-size: 12px;
+    padding: 6px 1px 7px;
+    font-size: 10.5px;
     font-weight: 700;
     color: #636366;
     text-align: center;
@@ -290,10 +348,11 @@
 }
 
 .f1ip-leaf-th {
-    font-size: 12px;
+    font-size: 10.5px;
     font-weight: 700;
     color: #636366 !important;
     text-align: center;
+    letter-spacing: -0.3px;
 }
 
 /* ─ 그룹 구분선 ─ */
@@ -301,10 +360,10 @@
     border-left: 1px solid #e0e0e0 !important;
 }
 
-/* ─ 데이터 셀 ─ */
+/* ─ 데이터 셀 ─ (두 자리 숫자 기준으로 좁게) */
 .f1ip-table td {
-    padding: 9px 3px;
-    font-size: 13px;
+    padding: 9px 1px;
+    font-size: 12px;
     font-weight: 600;
     text-align: center;
     border-bottom: 1px solid #ebebeb;
@@ -325,7 +384,7 @@
     width: var(--ipgo-date-col-width) !important;
     border-right: 1px solid #e0e0e0 !important;
     border-bottom: 1px solid #e0e0e0 !important;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 800;
     color: #1d1d1f;
     box-sizing: border-box;
@@ -333,6 +392,8 @@
     vertical-align: middle;
 }
 
+/* 날짜 셀 — .f1ip-table td 보다 우선하도록 선택자를 함께 지정 */
+.f1ip-table td.f1ip-date-td,
 .f1ip-date-td {
     position: sticky;
     left: 0;
@@ -341,12 +402,14 @@
     text-align: center;
     white-space: nowrap;
     border-right: 1px solid #e0e0e0 !important;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 700;
     min-width: var(--ipgo-date-col-width) !important;
     width: var(--ipgo-date-col-width) !important;
     box-sizing: border-box;
     cursor: pointer;
+    padding-left: 2px;
+    padding-right: 2px;
 }
 
 /* ================================================
@@ -385,14 +448,19 @@
    반응형
    ================================================ */
 @media (max-width: 1100px) {
-    /* 두 패널을 세로로 쌓고, 우측 패널에도 날짜 열을 표시 */
+    /* 좌우 레이아웃과 두 패널을 모두 세로로 쌓고, 우측 패널에도 날짜 열을 표시 */
+    .f1ip-top-grid { flex-direction: column; }
+    .f1ip-main-card, .f1ip-side-card { flex: none; width: 100%; }
+
     .f1ip-panels-outer { flex-direction: column; }
     .f1ip-panel-ledger, .f1ip-panel-plan { flex: none; width: 100%; }
     .f1ip-responsive-date { display: table-cell !important; }
 
     .f1ip-scroll-area { overflow-x: auto; }
-    .f1ip-table { table-layout: auto; min-width: 900px; }
+    .f1ip-table { table-layout: auto; min-width: 620px; }
     .f1ip-plan-table { min-width: 0; }
+
+    .f1ip-inner-card { height: 200px; }
 }
 
 @media (max-width: 640px) {
@@ -407,7 +475,7 @@
     }
 
     .f1ip-table td {
-        font-size: 12px;
+        font-size: 11.5px;
         height: 38px;
     }
 
@@ -415,6 +483,6 @@
     .f1ip-thead-lv2 th,
     .f1ip-group-th,
     .f1ip-leaf-th {
-        font-size: 11px !important;
+        font-size: 10px !important;
     }
 }
