@@ -50,6 +50,11 @@
 
             App.initUI(); // 스크롤 잠금 / 클릭 / 키보드 네비게이션 바인딩
 
+            // 공통 헤더는 기본값이 '어제'이지만 입고 페이지는 '오늘'로 시작합니다.
+            // (false = 데이터 재조회 없이 표시만 갱신 → 바로 아래에서 한 번만 로드)
+            const today = (window.Factory3Utils || window.CommonUtils).getTodayStr();
+            App.headerApi.setCurrentDate(today, false);
+
             App.loadData(App.headerApi.getCurrentDate());
         }
     };

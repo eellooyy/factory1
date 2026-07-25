@@ -55,28 +55,78 @@
     min-width: 0;
 }
 
-/* 우측 추가 영역 내부 프레임 (내용 미정 — 자리만 확보) */
-.f1ip-inner-card {
-    background: #ffffff;
-    border: 1px solid #e5e5ea;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
-    height: var(--ipgo-scroll-height);
+/* ================================================
+   우측 영역: 지종별 재고 블록
+   (제목 없이 블록만 세로로 균등 배치)
+   ================================================ */
+.f1ip-side-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.f1ip-side-list {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.f1ip-side-list::-webkit-scrollbar { display: none; }
+
+.f1ip-side-block {
+    text-align: center;
+    line-height: 1.45;
+}
+
+.f1ip-side-title {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #1d1d1f;
+    letter-spacing: -0.2px;
+}
+
+/* 지폭별 "지폭 - N롤" 한 줄 */
+.f1ip-side-specs {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px;
-    text-align: center;
-    min-width: 0;
-    overflow: hidden;
+    gap: 18px;
+    margin-top: 2px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d1d1f;
+    white-space: nowrap;
 }
 
-.f1ip-placeholder-text {
+/* 롤 수 — DB 연동 후 채워지는 값 */
+.f1ip-side-roll {
+    display: inline-block;
+    min-width: 18px;
+    text-align: right;
+    font-weight: 700;
+}
+
+.f1ip-side-kg {
+    margin-top: 1px;
     font-size: 12.5px;
     font-weight: 600;
-    color: #aeaeb2;
-    line-height: 1.5;
+    color: #3a3a3c;
+    white-space: nowrap;
 }
+
+/* kg 값 — DB 연동 후 채워지는 값 */
+.f1ip-side-kg-val {
+    display: inline-block;
+    min-width: 42px;
+    text-align: right;
+    font-weight: 700;
+}
+
+.f1ip-side-empty { color: #c7c7cc; font-weight: 400; }
 
 /* 층(레이아웃) 외곽 프레임 — 이 안에 개별 패널(레이아웃 안의 레이아웃)이 들어갑니다 */
 .f1ip-floor-container {
@@ -460,7 +510,8 @@
     .f1ip-table { table-layout: auto; min-width: 620px; }
     .f1ip-plan-table { min-width: 0; }
 
-    .f1ip-inner-card { height: 200px; }
+    /* 세로로 쌓일 때는 블록 사이 여백을 고정 */
+    .f1ip-side-list { justify-content: flex-start; gap: 16px; }
 }
 
 @media (max-width: 640px) {

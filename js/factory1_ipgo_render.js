@@ -61,6 +61,46 @@
     };
 
     /* ────────────────────────────────────────────────────────────
+       우측 영역: 지종별 재고 블록
+       롤 수 / kg 값은 DB 연동 후 채워집니다. (지금은 '-' 표기)
+       추후 App.renderSideBlocks(data) 형태로 값만 넘기면 됩니다.
+       ──────────────────────────────────────────────────────────── */
+    App.renderSideBlocks = function (data) {
+        const host = document.getElementById('f1ipSideBody');
+        if (!host) return;
+
+        const values = data || {};
+
+        host.innerHTML = App.SIDE_BLOCKS.map(block => {
+            const blockVal = values[block.key] || {};
+
+            const titleHtml = block.title
+                .map(line => `<div class="f1ip-side-title">${line}</div>`)
+                .join('');
+
+            const specsHtml = block.specs.map(spec => {
+                const roll = blockVal[spec];
+                // 값이 없을 때는 "1576 - -롤" 처럼 대시가 겹쳐 보이므로 빈 칸으로 자리만 잡습니다.
+                const rollHtml = (roll === undefined || roll === null || roll === '')
+                    ? '&nbsp;'
+                    : Number(roll).toLocaleString();
+                return `<span class="f1ip-side-spec">${spec} - <span class="f1ip-side-roll" data-spec="${spec}">${rollHtml}</span>롤</span>`;
+            }).join('');
+
+            const kg = blockVal.kg;
+            const kgHtml = (kg === undefined || kg === null || kg === '')
+                ? '<span class="f1ip-side-empty">-</span>'
+                : Number(kg).toLocaleString();
+
+            return `<div class="f1ip-side-block" data-key="${block.key}">
+                ${titleHtml}
+                <div class="f1ip-side-specs">${specsHtml}</div>
+                <div class="f1ip-side-kg">(<span class="f1ip-side-kg-val">${kgHtml}</span> kg)</div>
+            </div>`;
+        }).join('');
+    };
+
+    /* ────────────────────────────────────────────────────────────
        스크롤 잠금 / 패널 간 스크롤 동기화
        ──────────────────────────────────────────────────────────── */
     function updateScrollLockUI() {
@@ -180,6 +220,12 @@
         state.selectedDate = dateStr;
         state.selectedPanel = panelIdx;
         state.selectedCol = colNum;
+
+        // 선택한 행의 날짜를 공통 헤더 날짜에 반영 (false = 데이터 재조회 없이 표시만 갱신)
+        // DB 연동 후에는 이 시점에 우측 영역도 해당 날짜 기준으로 다시 그리면 됩니다.
+        if (dateStr && App.headerApi && App.headerApi.setCurrentDate) {
+            App.headerApi.setCurrentDate(dateStr, false);
+        }
 
         // 행 강조는 두 패널 모두 적용 (같은 날짜 행이 함께 강조됨)
         PANELS.forEach(p => {
@@ -328,6 +374,22 @@
         return rows.map(fn).join('');
     }
 
+    /* 표에 보이는 행 수를 기준으로, 오늘 아래에 렌더링할 미래 날짜 수를 계산합니다.
+       (오늘이 '위에서 3번째 줄'에 오려면 그 아래로 화면을 채울 행이 있어야 합니다) */
+    function futureRowCount() {
+        const panel = document.getElementById(LEDGER.scrollId);
+        if (!panel) return 0;
+
+        const thead = panel.querySelector('thead');
+        const theadH = thead ? thead.getBoundingClientRect().height : 0;
+        const rowEl = panel.querySelector('tbody tr');
+        // 최초 렌더 전에는 가장 작은 행 높이(38px)로 가정 → 넉넉하게 계산됨
+        const rowH = (rowEl && rowEl.offsetHeight) || 38;
+
+        const visibleRows = Math.ceil((panel.clientHeight - theadH) / rowH);
+        return Math.max(0, visibleRows - App.TODAY_ROW_FROM_TOP) + 1;
+    }
+
     /* 레이아웃 확인용 빈 행 생성 — DB 연동 시 이 함수를 실제 조회로 교체 */
     function buildRows(from, to) {
         const rows = [];
@@ -350,7 +412,7 @@
 
         const today = todayStr();
         const minDate = addDays(today, -App.MAX_PAST_DAYS);
-        const maxDate = addDays(today, App.FUTURE_ROWS_BELOW_TODAY);
+        const maxDate = addDays(today, futureRowCount());
 
         let baseDate = state.baseDate || today;
         if (direction !== 'none' && ledgerBody.children.length > 0) {
@@ -390,14 +452,15 @@
                 if (body) body.innerHTML = htmlFor(p.idx, rows);
             });
 
-            // 오늘 행이 '아래에서 두 번째 줄'에 오도록 스크롤
-            // (오늘 아래로 FUTURE_ROWS_BELOW_TODAY 만큼의 행이 남습니다)
+            // 오늘 행이 '위에서 TODAY_ROW_FROM_TOP 번째 줄'에 오도록 스크롤
+            // (sticky 헤더 아래로 오늘 위에 TODAY_ROW_FROM_TOP - 1 개의 행이 보입니다)
             const todayRow = ledgerBody.querySelector(`tr[data-date="${today}"]`) || ledgerBody.lastElementChild;
             if (todayRow) {
                 applyScrollTwice(() => {
+                    const thead = ledgerPanel.querySelector('thead');
+                    const theadH = thead ? thead.getBoundingClientRect().height : 0;
                     const rowH = todayRow.offsetHeight;
-                    const keepBelow = App.FUTURE_ROWS_BELOW_TODAY * rowH;
-                    return todayRow.offsetTop + rowH + keepBelow - ledgerPanel.clientHeight;
+                    return todayRow.offsetTop - theadH - (App.TODAY_ROW_FROM_TOP - 1) * rowH;
                 }, true);
             }
 
@@ -440,6 +503,7 @@
         state.hasPrev = true;
         state.isInitialLoad = true;
 
+        App.renderSideBlocks();   // 우측 지종별 재고 — DB 연동 후 값 전달
         await App.loadRows('none');
         state.isChanged = false;
     };
