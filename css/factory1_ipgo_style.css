@@ -1,0 +1,405 @@
+/* factory1_ipgo_style.css — 1공장 입고 스타일 정의
+   (3공장 재고 종합 페이지 '입출고 대장' 좌측 패널(factory3_io.css의 .f3io-*)과
+    동일한 레이아웃/색상 규격을 따릅니다) */
+
+/* ================================================
+   [옵션 설정] 글로벌 CSS 변수
+   ================================================ */
+:root {
+    /*
+      [제목 좌측 여백 옵션]
+      '입고 대장' 제목의 좌측 여백입니다. 원하는 간격으로 px 값을 변경해 사용하세요.
+    */
+    --panel-title-left-offset: 12px;
+
+    /*
+      [날짜 열 너비 옵션]
+      좌측 고정(sticky) 날짜 열의 너비입니다.
+    */
+    --ipgo-date-col-width: 80px;
+}
+
+.f1ip-wrapper {
+    gap: 14px;
+}
+
+/* 층(레이아웃) 외곽 프레임 — 이 안에 개별 패널(레이아웃 안의 레이아웃)이 들어갑니다 */
+.f1ip-floor-container {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+    border: 1px solid #dcdce4;
+    margin-bottom: 0;
+}
+
+/* ================================================
+   패널 헤더 그리드 — 제목은 좌측 상단 고정
+   ================================================ */
+.panel-header-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: stretch;
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+}
+
+.panel-header-grid .header-left,
+.panel-header-grid .header-center,
+.panel-header-grid .header-right {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.panel-header-grid .header-left {
+    justify-content: flex-start;
+    padding-left: var(--panel-title-left-offset);
+}
+
+.panel-header-grid .header-center {
+    justify-content: center;
+}
+
+.panel-header-grid .header-right {
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.panel-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #000000 !important;
+    letter-spacing: -0.3px;
+    margin: 0;
+}
+
+/* 스크롤 ON/OFF 라벨 */
+.panel-toggle-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1d1d1f;
+    margin-right: 4px;
+    white-space: nowrap;
+}
+
+/* ================================================
+   스크롤 ON/OFF 토글 스위치
+   ================================================ */
+.f1-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 38px;
+    height: 22px;
+    margin: 0;
+}
+
+.f1-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.f1-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #e5e5ea;
+    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 22px;
+    border: 1px solid #d1d1d6;
+}
+
+.f1-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: #ffffff;
+    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+}
+
+.f1-toggle-switch input:checked + .f1-toggle-slider {
+    background-color: #007aff;
+    border-color: #007aff;
+}
+
+.f1-toggle-switch input:checked + .f1-toggle-slider:before {
+    transform: translateX(16px);
+}
+
+/* ================================================
+   유틸리티
+   ================================================ */
+.d-flex { display: flex; }
+.justify-content-end { justify-content: flex-end; }
+.align-items-center { align-items: center; }
+.gap-1 { gap: 4px; }
+.gap-2 { gap: 8px; }
+.fw-bold { font-weight: 700; }
+.text-dark { color: #000000 !important; }
+.text-muted { color: #8e8e93; }
+.text-center { text-align: center; }
+.small { font-size: 12px; }
+.py-4 { padding-top: 16px; padding-bottom: 16px; }
+.m-0 { margin: 0; }
+.me-1 { margin-right: 4px; }
+.mb-3 { margin-bottom: 14px; }
+
+/* ================================================
+   패널 바깥 컨테이너 / 개별 패널 (독립된 박스)
+   ================================================ */
+.f1ip-panels-outer {
+    display: flex;
+    gap: 16px;
+    align-items: stretch;
+    background: transparent;
+    overflow: visible;
+}
+
+.f1ip-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+    flex: 1;
+    background: #ffffff;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+}
+
+/* ================================================
+   스크롤 영역
+   ================================================ */
+.f1ip-scroll-area {
+    position: relative;
+    height: 396px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.f1ip-scroll-area::-webkit-scrollbar { display: none; }
+
+/* 스크롤 잠금 시 시각적 반응 및 마우스 커서 제어 */
+.f1ip-scroll-area.locked {
+    touch-action: none;
+    overflow-y: hidden !important;
+}
+
+/* ================================================
+   글래스 커서
+   ================================================ */
+.f1ip-cursor {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.10), inset 0 0 8px rgba(255,255,255,0.5);
+    border-radius: 6px;
+    z-index: 8;
+    opacity: 0;
+    transition:
+        top 0.12s cubic-bezier(0.23, 1, 0.32, 1),
+        left 0.12s cubic-bezier(0.23, 1, 0.32, 1),
+        width 0.10s ease-out,
+        height 0.10s ease-out,
+        opacity 0.10s ease-out;
+}
+.f1ip-cursor.active { opacity: 1; }
+
+/* ================================================
+   테이블
+   ================================================ */
+.f1ip-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+}
+
+/* 열 너비 — 날짜는 고정, 품목 12열은 남은 폭을 균등 분할 */
+.f1ip-table col.f1ip-col-date { width: var(--ipgo-date-col-width); }
+.f1ip-table col.f1ip-col-data { width: calc((100% - var(--ipgo-date-col-width)) / 12); }
+
+.f1ip-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #ffffff;
+}
+
+/* ─ 1레벨 헤더 행 ─ */
+.f1ip-thead-lv1 th {
+    padding: 10px 4px 6px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #1d1d1f;
+    text-align: center;
+    border-bottom: 1px solid #e0e0e0;
+    background: #ffffff;
+    white-space: nowrap;
+    height: 44px;
+    box-sizing: border-box;
+}
+
+/* ─ 그룹 헤더 (1레벨) ─ */
+.f1ip-group-th {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #1d1d1f;
+    padding: 10px 4px 6px;
+    background: #ffffff;
+    letter-spacing: -0.2px;
+}
+
+/* ─ 하위 구분이 없어 두 행을 병합한 1레벨 헤더 (예: 페이퍼 코리아) ─ */
+.f1ip-single-th {
+    vertical-align: middle;
+    white-space: normal !important;
+    line-height: 1.25;
+    font-size: 12px;
+    padding: 4px 2px !important;
+}
+
+/* ─ 2레벨 헤더 행 ─ */
+.f1ip-thead-lv2 th {
+    padding: 7px 2px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #636366;
+    text-align: center;
+    border-bottom: 1px solid #e0e0e0;
+    background: #ffffff;
+    white-space: nowrap;
+    height: 44px;
+    box-sizing: border-box;
+}
+
+.f1ip-leaf-th {
+    font-size: 12px;
+    font-weight: 700;
+    color: #636366 !important;
+    text-align: center;
+}
+
+/* ─ 그룹 구분선 ─ */
+.f1ip-sep {
+    border-left: 1px solid #e0e0e0 !important;
+}
+
+/* ─ 데이터 셀 ─ */
+.f1ip-table td {
+    padding: 9px 3px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px solid #ebebeb;
+    color: #1d1d1f;
+    transition: background 0.12s;
+    height: 44px;
+    box-sizing: border-box;
+}
+
+/* ─ 날짜 헤더 & 셀 (좌측 고정) ─ */
+.f1ip-date-th {
+    position: sticky;
+    left: 0;
+    background: #ffffff !important;
+    z-index: 11;
+    text-align: center;
+    min-width: var(--ipgo-date-col-width) !important;
+    width: var(--ipgo-date-col-width) !important;
+    border-right: 1px solid #e0e0e0 !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    font-size: 13px;
+    font-weight: 800;
+    color: #1d1d1f;
+    box-sizing: border-box;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.f1ip-date-td {
+    position: sticky;
+    left: 0;
+    background: #ffffff;
+    z-index: 5;
+    text-align: center;
+    white-space: nowrap;
+    border-right: 1px solid #e0e0e0 !important;
+    font-size: 12px;
+    font-weight: 700;
+    min-width: var(--ipgo-date-col-width) !important;
+    width: var(--ipgo-date-col-width) !important;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+/* ================================================
+   오늘 / 선택 행 강조
+   ================================================ */
+.f1ip-row-today td { background: #e8f4fd !important; }
+.f1ip-row-today .f1ip-date-td { background: #bbdefb !important; }
+.f1ip-selected-row td { background: #f4f4f8 !important; }
+.f1ip-selected-row .f1ip-date-td { background: #ebebf0 !important; }
+.f1ip-row-today.f1ip-selected-row td { background: #daedf9 !important; }
+.f1ip-row-today.f1ip-selected-row .f1ip-date-td { background: #bbd8f0 !important; }
+
+/* 활성화된 헤더 — 선택한 그룹(1레벨) + 선택한 열(2레벨) 두 칸만 강조 */
+.f1ip-thead-lv1 th.f1ip-header-active,
+.f1ip-thead-lv2 th.f1ip-header-active,
+.f1ip-group-th.f1ip-header-active {
+    background-color: rgba(255, 160, 50, 0.18) !important;
+    color: #c05a00 !important;
+}
+
+.f1ip-selected-cell {
+    position: relative;
+    z-index: 10;
+    font-weight: 900 !important;
+    color: #000000 !important;
+}
+
+/* ─ 색상 / 호버 ─ */
+.f1ip-sat { color: #007aff !important; }
+.f1ip-sun { color: #ff3b30 !important; }
+.f1ip-empty { color: #c7c7cc; font-weight: 400; }
+.f1ip-table tbody tr:not(.f1ip-selected-row):hover td { background: #f7f7fa; }
+.f1ip-data-cell { cursor: pointer; }
+
+/* ================================================
+   반응형
+   ================================================ */
+@media (max-width: 1100px) {
+    .f1ip-scroll-area { overflow-x: auto; }
+    .f1ip-table { table-layout: auto; min-width: 900px; }
+}
+
+@media (max-width: 640px) {
+    .f1ip-floor-container { padding: 14px; border-radius: 14px; }
+    .panel-title { font-size: 16px; }
+
+    .f1ip-date-th,
+    .f1ip-date-td {
+        min-width: 62px !important;
+        width: 62px !important;
+        font-size: 11px;
+    }
+
+    .f1ip-table td {
+        font-size: 12px;
+        height: 38px;
+    }
+
+    .f1ip-thead-lv1 th,
+    .f1ip-thead-lv2 th,
+    .f1ip-group-th,
+    .f1ip-leaf-th {
+        font-size: 11px !important;
+    }
+}
