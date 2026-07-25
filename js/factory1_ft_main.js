@@ -55,6 +55,13 @@
 
             App.bindInputFormatters();
             App.bindKeyboardNavigation();
+
+            // 지고 재고 단위 토글 버튼 바인딩
+            const jigoToggleBtn = document.getElementById('f1FtJigoUnitToggle');
+            if (jigoToggleBtn) {
+                jigoToggleBtn.addEventListener('click', App.toggleJigoUnit);
+            }
+
             App.setReadOnlyMode(true); // 페이지 진입 시 항상 보기 모드로 시작
 
             App.loadData(App.headerApi.getCurrentDate());

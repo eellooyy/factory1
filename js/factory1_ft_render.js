@@ -137,6 +137,39 @@
 
     };
 
+    // ── 지고 재고 단위 토글 (R/L ↔ KG) ──────────────────────────────────────
+    App.toggleJigoUnit = function () {
+        App.state.jigoUnit = App.state.jigoUnit === 'RL' ? 'KG' : 'RL';
+        App.updateJigoDisplay();
+
+        const btn = App.elements.wrapper
+            ? App.elements.wrapper.querySelector('#f1FtJigoUnitToggle')
+            : null;
+        if (btn) {
+            btn.textContent = App.state.jigoUnit === 'KG' ? 'R/L' : 'KG';
+            btn.classList.toggle('active', App.state.jigoUnit === 'KG');
+        }
+    };
+
+    // ── 지고 재고 값 표시 업데이트 ────────────────────────────────────────────
+    App.updateJigoDisplay = function () {
+        if (!App.elements.wrapper) return;
+
+        App.elements.wrapper.querySelectorAll('.f1ft-input[data-field="jigo"]').forEach(input => {
+            if (!input.value.trim()) return;
+            const group = input.dataset.group;
+            const rawValue = App.utils.parseJigoNum(input.value);
+
+            if (App.state.jigoUnit === 'KG') {
+                const multiplier = App.JIGO_WEIGHT_MULTIPLIER[group] || 0;
+                const kgValue = rawValue * multiplier;
+                input.value = `${App.utils.formatNum(kgValue)} KG`;
+            } else {
+                input.value = `${App.utils.formatNum(rawValue)} R/L`;
+            }
+        });
+    };
+
     // ── 급지 재고 합계 업데이트 (endValues 객체를 직접 받아 날짜별 명시 처리) ──
     App.updateGeupjiTotals = function (endValues) {
         App.GROUPS.forEach(group => {

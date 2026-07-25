@@ -73,7 +73,8 @@
     App.state = {
         currentDate: null,
         isEditMode: false,
-        isChanged: false
+        isChanged: false,
+        jigoUnit: 'RL' // 'RL' or 'KG'
     };
 
     // headerApi 플레이스홀더 (factory1_ft_main.js 에서 주입)
