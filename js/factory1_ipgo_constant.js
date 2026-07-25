@@ -26,7 +26,8 @@
             'jeonju-bonji':  '전주본지',
             'jeonju-jeonja': '전주전자',
             'daehan-c':      '대한제지',
-            'ft':            'F.T'
+            'ft':            'F.T',
+            'byeolswae':     '별쇄 계획표'
         },
 
         /* ── 데이터 열 정의 ────────────────────────────────────────
@@ -50,9 +51,28 @@
             { col: 12, group: 'ft',            label: 'D' }
         ],
 
+        // ── 우측 패널: 별쇄 계획표 열 정의 ────────────────────────
+        PLAN_COLUMNS: [
+            { col: 1, group: 'byeolswae', label: '계획' },
+            { col: 2, group: 'byeolswae', label: '수정1' },
+            { col: 3, group: 'byeolswae', label: '수정2' }
+        ],
+
         // 한 번에 불러오는 일수 / 과거로 조회 가능한 최대치
         RANGE: 15,
         MAX_PAST_DAYS: 365,
+
+        // 오늘 날짜 아래로 함께 보여줄 행 수
+        // 1이면 오늘 다음날 한 줄이 아래에 남아 오늘이 '아래에서 두 번째 줄'에 위치합니다.
+        FUTURE_ROWS_BELOW_TODAY: 1,
+
+        /* ── 패널 정의 (좌: 입고 대장 / 우: 별쇄 계획표) ───────────
+           두 패널은 스크롤이 서로 동기화되어 같이 움직입니다.
+           ──────────────────────────────────────────────────────── */
+        PANELS: [
+            { idx: 1, scrollId: 'f1ipScrollPanel',     bodyId: 'f1ipBody',     cursorId: 'f1ipCursor' },
+            { idx: 2, scrollId: 'f1ipPlanScrollPanel', bodyId: 'f1ipPlanBody', cursorId: 'f1ipPlanCursor' }
+        ],
 
         state: {
             // 과거 DB 스크롤 허용 여부 (기본 OFF: 잠금 상태)
@@ -63,8 +83,10 @@
             hasNext: true,
             hasPrev: true,
             isInitialLoad: true,
+            syncLock: false,
 
             selectedDate: null,
+            selectedPanel: null,
             selectedCol: null,
 
             isChanged: false

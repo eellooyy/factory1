@@ -87,7 +87,8 @@
         </div>
 
         <div class="f1ip-panels-outer">
-            <div class="f1ip-panel">
+            <!-- 좌측: 입고 대장 -->
+            <div class="f1ip-panel f1ip-panel-ledger">
                 <div class="f1ip-scroll-area locked" id="f1ipScrollPanel">
                     <div id="f1ipCursor" class="f1ip-cursor"></div>
                     <table class="f1ip-table">
@@ -122,6 +123,28 @@
                             </tr>
                         </thead>
                         <tbody id="f1ipBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 우측: 별쇄 계획표 (좌측 입고 대장과 스크롤이 동기화됩니다) -->
+            <div class="f1ip-panel f1ip-panel-plan">
+                <div class="f1ip-scroll-area locked" id="f1ipPlanScrollPanel">
+                    <div id="f1ipPlanCursor" class="f1ip-cursor"></div>
+                    <table class="f1ip-table f1ip-plan-table">
+                        <thead>
+                            <tr class="f1ip-thead-lv1">
+                                <!-- 날짜 열은 데스크톱에서는 숨기고, 패널이 세로로 쌓이는 좁은 화면에서만 표시 -->
+                                <th class="f1ip-date-th f1ip-responsive-date" rowspan="2">날짜</th>
+                                <th colspan="3" class="f1ip-group-th" data-group="byeolswae">별쇄 계획표</th>
+                            </tr>
+                            <tr class="f1ip-thead-lv2">
+                                <th class="f1ip-leaf-th" data-col="1" data-parent-group="byeolswae">계획</th>
+                                <th class="f1ip-leaf-th" data-col="2" data-parent-group="byeolswae">수정1</th>
+                                <th class="f1ip-leaf-th" data-col="3" data-parent-group="byeolswae">수정2</th>
+                            </tr>
+                        </thead>
+                        <tbody id="f1ipPlanBody"></tbody>
                     </table>
                 </div>
             </div>

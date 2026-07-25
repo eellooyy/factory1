@@ -166,12 +166,15 @@
     flex-direction: column;
     overflow: hidden;
     min-width: 0;
-    flex: 1;
     background: #ffffff;
     border: 1px solid #e5e5ea;
     border-radius: 12px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.03);
 }
+
+/* 패널 비율 — 좌측 입고 대장(12열) : 우측 별쇄 계획표(3열) */
+.f1ip-panel-ledger { flex: 4; }
+.f1ip-panel-plan   { flex: 1.2; }
 
 /* ================================================
    스크롤 영역
@@ -225,6 +228,12 @@
 /* 열 너비 — 날짜는 고정, 품목 12열은 남은 폭을 균등 분할 */
 .f1ip-table col.f1ip-col-date { width: var(--ipgo-date-col-width); }
 .f1ip-table col.f1ip-col-data { width: calc((100% - var(--ipgo-date-col-width)) / 12); }
+
+/* 별쇄 계획표(우측 패널) — 3개 열이 남은 폭을 균등 분할 (colgroup 없이 colspan으로 자동 분배) */
+.f1ip-plan-table { table-layout: fixed; }
+
+/* 우측 패널의 날짜 열 — 데스크톱에서는 숨김 (좌측 패널과 행이 동기화되므로 불필요) */
+.f1ip-responsive-date { display: none; }
 
 .f1ip-table thead {
     position: sticky;
@@ -376,8 +385,14 @@
    반응형
    ================================================ */
 @media (max-width: 1100px) {
+    /* 두 패널을 세로로 쌓고, 우측 패널에도 날짜 열을 표시 */
+    .f1ip-panels-outer { flex-direction: column; }
+    .f1ip-panel-ledger, .f1ip-panel-plan { flex: none; width: 100%; }
+    .f1ip-responsive-date { display: table-cell !important; }
+
     .f1ip-scroll-area { overflow-x: auto; }
     .f1ip-table { table-layout: auto; min-width: 900px; }
+    .f1ip-plan-table { min-width: 0; }
 }
 
 @media (max-width: 640px) {
