@@ -167,11 +167,14 @@
             }
         }
 
+        // 헤더 강조는 "선택된 패널의 1레벨 헤더 + 선택한 열의 2레벨 헤더" 두 칸만
         const scrollPanel = document.getElementById(`compScrollPanel${panelIdx}`);
         if (scrollPanel && colNum !== null) {
             const groupTh = scrollPanel.querySelector('.comp-group-th');
             if (groupTh) groupTh.classList.add('comp-header-active');
-            scrollPanel.querySelectorAll('.comp-leaf-th').forEach(th => th.classList.add('comp-header-active'));
+
+            const leafTh = scrollPanel.querySelector(`.comp-leaf-th[data-col="${colNum}"]`);
+            if (leafTh) leafTh.classList.add('comp-header-active');
         }
     }
 

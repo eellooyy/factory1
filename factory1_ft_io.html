@@ -192,18 +192,25 @@
                 </div>
             </div>
 
-            <!-- 레이아웃 안의 레이아웃 프레임 -->
+            <!-- 레이아웃 안의 레이아웃 프레임
+                 (헤더 테이블과 데이터 테이블을 분리해 스크롤바가 DB 영역에만 표시되도록 합니다) -->
             <div class="inner-layout-card">
-                <div class="table-scroll-wrapper" style="max-height: 180px; min-height: 180px; overflow-y: auto;">
-                    <table class="custom-compact-table text-center m-0">
+                <div class="io-table-head">
+                    <table class="custom-compact-table io-split-table text-center m-0">
+                        <colgroup><col class="io-col-date"><col><col><col></colgroup>
                         <thead>
                             <tr>
-                                <th style="width: 34%; text-align: center;">일자</th>
-                                <th style="width: 22%; text-align: center;">A</th>
-                                <th style="width: 22%; text-align: center;">C</th>
-                                <th style="width: 22%; text-align: center;">D</th>
+                                <th>일자</th>
+                                <th>A</th>
+                                <th>C</th>
+                                <th>D</th>
                             </tr>
                         </thead>
+                    </table>
+                </div>
+                <div class="table-scroll-wrapper io-table-body">
+                    <table class="custom-compact-table io-split-table text-center m-0">
+                        <colgroup><col class="io-col-date"><col><col><col></colgroup>
                         <tbody id="in-body">
                             <tr><td colspan="4" class="py-4 text-center text-muted small">불러오는 중...</td></tr>
                         </tbody>
@@ -228,18 +235,25 @@
                 </div>
             </div>
 
-            <!-- 레이아웃 안의 레이아웃 프레임 -->
+            <!-- 레이아웃 안의 레이아웃 프레임
+                 (헤더 테이블과 데이터 테이블을 분리해 스크롤바가 DB 영역에만 표시되도록 합니다) -->
             <div class="inner-layout-card">
-                <div class="table-scroll-wrapper" style="max-height: 180px; min-height: 180px; overflow-y: auto;">
-                    <table class="custom-compact-table text-center m-0">
+                <div class="io-table-head">
+                    <table class="custom-compact-table io-split-table text-center m-0">
+                        <colgroup><col class="io-col-date"><col><col><col></colgroup>
                         <thead>
                             <tr>
-                                <th style="width: 34%; text-align: center;">월</th>
-                                <th style="width: 22%; text-align: center;">A</th>
-                                <th style="width: 22%; text-align: center;">C</th>
-                                <th style="width: 22%; text-align: center;">D</th>
+                                <th>월</th>
+                                <th>A</th>
+                                <th>C</th>
+                                <th>D</th>
                             </tr>
                         </thead>
+                    </table>
+                </div>
+                <div class="table-scroll-wrapper io-table-body">
+                    <table class="custom-compact-table io-split-table text-center m-0">
+                        <colgroup><col class="io-col-date"><col><col><col></colgroup>
                         <tbody id="out-body">
                             <tr><td colspan="4" class="py-4 text-center text-muted small">불러오는 중...</td></tr>
                         </tbody>

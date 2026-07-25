@@ -11,6 +11,13 @@
       추후 원하는 간격으로 px 값을 변경해 사용하세요. (예: 4px, 12px, 20px 등)
     */
     --panel-title-left-offset: 12px;
+
+    /*
+      [하단 카드 스크롤바 폭 옵션]
+      '입고 현황', '월별 출고 현황' 데이터 영역 스크롤바의 폭입니다.
+      헤더 테이블의 우측 여백도 이 값으로 함께 맞춰지므로 열 정렬이 유지됩니다.
+    */
+    --io-scrollbar-width: 8px;
 }
 
 .f1ftio-wrapper {
@@ -280,12 +287,58 @@
     border-bottom: none !important;
 }
 
-/* 스크롤바 숨김 및 세로 스크롤 허용 */
-.table-scroll-wrapper {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+/* ────────────────────────────────────────────────────────────
+   하단 카드: 헤더 테이블 / 데이터 테이블 분리 구조
+   스크롤바가 헤더 영역을 침범하지 않도록 thead 를 스크롤 영역 밖으로 빼고,
+   두 테이블의 열 너비를 colgroup + table-layout:fixed 로 고정합니다.
+   ──────────────────────────────────────────────────────────── */
+.io-split-table { table-layout: fixed; }
+.io-split-table .io-col-date { width: 34%; }
+.io-split-table col:not(.io-col-date) { width: 22%; }
+
+/* 헤더 테이블 — 데이터 영역과 동일한 스크롤바 폭을 '투명하게' 점유시켜
+   브라우저 종류에 상관없이 열 위치가 1px 오차 없이 맞도록 합니다. */
+.io-table-head {
+    background: #ffffff;
+    border-bottom: 1px solid #e5e5ea;   /* 구분선은 카드 전체 폭으로 그림 */
+    overflow-y: scroll;                 /* gutter 확보 전용 — 내용은 넘치지 않음 */
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
 }
-.table-scroll-wrapper::-webkit-scrollbar { display: none; }
+.io-table-head::-webkit-scrollbar { width: var(--io-scrollbar-width); }
+.io-table-head::-webkit-scrollbar-thumb,
+.io-table-head::-webkit-scrollbar-track { background: transparent; }
+.io-table-head .custom-compact-table th {
+    border-bottom: none !important;
+}
+
+/* 데이터 테이블(스크롤 영역) — 스크롤바가 항상 같은 폭을 점유하도록 gutter 고정 */
+.io-table-body {
+    max-height: 180px;
+    min-height: 180px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
+}
+
+/* 스크롤바 디자인 (Apple 계열 회색 — 카드 톤에 맞춘 얇은 형태) */
+.io-table-body { scrollbar-width: thin; scrollbar-color: #c7c7cc transparent; }
+.io-table-body::-webkit-scrollbar {
+    width: var(--io-scrollbar-width);
+}
+.io-table-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+.io-table-body::-webkit-scrollbar-thumb {
+    background-color: #c7c7cc;
+    border-radius: 8px;
+    border: 2px solid transparent;   /* 실제 thumb 폭을 4px로 얇게 보이도록 */
+    background-clip: padding-box;
+}
+.io-table-body::-webkit-scrollbar-thumb:hover {
+    background-color: #a1a1a6;
+}
 
 /* ========================================
    1층 4단 대조 테이블 (헤더 틈새 및 스크롤 잔상 완전 방지)
