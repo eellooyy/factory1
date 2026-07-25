@@ -14,6 +14,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
     <script src="js/common_ui.js" defer></script>
 </head>
@@ -58,8 +60,8 @@
             <button id="f1IljiTodayBtn" class="gf3-action-btn today-btn">오늘</button>
             <button id="f1IljiEditBtn" class="gf3-action-btn edit-btn" disabled>수정</button>
             <button id="f1IljiSaveBtn" class="gf3-action-btn save-btn" disabled>저장</button>
-            <button id="f1IljiExcelBtn" class="gf3-action-btn excel-btn">
-                <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">table_view</span>엑셀 출력
+            <button id="f1IljiExcelBtn" class="gf3-action-btn f3i-pdf-btn">
+                <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">picture_as_pdf</span>PDF 저장
             </button>
         </div>
     </div>
@@ -271,6 +273,7 @@
 
 <script src="js/common_utils.js"></script>
 <script src="js/common_header.js"></script>
+<script src="js/common_pdf.js"></script>
 <script src="js/factory1_ilji_constant.js"></script>
 <script src="js/factory1_ilji_api.js"></script>
 <script src="js/factory1_ilji_render.js"></script>

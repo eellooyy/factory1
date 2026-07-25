@@ -29,7 +29,7 @@ window.CommonHeader = (function() {
         setTimeout(() => {
             elements.excelBtn.innerHTML = btnInner;
             elements.excelBtn.disabled = false;
-            alert('엑셀 저장 기능은 준비 중입니다.');
+            alert('PDF 저장 기능은 준비 중입니다.');
         }, 400);
     }
 

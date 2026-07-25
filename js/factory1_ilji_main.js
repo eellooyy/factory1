@@ -22,7 +22,28 @@
                     App.setReadOnlyMode(!isEdit);
                 },
                 onExportExcel: function () {
-                    alert('엑셀 출력 기능은 DB 연결을 정리한 뒤 활성화할 예정입니다.');
+                    const pdfBtn = App.headerApi.elements.excelBtn;
+                    const btnInner = pdfBtn.innerHTML;
+                    window.CommonPdf.exportElementToPDF({
+                        target: document.body,
+                        filename: `1공장_급지일지_${App.headerApi.getCurrentDate()}.pdf`,
+                        backgroundColor: '#f5f5f7',
+                        hideDuringCapture: [
+                            document.getElementById('f3iNoticeTicker'),
+                            App.headerApi.elements.todayBtn,
+                            App.headerApi.elements.editBtn,
+                            App.headerApi.elements.saveBtn,
+                            pdfBtn
+                        ],
+                        onBusy: function () {
+                            pdfBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">hourglass_empty</span>처리중...';
+                            pdfBtn.disabled = true;
+                        },
+                        onDone: function () {
+                            pdfBtn.innerHTML = btnInner;
+                            pdfBtn.disabled = false;
+                        }
+                    });
                 }
             });
             if (!App.headerApi) return;
