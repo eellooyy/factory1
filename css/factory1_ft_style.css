@@ -18,24 +18,19 @@
     width: 100%;
 }
 
-/* 1.5층: 급지 재고 합계 — compact, 내용 너비만큼만 차지 */
-.f1ft-row-mid {
-    align-self: flex-start;
-}
-
-.f1ft-row-mid .f1ft-td {
-    text-align: center;
-    font-size: 14px;
-    color: #1d1d1f;
-}
-
-/* 2층: 두 개의 요약 표를 깔끔하게 분할 배치 (대조표 57% : 지고재고 41%) */
+/* 2층: 대조 표 48% · 급지 재고 합계 20% · 지고 재고 28% (gap 2% × 2 = 4%) */
 .f1ft-row-2 {
     display: grid;
-    grid-template-columns: 57% 41%;
+    grid-template-columns: 48% 20% 28%;
     gap: 2%;
     width: 100%;
     align-items: start;
+}
+
+.f1ft-geupji-total-cell {
+    text-align: center;
+    font-size: 14px;
+    color: #1d1d1f;
 }
 
 .f1ft-box {
@@ -170,7 +165,7 @@
     color: #c62828;
 }
 
-@media (max-width: 850px) {
+@media (max-width: 900px) {
     /* 화면 폭이 좁아질 경우 2층 레이아웃도 수직 적층으로 전환 */
     .f1ft-row-2 {
         grid-template-columns: 1fr;
