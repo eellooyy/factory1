@@ -54,6 +54,9 @@
 
     // ── 자동 수식 계산 ────────────────────────────────────────────────────────
     App.calculateFields = function () {
+        // 편집 중 실시간 급지 재고 합계 갱신 (loadData 시에는 updateGeupjiTotals가 직접 호출됨)
+        App.updateGeupjiTotals(App.collectInputData('end', false));
+
         const groups = { A: 0, C: 0, D: 0 };
         const validCounts = { A: 0, C: 0, D: 0 };
 
@@ -132,7 +135,10 @@
             }
         });
 
-        // 급지 재고 합계 업데이트 (사용 후 잔량 기준 KG)
+    };
+
+    // ── 급지 재고 합계 업데이트 (endValues 객체를 직접 받아 날짜별 명시 처리) ──
+    App.updateGeupjiTotals = function (endValues) {
         App.GROUPS.forEach(group => {
             const span = App.elements.wrapper
                 ? App.elements.wrapper.querySelector(`.f1ft-geupji-total[data-group="${group}"]`)
@@ -142,9 +148,9 @@
             let totalRolls = 0;
             let hasValue = false;
             cols.forEach(col => {
-                const endInput = getInput('end', col);
-                if (endInput && endInput.value.trim() !== '') {
-                    totalRolls += App.utils.parseNum(endInput.value);
+                const val = endValues ? endValues[col] : undefined;
+                if (val !== undefined && val !== null && val !== '') {
+                    totalRolls += App.utils.parseNum(val);
                     hasValue = true;
                 }
             });

@@ -79,6 +79,9 @@
             if (input) input.value = App.utils.formatNum(val);
         });
 
+        // 급지 재고 합계: 해당 날짜의 end_values를 직접 전달
+        App.updateGeupjiTotals(endValues);
+
         // ERP 입력량
         const erpUsage = todayData.erp_usage || {};
         Object.entries(erpUsage).forEach(([group, val]) => {
