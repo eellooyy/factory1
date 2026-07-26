@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1공장 재고 종합</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <link rel="stylesheet" href="css/common_header.css">
+    <link rel="stylesheet" href="css/factory1_inventory_io_style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+    <script src="js/common_ui.js" defer></script>
+</head>
+<body data-notice-scope="factory1">
+
+<div class="gf3-wrapper" data-page-module="Factory1InventoryIoModule" style="padding-bottom: 0;">
+    <div class="gf3-header">
+        <div class="gf3-title-wrap">
+            <span class="material-symbols-outlined gf3-hamburger">menu</span>
+            <span class="gf3-main-title">1공장 재고 종합</span>
+
+            <div class="gf3-dropdown">
+                <a href="factory1_inventory_io.html" class="active">재고 종합</a>
+                <a href="factory1_ipgo.html">1공장 입고</a>
+                <div class="gf3-dropdown-item">
+                    <span class="gf3-dropdown-label">
+                        1공장 FT
+                        <span class="material-symbols-outlined gf3-submenu-arrow">chevron_right</span>
+                    </span>
+                    <div class="gf3-submenu">
+                        <a href="factory1_ft.html">FT 일지</a>
+                        <a href="factory1_ft_io.html">FT 재고 종합</a>
+                    </div>
+                </div>
+                <a href="factory1_ilji.html">1공장 급지 일지</a>
+                <a href="https://eellooyy.github.io/factory3/" target="_blank">3공장으로 이동</a>
+            </div>
+        </div>
+
+        <div class="f3i-notice-ticker" id="f3iNoticeTicker" title="클릭하시면 전체 공지를 확인하실 수 있습니다.">
+            <div class="f3i-ticker-wrapper" id="f3iTickerWrapper"></div>
+        </div>
+
+        <div class="gf3-controls">
+            <div class="gf3-nav-group">
+                <button id="f1InvPrevBtn" class="gf3-icon-btn" title="이전 날짜"><span class="material-symbols-outlined">chevron_left</span></button>
+                <div class="gf3-cal-wrap" id="f1InvCalendarWrap">
+                    <span id="f1InvDateText" class="gf3-date-text cursor-pointer"></span>
+                    <input type="text" id="f1InvFlatpickr" style="display: none;">
+                </div>
+                <button id="f1InvNextBtn" class="gf3-icon-btn" title="다음 날짜"><span class="material-symbols-outlined">chevron_right</span></button>
+            </div>
+
+            <button id="f1InvTodayBtn" class="gf3-action-btn today-btn">오늘</button>
+            <button id="f1InvEditBtn" class="gf3-action-btn edit-btn" disabled>수정</button>
+            <button id="f1InvSaveBtn" class="gf3-action-btn save-btn" disabled>저장</button>
+            <button id="f1InvExcelBtn" class="gf3-action-btn f3i-pdf-btn">
+                <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">picture_as_pdf</span>PDF 저장
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="gf3-wrapper f1inv-wrapper" data-page-module="Factory1InventoryIoModule" style="padding-top: 16px;">
+
+    <!-- 1층: 저장위치별 재고 종합표 (ERP 재고 · 전일 입출 · 실재고 대조) -->
+    <div class="f1inv-floor-container">
+        <div class="panel-header-grid mb-3">
+            <div class="header-left">
+                <span class="panel-title">재고 종합</span>
+                <span class="panel-subtitle" id="f1invSubtitle"></span>
+            </div>
+            <div class="header-center text-center"></div>
+            <div class="header-right">
+                <div class="f1inv-legend">
+                    <span class="f1inv-legend-item"><i class="f1inv-legend-dot plus"></i>실재고 &gt; ERP재고</span>
+                    <span class="f1inv-legend-item"><i class="f1inv-legend-dot minus"></i>실재고 &lt; ERP재고</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 레이아웃 안의 레이아웃 프레임 (표 전용 카드) -->
+        <div class="inner-layout-card">
+            <div class="f1inv-table-scroll">
+                <table class="f1inv-table">
+                    <colgroup>
+                        <col class="f1inv-col-loc">   <!-- 저장위치 -->
+                        <col class="f1inv-col-code">  <!-- 품목코드 -->
+                        <col>                         <!-- 품목명 (남은 공간 전부) -->
+                        <col class="f1inv-col-erp">   <!-- ERP 재고 -->
+                        <col class="f1inv-col-io">    <!-- 전일 입고 -->
+                        <col class="f1inv-col-io">    <!-- 전일 사용 -->
+                        <col class="f1inv-col-real">  <!-- B5 -->
+                        <col class="f1inv-col-real">  <!-- B6 -->
+                        <col class="f1inv-col-real">  <!-- B6(주행지) -->
+                        <col class="f1inv-col-sum">   <!-- 합계 -->
+                        <col class="f1inv-col-diff">  <!-- 실재고 - ERP재고 -->
+                    </colgroup>
+                    <thead>
+                        <tr class="f1inv-thead-lv1">
+                            <th>저장위치</th>
+                            <th colspan="2" class="f1inv-sep">품목</th>
+                            <th rowspan="2" class="f1inv-sep">ERP 재고</th>
+                            <th rowspan="2">전일 입고</th>
+                            <th rowspan="2">전일 사용</th>
+                            <th colspan="4" class="f1inv-sep">실재고</th>
+                            <th rowspan="2" class="f1inv-sep">실재고<br>- ERP재고</th>
+                        </tr>
+                        <tr class="f1inv-thead-lv2">
+                            <th>저장위치명</th>
+                            <th class="f1inv-sep">품목코드</th>
+                            <th>품목명</th>
+                            <th class="f1inv-sep">B5</th>
+                            <th>B6</th>
+                            <th>B6(주행지)</th>
+                            <th>합계</th>
+                        </tr>
+                    </thead>
+                    <tbody id="f1invBody">
+                        <tr class="f1inv-placeholder"><td colspan="11">불러오는 중...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="f3iNoticeModal" class="f3i-nmodal-overlay">
+    <div class="f3i-nmodal-box">
+        <div class="f3i-nmodal-header">
+            <button id="f3iNoticeBackBtn" class="f3i-nmodal-back-btn" style="display: none;">
+                <span class="material-symbols-outlined">arrow_back</span> 뒤로가기
+            </button>
+            <span id="f3iNoticeModalTitle" class="f3i-nmodal-title">전체 공지사항 목록</span>
+            <span id="f3iNoticeCloseBtn" class="material-symbols-outlined f3i-nmodal-close">close</span>
+        </div>
+        <div class="f3i-nmodal-body" id="f3iNoticeModalBody"></div>
+        <div class="f3i-nmodal-footer-info" id="f3iMasterNoticeInfo" style="display: none;">
+            ⚠️ 마스터 모드: 글이나 HTML 태그를 편집한 후 상단 [저장] 버튼을 누르면 확정됩니다.
+        </div>
+    </div>
+</div>
+
+<script src="js/common_utils.js"></script>
+<script src="js/common_header.js"></script>
+<script src="js/common_pdf.js"></script>
+<script src="js/factory1_inventory_io_constant.js"></script>
+<script src="js/factory1_inventory_io_render.js"></script>
+<script src="js/factory1_inventory_io_main.js"></script>
+</body>
+</html>
