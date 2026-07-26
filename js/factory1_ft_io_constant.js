@@ -19,6 +19,11 @@
         // 실재고 및 대조: log_date / item_name / actual_stock_kg / contrast_qty
         STOCK_VIEW: 'v_factory1_ft_actual_stock',
 
+        // 입고 현황: 1공장 입고(factory1_ipgo)의 F.T 품목을 그대로 씁니다.
+        // 뷰에서 inbound_qty(= roll_qty × roll_kg)까지 계산되어 나옵니다.
+        IPGO_VIEW: 'v_factory1_ipgo',
+        FT_ITEMS: { ft_a: 'A', ft_c: 'C', ft_d: 'D' },
+
         GROUPS: ['A', 'C', 'D'],
 
         WD_KR: ['일', '월', '화', '수', '목', '금', '토'],
@@ -28,10 +33,9 @@
         COMP_RANGE: 15,
         COMP_MAX_PAST_DAYS: 365,
 
-        // 2층 좌측 입고 현황 — 한 번에 불러오는 개수 / 과거로 조회 가능한 최대치
-        // (입고는 아직 실제 DB 미연동 상태입니다.)
-        INBOUND_BATCH: 5,        // 5건이면 표시 영역(180px)을 넘겨 스크롤바가 노출됨
-        INBOUND_MAX_DAYS: 90,      // 입고 현황: 최근 90일까지 과거 스크롤 허용
+        // 2층 좌측 입고 현황 — 입고가 실제로 있었던 날만 표시합니다.
+        // 월 1~2회 발생하는 데이터라 연 단위로 한 번에 조회하며,
+        // 월별 출고 현황과 마찬가지로 과거 스크롤 페이징이 없습니다.
 
         state: {
             // 과거 DB 스크롤 허용 여부 (기본 OFF: 잠금 상태)
@@ -48,12 +52,10 @@
             selectedCol: null,
             syncLock: false,
 
-            // 우측 상단: 입고 현황 (연도 단위 자체 네비게이션 + 과거 스크롤 페이징)
+            // 우측 상단: 입고 현황 (연도 단위 네비게이션 — 해당 연도의 입고일 전체)
             inYear: today.getFullYear(),
             unit: 'RL',
-            inOffset: 0,       // 현재까지 불러온 "오늘 기준 며칠 전"까지의 offset (다음 로드 시작점)
             inLoading: false,
-            inHasMore: true,
 
             // 우측 하단: 월별 출고 현황 — 연도 단위 네비게이션 (해당 연도 1~12월 합산)
             outYear: today.getFullYear(),

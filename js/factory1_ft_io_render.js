@@ -388,7 +388,7 @@
        ──────────────────────────────────────────────────────────── */
     function rowHtmlInbound(r) {
         return `
-            <tr data-offset="${r.day_offset}">
+            <tr data-date="${r.date}">
                 <td class="fw-bold">${r.date_display}</td>
                 <td class="unit-cell text-center" data-rl="${r.A_rl}" data-kg="${r.A_kg}"></td>
                 <td class="unit-cell text-center" data-rl="${r.C_rl}" data-kg="${r.C_kg}"></td>
@@ -402,18 +402,16 @@
         if (yearTxt) yearTxt.textContent = `${state.inYear}년`;
         if (!body) return;
 
-        state.inOffset = 0;
-        state.inHasMore = true;
-        state.inLoading = false;
+        if (state.inLoading) return;
+        state.inLoading = true;
 
         try {
-            const data = await App.fetchInboundList(0, App.INBOUND_BATCH);
+            // 해당 연도에서 실제 입고가 있었던 날만 과거→최신 순으로 옵니다.
+            const data = await App.fetchInboundList(state.inYear);
             if (data && data.length > 0) {
                 body.innerHTML = data.map(rowHtmlInbound).join('');
-                state.inOffset = App.INBOUND_BATCH;
             } else {
-                body.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-muted small">기록된 입고 이벤트가 없습니다.</td></tr>`;
-                state.inHasMore = false;
+                body.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-muted small">${state.inYear}년 입고 기록이 없습니다.</td></tr>`;
             }
             updateDisplay();
 
@@ -425,41 +423,10 @@
             }
         } catch (err) {
             console.error('입고 조회 실패:', err);
-        }
-    };
-
-    async function loadMoreInbound() {
-        if (state.inLoading || !state.inHasMore) return;
-        if (state.inOffset >= App.INBOUND_MAX_DAYS) { state.inHasMore = false; return; }
-
-        state.inLoading = true;
-        const body = document.getElementById('in-body');
-        const wrapper = body ? body.closest('.table-scroll-wrapper') : null;
-        const prevScrollHeight = wrapper ? wrapper.scrollHeight : 0;
-        const prevScrollTop = wrapper ? wrapper.scrollTop : 0;
-
-        try {
-            const batchSize = Math.min(App.INBOUND_BATCH, App.INBOUND_MAX_DAYS - state.inOffset);
-            const data = await App.fetchInboundList(state.inOffset, batchSize);
-            if (data && data.length > 0 && body) {
-                body.insertAdjacentHTML('afterbegin', data.map(rowHtmlInbound).join(''));
-                state.inOffset += batchSize;
-                updateDisplay();
-
-                if (wrapper) {
-                    requestAnimationFrame(() => {
-                        const diff = wrapper.scrollHeight - prevScrollHeight;
-                        wrapper.scrollTop = prevScrollTop + diff;
-                    });
-                }
-            }
-            if (state.inOffset >= App.INBOUND_MAX_DAYS) state.inHasMore = false;
-        } catch (err) {
-            console.error('입고 과거 데이터 조회 실패:', err);
         } finally {
             state.inLoading = false;
         }
-    }
+    };
 
     /* ────────────────────────────────────────────────────────────
        2층 우측: 월별 출고 현황
@@ -517,17 +484,8 @@
         }
     };
 
-    function bindHistoryScroll() {
-        // 월별 출고 현황은 연도 단위(1~12월)로 한 번에 조회되므로 과거 페이징이 없습니다.
-        const inWrapper = document.getElementById('in-body') && document.getElementById('in-body').closest('.table-scroll-wrapper');
-        const threshold = 30;
-
-        if (inWrapper) {
-            inWrapper.addEventListener('scroll', () => {
-                if (inWrapper.scrollTop <= threshold) loadMoreInbound();
-            });
-        }
-    }
+    /* 입고 현황 / 월별 출고 현황 모두 연도 단위(1~12월)로 한 번에 조회되므로
+       과거 스크롤 페이징이 없습니다. 연도 이동은 좌우 화살표로 합니다. */
 
     function bindSidePanelEvents() {
         const inPrev = document.getElementById('in-prev');
@@ -568,7 +526,6 @@
         bindBodyClicks();
         bindKeyboardNav();
         bindSidePanelEvents();
-        bindHistoryScroll();
     };
 
 })();
