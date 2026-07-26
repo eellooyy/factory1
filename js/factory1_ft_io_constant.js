@@ -18,6 +18,11 @@
         USAGE_VIEW: 'v_factory1_ft_usage_daily',
         // 실재고 및 대조: log_date / item_name / actual_stock_kg / contrast_qty
         STOCK_VIEW: 'v_factory1_ft_actual_stock',
+        // ERP 재고(전산 재고): date / item / anchor_date / erp_stock
+        // 앵커(factory1_ft_erp_anchor의 결산 확정 재고)에 입고 - 출고를 누적한 값입니다.
+        // ERP 결재 지연과 무관하게 매일 산출되므로 실재고와의 차이를 당일 확인할 수 있습니다.
+        // 입출고가 없는 날(주말·휴무)은 뷰에 행이 없어 전일 잔고를 이월해 표시합니다.
+        ERP_STOCK_VIEW: 'v_factory1_ft_erp_stock',
 
         // 입고 현황: 1공장 입고(factory1_ipgo)의 F.T 품목을 그대로 씁니다.
         // 뷰에서 inbound_qty(= roll_qty × roll_kg)까지 계산되어 나옵니다.
