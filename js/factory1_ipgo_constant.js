@@ -192,6 +192,10 @@
             snapshot: {},
             dirty: new Set(),
 
+            // 셀별 메모  memo[날짜][itemCode] = 문자열 or null
+            // 롤 수와 달리 더블클릭 즉시 저장되므로 dirty 추적 대상이 아닙니다.
+            memo: {},
+
             isChanged: false
         },
 

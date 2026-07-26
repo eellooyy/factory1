@@ -38,10 +38,11 @@
             if (!state.cache[d]) state.cache[d] = {};
             if (!state.snapshot[d]) state.snapshot[d] = {};
 
-            const v = Number(r.roll_qty) || 0;
+            if (!state.memo[d]) state.memo[d] = {};
 
-            // memo 는 롤 수가 0 이어도 행을 지우면 안 되는 경우를 가리는 데 씁니다.
-            state.snapshot[d][r.item_code] = { roll: v, memo: r.memo || null };
+            const v = Number(r.roll_qty) || 0;
+            state.snapshot[d][r.item_code] = v;
+            state.memo[d][r.item_code] = r.memo || null;
 
             // 저장 전 입력값이 남아 있는 셀은 덮어쓰지 않습니다.
             if (!state.dirty.has(`${d}|${r.item_code}`)) {
@@ -49,6 +50,47 @@
             }
         });
 
+        return true;
+    };
+
+    /* ────────────────────────────────────────────────────────────
+       셀 메모 즉시 저장
+       롤 수와 달리 편집 모드/저장 버튼과 무관하게 그 자리에서 반영합니다.
+
+       rollQty 는 DB 에 저장돼 있는 현재 롤 수입니다. 메모만 건드리고
+       아직 저장하지 않은 입력값은 건드리지 않기 위해 스냅샷 값을 씁니다.
+       메모도 없고 롤 수도 0 이면 행을 남길 이유가 없어 삭제합니다.
+       ──────────────────────────────────────────────────────────── */
+    App.saveMemo = async function (dateStr, itemCode, memoText, rollQty) {
+        const roll = Number(rollQty) || 0;
+
+        if (!memoText && roll === 0) {
+            const { error } = await supabase
+                .from(App.TABLE)
+                .delete()
+                .eq('ipgo_date', dateStr)
+                .eq('item_code', itemCode);
+
+            if (error) {
+                console.error('[factory1_ipgo] 메모 삭제 실패:', error.message);
+                alert('메모 삭제에 실패했습니다: ' + error.message);
+                return false;
+            }
+            return true;
+        }
+
+        const { error } = await supabase
+            .from(App.TABLE)
+            .upsert(
+                { ipgo_date: dateStr, item_code: itemCode, roll_qty: roll, memo: memoText },
+                { onConflict: 'ipgo_date,item_code' }
+            );
+
+        if (error) {
+            console.error('[factory1_ipgo] 메모 저장 실패:', error.message);
+            alert('메모 저장에 실패했습니다: ' + error.message);
+            return false;
+        }
         return true;
     };
 

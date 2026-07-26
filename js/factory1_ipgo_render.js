@@ -66,10 +66,32 @@
         return isNaN(n) ? 0 : n;
     }
 
-    /* DB 원본 스냅샷 — { roll, memo } 또는 행이 없으면 null */
+    /* DB 에 저장돼 있는 롤 수. 행이 없으면 undefined 입니다. */
     function snapOf(dateStr, itemCode) {
         const row = state.snapshot[dateStr];
+        return row ? row[itemCode] : undefined;
+    }
+
+    /* 셀 메모. 없으면 null 입니다. */
+    function memoOf(dateStr, itemCode) {
+        const row = state.memo[dateStr];
         return (row && row[itemCode]) || null;
+    }
+
+    function escapeAttr(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    }
+
+    /* 메모가 있는 셀에 표시(우측 상단 삼각형)와 툴팁을 붙입니다. */
+    function applyMemoMark(td, dateStr, itemCode) {
+        const memo = memoOf(dateStr, itemCode);
+        if (memo) {
+            td.classList.add('f1ip-has-memo');
+            td.setAttribute('title', memo);
+        } else {
+            td.classList.remove('f1ip-has-memo');
+            td.removeAttribute('title');
+        }
     }
 
     function cellKey(dateStr, itemCode) {
@@ -478,7 +500,12 @@
             const sepCls = c.sep ? ' f1ip-sep' : '';
             // 저장 전 변경분은 편집 모드를 빠져나가도 계속 표시해 둡니다.
             const dirtyCls = state.dirty.has(cellKey(r.date, c.itemCode)) ? ' f1ip-dirty-cell' : '';
-            cells += `<td class="f1ip-data-cell${sepCls}${dirtyCls}" data-col="${c.col}">${fmtVal(r.values[c.col])}</td>`;
+
+            const memo = memoOf(r.date, c.itemCode);
+            const memoCls = memo ? ' f1ip-has-memo' : '';
+            const titleAttr = memo ? ` title="${escapeAttr(memo)}"` : '';
+
+            cells += `<td class="f1ip-data-cell${sepCls}${dirtyCls}${memoCls}" data-col="${c.col}"${titleAttr}>${fmtVal(r.values[c.col])}</td>`;
         });
 
         return `<tr class="${rowClasses(r)}" data-date="${r.date}">
@@ -643,8 +670,7 @@
         const dateStr = inp.dataset.date;
         const itemCode = inp.dataset.item;
         const now = normVal(inp.value);
-        const snap = snapOf(dateStr, itemCode);
-        const orig = snap ? snap.roll : 0;   // 행이 없으면 0 과 같습니다
+        const orig = normVal(snapOf(dateStr, itemCode));   // 행이 없으면 0 과 같습니다
 
         if (!state.cache[dateStr]) state.cache[dateStr] = {};
         state.cache[dateStr][itemCode] = now;
@@ -729,7 +755,68 @@
                 td.innerHTML = fmtVal(cachedVal(dateStr, c.itemCode));
                 // 저장하지 않고 나온 변경분은 눈에 보이게 남겨 둡니다.
                 td.classList.toggle('f1ip-dirty-cell', state.dirty.has(cellKey(dateStr, c.itemCode)));
+                applyMemoMark(td, dateStr, c.itemCode);
             });
+        });
+    }
+
+    /* ────────────────────────────────────────────────────────────
+       셀 메모 — 더블클릭으로 입력/수정/삭제 (즉시 저장)
+       롤 수 편집과 달리 수정 모드와 무관하게 동작하며 저장 버튼도 거치지
+       않습니다. 저장에 실패하면 화면을 원래대로 되돌립니다.
+       ──────────────────────────────────────────────────────────── */
+    function bindBodyDoubleClicks() {
+        const body = document.getElementById(LEDGER.bodyId);
+        if (!body) return;
+
+        body.addEventListener('dblclick', async e => {
+            // 수정 모드에서는 입력칸 텍스트 선택과 겹치므로 보기 모드에서만 받습니다.
+            if (isEditMode()) return;
+
+            const td = e.target.closest('td.f1ip-data-cell');
+            if (!td) return;
+            const tr = td.closest('tr[data-date]');
+            if (!tr) return;
+
+            // 읽기 전용 계정은 메모도 남길 수 없습니다.
+            if (!App.headerApi || !App.headerApi.state || !App.headerApi.state.isAdmin) return;
+
+            const dateStr = tr.getAttribute('data-date');
+            const colDef = App.COLUMNS.find(c => String(c.col) === String(td.getAttribute('data-col')));
+            if (!colDef) return;
+
+            const itemCode = colDef.itemCode;
+            const current = memoOf(dateStr, itemCode) || '';
+
+            const groupName = App.GROUPS[colDef.group] || colDef.group;
+            const label = colDef.label ? `${groupName} ${colDef.label}` : groupName;
+            const input = prompt(`${fmtDateShort(dateStr)} [${label}] 메모 (비우면 삭제됩니다)`, current);
+
+            if (input === null) return;                    // 취소
+            const next = input.trim() === '' ? null : input.trim();
+            if (next === (current || null)) return;        // 변경 없음
+
+            // 화면 먼저 반영하고, 실패하면 되돌립니다.
+            if (!state.memo[dateStr]) state.memo[dateStr] = {};
+            state.memo[dateStr][itemCode] = next;
+            applyMemoMark(td, dateStr, itemCode);
+
+            // 아직 저장하지 않은 입력값을 건드리지 않도록 DB 원본 롤 수를 넘깁니다.
+            const ok = await App.saveMemo(dateStr, itemCode, next, normVal(snapOf(dateStr, itemCode)));
+
+            if (!ok) {
+                state.memo[dateStr][itemCode] = current || null;
+                applyMemoMark(td, dateStr, itemCode);
+                return;
+            }
+
+            // 메모만 남기려고 만든 행 / 지우면서 없어진 행을 스냅샷에 반영
+            if (!state.snapshot[dateStr]) state.snapshot[dateStr] = {};
+            if (next === null && normVal(snapOf(dateStr, itemCode)) === 0) {
+                delete state.snapshot[dateStr][itemCode];
+            } else if (next !== null && snapOf(dateStr, itemCode) === undefined) {
+                state.snapshot[dateStr][itemCode] = 0;
+            }
         });
     }
 
@@ -768,6 +855,7 @@
         });
         state.cache = keep;
         state.snapshot = {};
+        state.memo = {};   // 메모는 즉시 저장되므로 남겨둘 미저장분이 없습니다
 
         await App.refreshSideBlocks(state.baseDate);   // 우측 거래처별 입고 현황
         await App.loadRows('none');
@@ -793,14 +881,14 @@
             const dateStr = key.slice(0, sep);
             const itemCode = key.slice(sep + 1);
             const val = normVal(cachedVal(dateStr, itemCode));
-            const snap = snapOf(dateStr, itemCode);
+            const hasRow = snapOf(dateStr, itemCode) !== undefined;
 
             if (val > 0) {
                 upserts.push({ ipgo_date: dateStr, item_code: itemCode, roll_qty: val });
-            } else if (snap && snap.memo) {
+            } else if (memoOf(dateStr, itemCode)) {
                 // 메모가 달린 칸은 지우지 않고 0 으로 남깁니다 (메모 보존)
                 upserts.push({ ipgo_date: dateStr, item_code: itemCode, roll_qty: 0 });
-            } else if (snap) {
+            } else if (hasRow) {
                 // 값을 지운 칸 → 행을 삭제합니다. 0 은 저장하지 않습니다.
                 deletes.push({ ipgo_date: dateStr, item_code: itemCode });
             }
@@ -820,11 +908,7 @@
         // 저장 성공 → 원본 스냅샷을 갱신하고 변경 표시를 해제합니다.
         upserts.forEach(r => {
             if (!state.snapshot[r.ipgo_date]) state.snapshot[r.ipgo_date] = {};
-            const prev = state.snapshot[r.ipgo_date][r.item_code];
-            state.snapshot[r.ipgo_date][r.item_code] = {
-                roll: r.roll_qty,
-                memo: prev ? prev.memo : null
-            };
+            state.snapshot[r.ipgo_date][r.item_code] = r.roll_qty;
         });
         deletes.forEach(r => {
             if (state.snapshot[r.ipgo_date]) delete state.snapshot[r.ipgo_date][r.item_code];
@@ -845,6 +929,7 @@
         bindBodyClicks();
         bindKeyboardNav();
         bindEditInput();
+        bindBodyDoubleClicks();
         bindDeptToggle();
     };
 

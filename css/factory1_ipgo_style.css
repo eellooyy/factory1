@@ -547,6 +547,26 @@
 .f1ip-data-cell { cursor: pointer; }
 
 /* ================================================
+   셀 메모 — 우측 상단 빨간 삼각형 (factory3_io 와 동일한 표기)
+   더블클릭으로 입력하고 마우스를 올리면 내용이 툴팁으로 뜹니다.
+   ================================================ */
+.f1ip-table td.f1ip-has-memo {
+    position: relative;
+    background-color: rgba(255, 59, 48, 0.05) !important;
+}
+
+.f1ip-table td.f1ip-has-memo::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    border-top: 8px solid #ff3b30;
+    border-left: 8px solid transparent;
+    z-index: 12;
+    pointer-events: none;
+}
+
+/* ================================================
    편집 모드 — 수정 가능 구간(오늘 기준 ±7일)의 셀 입력
    ================================================ */
 
