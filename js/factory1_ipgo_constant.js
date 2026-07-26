@@ -15,7 +15,7 @@
     window.Factory1Ipgo = {
         SUPABASE_URL: base.SUPABASE_URL || 'https://npiflqoscsvnnauvqhrr.supabase.co',
         SUPABASE_KEY: base.SUPABASE_KEY || 'sb_publishable_ir-mHSsX6SSIQwHerkLbfA_2qCOP3KW',
-        TABLE: null,   // 입고 테이블 미확정 (추후 논의 후 결정)
+        TABLE: 'factory1_ipgo',   // (ipgo_date, item_code) 유니크 · 셀 하나당 한 줄
 
         WD_KR: ['일', '월', '화', '수', '목', '금', '토'],
 
@@ -31,24 +31,28 @@
         },
 
         /* ── 데이터 열 정의 ────────────────────────────────────────
-           col   : 열 번호 (헤더 th / 데이터 td 의 data-col 과 일치)
-           group : 소속 1레벨 헤더 키
-           label : 2레벨 헤더 라벨 (빈 값이면 하위 구분 없이 1레벨이 두 행 병합)
-           sep   : 그룹 시작 열 → 좌측 구분선 표시
+           col      : 열 번호 (헤더 th / 데이터 td 의 data-col 과 일치)
+           group    : 소속 1레벨 헤더 키
+           label    : 2레벨 헤더 라벨 (빈 값이면 하위 구분 없이 1레벨이 두 행 병합)
+           sep      : 그룹 시작 열 → 좌측 구분선 표시
+           itemCode : factory1_ipgo.item_code 와 1:1 대응하는 품목 키
+
+           itemCode 는 추후 paper_item 마스터 테이블이 생기면 그쪽에서 읽어옵니다.
+           그때는 이 배열을 만드는 부분만 교체하면 되고, 렌더/저장 로직은 그대로입니다.
            ──────────────────────────────────────────────────────── */
         COLUMNS: [
-            { col: 1,  group: 'daehan-ad',     label: 'A' },
-            { col: 2,  group: 'daehan-ad',     label: 'D' },
-            { col: 3,  group: 'paperkorea',    label: '',      sep: true },
-            { col: 4,  group: 'jeonju-bonji',  label: 'A',     sep: true },
-            { col: 5,  group: 'jeonju-bonji',  label: 'D' },
-            { col: 6,  group: 'jeonju-jeonja', label: 'A',     sep: true },
-            { col: 7,  group: 'jeonju-jeonja', label: 'D' },
-            { col: 8,  group: 'daehan-c',      label: 'C',     sep: true },
-            { col: 9,  group: 'daehan-c',      label: '48.8g' },
-            { col: 10, group: 'ft',            label: 'A',     sep: true },
-            { col: 11, group: 'ft',            label: 'C' },
-            { col: 12, group: 'ft',            label: 'D' }
+            { col: 1,  group: 'daehan-ad',     label: 'A',     itemCode: 'daehan_a' },
+            { col: 2,  group: 'daehan-ad',     label: 'D',     itemCode: 'daehan_d' },
+            { col: 3,  group: 'paperkorea',    label: '',      itemCode: 'paperkorea',  sep: true },
+            { col: 4,  group: 'jeonju-bonji',  label: 'A',     itemCode: 'jj_bonji_a',  sep: true },
+            { col: 5,  group: 'jeonju-bonji',  label: 'D',     itemCode: 'jj_bonji_d' },
+            { col: 6,  group: 'jeonju-jeonja', label: 'A',     itemCode: 'jj_jeonja_a', sep: true },
+            { col: 7,  group: 'jeonju-jeonja', label: 'D',     itemCode: 'jj_jeonja_d' },
+            { col: 8,  group: 'daehan-c',      label: 'C',     itemCode: 'daehan_c',    sep: true },
+            { col: 9,  group: 'daehan-c',      label: '48.8g', itemCode: 'daehan_488' },
+            { col: 10, group: 'ft',            label: 'A',     itemCode: 'ft_a',        sep: true },
+            { col: 11, group: 'ft',            label: 'C',     itemCode: 'ft_c' },
+            { col: 12, group: 'ft',            label: 'D',     itemCode: 'ft_d' }
         ],
 
         // ── 우측 패널: 별쇄 계획표 열 정의 ────────────────────────
@@ -74,6 +78,11 @@
         // 한 번에 불러오는 일수 / 과거로 조회 가능한 최대치
         RANGE: 15,
         MAX_PAST_DAYS: 365,
+
+        // 수정 가능 구간 — 오늘 기준 과거/미래 며칠까지 입력칸을 열어줄지
+        // (이 범위 밖의 행은 편집 모드에서도 잠긴 상태로 표시됩니다)
+        EDIT_PAST_DAYS: 7,
+        EDIT_FUTURE_DAYS: 7,
 
         // 초기 진입 시 오늘 날짜가 위에서 몇 번째 줄에 오게 할지
         // (3 = 오늘 위로 2줄이 보이고, 아래로는 화면이 찰 만큼의 날짜가 렌더링됩니다)
@@ -101,6 +110,17 @@
             selectedDate: null,
             selectedPanel: null,
             selectedCol: null,
+
+            /* ── 입력 데이터 캐시 / 변경분 추적 ────────────────────
+               cache    : 화면에 표시 중인 값   cache[날짜][itemCode] = 롤수 or null
+               snapshot : DB 에서 읽어온 원본값 (변경 여부 판단 기준)
+               dirty    : 원본과 달라진 셀 키 집합 — '날짜|itemCode'
+                          저장 시 이 집합에 든 셀만 DB 로 보냅니다.
+                          값을 되돌리면 자동으로 빠지므로 불필요한 쓰기가 없습니다.
+               ──────────────────────────────────────────────────── */
+            cache: {},
+            snapshot: {},
+            dirty: new Set(),
 
             isChanged: false
         },

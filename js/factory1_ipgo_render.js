@@ -55,9 +55,44 @@
         return n.toLocaleString();
     }
 
+    /* 입력칸에서 읽은 값을 정규화합니다. 빈 칸은 null(=미입력)로 둡니다. */
+    function normVal(v) {
+        if (v === '' || v === null || v === undefined) return null;
+        const n = Number(v);
+        return isNaN(n) ? null : n;
+    }
+
+    function cellKey(dateStr, itemCode) {
+        return `${dateStr}|${itemCode}`;
+    }
+
+    function cachedVal(dateStr, itemCode) {
+        const row = state.cache[dateStr];
+        return row ? row[itemCode] : undefined;
+    }
+
+    /* 수정 가능 구간: 오늘 기준 -EDIT_PAST_DAYS ~ +EDIT_FUTURE_DAYS */
+    function isEditableDate(dateStr) {
+        const t = todayStr();
+        return dateStr >= addDays(t, -App.EDIT_PAST_DAYS)
+            && dateStr <= addDays(t, App.EDIT_FUTURE_DAYS);
+    }
+
+    function isEditMode() {
+        return !!(App.headerApi && App.headerApi.isEditMode && App.headerApi.isEditMode());
+    }
+
     App.setReadOnlyMode = function (isReadOnly) {
         const wrapper = App.elements.wrapper;
         if (!wrapper) return;
+
+        if (isReadOnly) {
+            wrapper.classList.remove('edit-mode');
+            exitEditMode();
+        } else {
+            wrapper.classList.add('edit-mode');
+            enterEditMode();
+        }
     };
 
     /* ────────────────────────────────────────────────────────────
@@ -268,6 +303,7 @@
             if (!body) return;
 
             body.addEventListener('click', e => {
+                if (isEditMode()) return;   // 편집 중에는 셀 커서 이동을 막습니다
                 const td = e.target.closest('td');
                 if (!td) return;
                 const tr = td.closest('tr[data-date]');
@@ -285,6 +321,7 @@
 
     function bindKeyboardNav() {
         document.addEventListener('keydown', e => {
+            if (isEditMode()) return;   // 편집 중에는 방향키를 입력칸에 양보합니다
             if (!state.selectedDate || state.selectedCol === null) return;
             if (!App.elements.wrapper || !document.body.contains(App.elements.wrapper)) return;
             if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
@@ -347,7 +384,9 @@
         let cells = '';
         App.COLUMNS.forEach(c => {
             const sepCls = c.sep ? ' f1ip-sep' : '';
-            cells += `<td class="f1ip-data-cell${sepCls}" data-col="${c.col}">${fmtVal(r.values[c.col])}</td>`;
+            // 저장 전 변경분은 편집 모드를 빠져나가도 계속 표시해 둡니다.
+            const dirtyCls = state.dirty.has(cellKey(r.date, c.itemCode)) ? ' f1ip-dirty-cell' : '';
+            cells += `<td class="f1ip-data-cell${sepCls}${dirtyCls}" data-col="${c.col}">${fmtVal(r.values[c.col])}</td>`;
         });
 
         return `<tr class="${rowClasses(r)}" data-date="${r.date}">
@@ -390,11 +429,14 @@
         return Math.max(0, visibleRows - App.TODAY_ROW_FROM_TOP) + 1;
     }
 
-    /* 레이아웃 확인용 빈 행 생성 — DB 연동 시 이 함수를 실제 조회로 교체 */
+    /* 캐시(=DB 조회 결과 + 미저장 입력값)를 열 번호 기준으로 펼칩니다.
+       별쇄 계획표(plan)는 아직 DB 미연동이라 빈 값으로 둡니다. */
     function buildRows(from, to) {
         const rows = [];
         for (let d = from; d <= to; d = addDays(d, 1)) {
-            rows.push({ date: d, weekday: weekdayKr(d), values: {}, plan: {} });
+            const values = {};
+            App.COLUMNS.forEach(c => { values[c.col] = cachedVal(d, c.itemCode); });
+            rows.push({ date: d, weekday: weekdayKr(d), values, plan: {} });
         }
         return rows;
     }
@@ -412,7 +454,9 @@
 
         const today = todayStr();
         const minDate = addDays(today, -App.MAX_PAST_DAYS);
-        const maxDate = addDays(today, futureRowCount());
+        // 화면을 채울 만큼 + 최소한 수정 가능 구간(+EDIT_FUTURE_DAYS)까지는 렌더링합니다.
+        // (창이 짧아 futureRowCount()가 작아도 미래 입력칸이 잘리지 않도록)
+        const maxDate = addDays(today, Math.max(futureRowCount(), App.EDIT_FUTURE_DAYS));
 
         let baseDate = state.baseDate || today;
         if (direction !== 'none' && ledgerBody.children.length > 0) {
@@ -441,6 +485,8 @@
             state.loading = false;
             return;
         }
+
+        if (App.fetchRange) await App.fetchRange(from, to);
 
         const rows = buildRows(from, to);
         const prevScrollHeight = ledgerPanel.scrollHeight;
@@ -491,27 +537,197 @@
     };
 
     /* ────────────────────────────────────────────────────────────
+       편집 모드 — 셀 입력 및 변경분 추적
+       수정 가능 구간의 td 를 <input> 으로 교체하고, 입력할 때마다
+       원본(snapshot)과 비교해 달라진 셀만 dirty 에 담습니다.
+       값을 원래대로 되돌리면 dirty 에서 자동으로 빠집니다.
+       ──────────────────────────────────────────────────────────── */
+    function updateSaveLabel() {
+        const btn = (App.headerApi && App.headerApi.elements) ? App.headerApi.elements.saveBtn : null;
+        if (!btn) return;
+        const n = state.dirty.size;
+        btn.textContent = n > 0 ? `저장 (${n})` : '저장';
+    }
+
+    function markDirty(inp) {
+        const dateStr = inp.dataset.date;
+        const itemCode = inp.dataset.item;
+        const now = normVal(inp.value);
+        const orig = normVal((state.snapshot[dateStr] || {})[itemCode]);
+
+        if (!state.cache[dateStr]) state.cache[dateStr] = {};
+        state.cache[dateStr][itemCode] = now;
+
+        if (now === orig) {
+            state.dirty.delete(cellKey(dateStr, itemCode));
+            inp.classList.remove('f1ip-dirty');
+        } else {
+            state.dirty.add(cellKey(dateStr, itemCode));
+            inp.classList.add('f1ip-dirty');
+        }
+
+        state.isChanged = state.dirty.size > 0;
+        updateSaveLabel();
+    }
+
+    function enterEditMode() {
+        const body = document.getElementById(LEDGER.bodyId);
+        if (!body) return;
+
+        let firstInput = null;
+
+        body.querySelectorAll('tr[data-date]').forEach(tr => {
+            const dateStr = tr.getAttribute('data-date');
+
+            // 수정 구간 밖은 입력칸을 만들지 않고 잠긴 행으로 표시합니다.
+            if (!isEditableDate(dateStr)) {
+                tr.classList.add('f1ip-row-locked');
+                return;
+            }
+
+            App.COLUMNS.forEach(c => {
+                const td = tr.querySelector(`td[data-col="${c.col}"]`);
+                if (!td) return;
+
+                const val = cachedVal(dateStr, c.itemCode);
+
+                const inp = document.createElement('input');
+                inp.type = 'number';
+                inp.min = '0';
+                inp.className = 'f1ip-input';
+                inp.value = (val === null || val === undefined) ? '' : val;
+                inp.dataset.date = dateStr;
+                inp.dataset.item = c.itemCode;
+                if (state.dirty.has(cellKey(dateStr, c.itemCode))) inp.classList.add('f1ip-dirty');
+
+                td.innerHTML = '';
+                td.classList.remove('f1ip-dirty-cell');
+                td.classList.add('f1ip-edit-cell');
+                td.appendChild(inp);
+
+                if (!firstInput) firstInput = inp;
+            });
+        });
+
+        updateSaveLabel();
+
+        if (firstInput) {
+            firstInput.focus();
+            firstInput.select();
+        }
+    }
+
+    function exitEditMode() {
+        const body = document.getElementById(LEDGER.bodyId);
+        if (!body) return;
+
+        body.querySelectorAll('tr[data-date]').forEach(tr => {
+            tr.classList.remove('f1ip-row-locked');
+            const dateStr = tr.getAttribute('data-date');
+
+            App.COLUMNS.forEach(c => {
+                const td = tr.querySelector(`td[data-col="${c.col}"]`);
+                if (!td) return;
+
+                td.classList.remove('f1ip-edit-cell');
+                td.innerHTML = fmtVal(cachedVal(dateStr, c.itemCode));
+                // 저장하지 않고 나온 변경분은 눈에 보이게 남겨 둡니다.
+                td.classList.toggle('f1ip-dirty-cell', state.dirty.has(cellKey(dateStr, c.itemCode)));
+            });
+        });
+
+        updateSaveLabel();
+    }
+
+    /* 입력 이벤트는 tbody 에 한 번만 위임해 둡니다. */
+    function bindEditInput() {
+        const body = document.getElementById(LEDGER.bodyId);
+        if (!body) return;
+
+        body.addEventListener('input', e => {
+            const inp = e.target.closest('.f1ip-input');
+            if (inp) markDirty(inp);
+        });
+    }
+
+    /* ────────────────────────────────────────────────────────────
        공통 라우터 훅
        ──────────────────────────────────────────────────────────── */
     App.loadData = async function (dateStr) {
-        if (App.headerApi && App.headerApi.isEditMode && App.headerApi.isEditMode()) {
-            App.headerApi.toggleEditMode();
-        }
+        if (isEditMode()) App.headerApi.toggleEditMode();
 
         state.baseDate = dateStr || state.baseDate || todayStr();
         state.hasNext = true;
         state.hasPrev = true;
         state.isInitialLoad = true;
 
+        /* 날짜를 옮기면 값을 새로 조회하므로 캐시를 비웁니다.
+           단 저장하지 않은 입력값(dirty)은 남겨 둡니다 — 다른 날짜를 잠깐
+           확인하고 돌아왔을 때 입력하던 내용이 사라지면 안 되기 때문입니다. */
+        const keep = {};
+        state.dirty.forEach(key => {
+            const sep = key.indexOf('|');
+            const d = key.slice(0, sep);
+            const item = key.slice(sep + 1);
+            if (!keep[d]) keep[d] = {};
+            keep[d][item] = state.cache[d] ? state.cache[d][item] : null;
+        });
+        state.cache = keep;
+        state.snapshot = {};
+
         App.renderSideBlocks();   // 우측 지종별 재고 — DB 연동 후 값 전달
         await App.loadRows('none');
-        state.isChanged = false;
+        state.isChanged = state.dirty.size > 0;
+        updateSaveLabel();
     };
 
+    /* 변경된 셀만 저장합니다. 화면에 보이는 구간을 통째로 덮어쓰지 않습니다. */
     App.saveData = async function () {
-        // 입고 DB 연동 전이므로 저장 동작 없음
+        // 편집 모드에서 아직 <input> 안에 있는 값들을 캐시에 반영
+        document.querySelectorAll('.f1ip-input').forEach(inp => markDirty(inp));
+
+        if (state.dirty.size === 0) {
+            alert('변경된 내용이 없습니다.');
+            if (App.headerApi && App.headerApi.toggleEditMode) App.headerApi.toggleEditMode();
+            return;
+        }
+
+        const upserts = [];
+        const deletes = [];
+
+        state.dirty.forEach(key => {
+            const sep = key.indexOf('|');
+            const dateStr = key.slice(0, sep);
+            const itemCode = key.slice(sep + 1);
+            const val = cachedVal(dateStr, itemCode);
+
+            if (val === null || val === undefined) {
+                // 값을 지운 셀 → 행을 삭제해 '미입력' 상태로 되돌립니다.
+                deletes.push({ ipgo_date: dateStr, item_code: itemCode });
+            } else {
+                upserts.push({ ipgo_date: dateStr, item_code: itemCode, roll_qty: val });
+            }
+        });
+
+        const ok = await App.saveDirty(upserts, deletes);
+        if (!ok) return;
+
+        // 저장 성공 → 원본 스냅샷을 갱신하고 변경 표시를 해제합니다.
+        upserts.forEach(r => {
+            if (!state.snapshot[r.ipgo_date]) state.snapshot[r.ipgo_date] = {};
+            state.snapshot[r.ipgo_date][r.item_code] = r.roll_qty;
+        });
+        deletes.forEach(r => {
+            if (!state.snapshot[r.ipgo_date]) state.snapshot[r.ipgo_date] = {};
+            state.snapshot[r.ipgo_date][r.item_code] = null;
+        });
+
+        const saved = upserts.length + deletes.length;
+        state.dirty.clear();
         state.isChanged = false;
+
         if (App.headerApi && App.headerApi.toggleEditMode) App.headerApi.toggleEditMode();
+        alert(`${saved}건이 저장되었습니다.`);
     };
 
     App.initUI = function () {
@@ -519,6 +735,7 @@
         bindScrollSync();
         bindBodyClicks();
         bindKeyboardNav();
+        bindEditInput();
     };
 
 })();

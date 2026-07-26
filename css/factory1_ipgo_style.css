@@ -495,6 +495,65 @@
 .f1ip-data-cell { cursor: pointer; }
 
 /* ================================================
+   편집 모드 — 수정 가능 구간(오늘 기준 ±7일)의 셀 입력
+   ================================================ */
+
+/* 입력칸이 들어간 셀 — td 자체 여백을 없애고 input 이 칸을 꽉 채우게 합니다 */
+.f1ip-table td.f1ip-edit-cell {
+    padding: 0 !important;
+    background: #fffdf7;
+}
+
+.f1ip-input {
+    width: 100%;
+    height: 100%;
+    min-height: 42px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    color: #1d1d1f;
+    box-sizing: border-box;
+    /* 스피너(위아래 화살표)는 두 자리 숫자 칸에서 자리만 차지하므로 제거 */
+    -moz-appearance: textfield;
+}
+
+.f1ip-input::-webkit-outer-spin-button,
+.f1ip-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.f1ip-input:focus {
+    background: #e8f0fe;
+    box-shadow: inset 0 0 0 2px #007aff;
+}
+
+/* 원본과 달라진 셀 — 저장 전까지 유지되며, 되돌리면 자동으로 해제됩니다 */
+.f1ip-input.f1ip-dirty {
+    background: #fff3cd;
+    font-weight: 800;
+    color: #8a6d00;
+}
+
+/* 편집 모드를 빠져나가도 미저장 변경분은 계속 표시 */
+.f1ip-table td.f1ip-dirty-cell {
+    background: #fff3cd !important;
+    font-weight: 800 !important;
+    color: #8a6d00 !important;
+}
+
+/* 수정 구간 밖(±7일 초과) — 편집 모드에서만 잠긴 것으로 표시 */
+.f1ip-wrapper.edit-mode .f1ip-row-locked td.f1ip-data-cell {
+    background: #f2f2f5 !important;
+    color: #b0b0b8 !important;
+    cursor: not-allowed;
+}
+
+/* ================================================
    반응형
    ================================================ */
 @media (max-width: 1100px) {
@@ -528,6 +587,11 @@
     .f1ip-table td {
         font-size: 11.5px;
         height: 38px;
+    }
+
+    .f1ip-input {
+        font-size: 11.5px;
+        min-height: 36px;
     }
 
     .f1ip-thead-lv1 th,
