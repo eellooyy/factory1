@@ -78,7 +78,7 @@
 
 .f1ip-side-date {
     font-size: 12.5px;
-    font-weight: 600;
+    font-weight: 500;
     color: #1d1d1f;
     letter-spacing: -0.2px;
     white-space: nowrap;
@@ -137,20 +137,15 @@
 }
 .f1ip-side-list::-webkit-scrollbar { display: none; }
 
-/* ── 블록 안의 글자는 크기·굵기를 하나로 통일합니다 ────────────
-   제목만 색과 굵기를 한 단계 올려 구분하고, 볼드는 쓰지 않습니다. */
+/* ── 블록 안의 글자는 크기·굵기·색을 전부 동일하게 씁니다 ──────
+   제목/지폭/kg 을 구분하지 않고 한 가지 서식으로만 표시합니다. */
 .f1ip-side-block {
     text-align: center;
     line-height: 1.5;
     font-size: 12.5px;
     font-weight: 500;
-    color: #3a3a3c;
-    letter-spacing: -0.2px;
-}
-
-.f1ip-side-title {
-    font-weight: 600;
     color: #1d1d1f;
+    letter-spacing: -0.2px;
 }
 
 /* 지폭별 "지폭 - N롤" 한 줄 */
@@ -169,14 +164,9 @@
     text-align: right;
 }
 
-.f1ip-side-kg {
-    color: #636366;
-    white-space: nowrap;
-}
+.f1ip-side-kg { white-space: nowrap; }
 
 .f1ip-side-kg-val { display: inline-block; }
-
-.f1ip-side-empty { color: #c7c7cc; }
 
 /* 한 블록 안의 두 번째 줄(대한제지 본관의 48.8g)만 앞 줄과 살짝 띄웁니다 */
 .f1ip-side-kg + .f1ip-side-specs { margin-top: 6px; }
