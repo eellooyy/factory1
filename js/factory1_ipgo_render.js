@@ -48,18 +48,28 @@
         return App.WD_KR[d.getDay()];
     }
 
+    /* 0 은 빈 칸과 똑같이 '-' 로 표시합니다.
+       0 이 화면에 그대로 깔리면 실제 입고가 있는 칸이 묻혀 버립니다. */
     function fmtVal(v) {
-        if (v === '' || v === null || v === undefined) return '<span class="f1ip-empty">-</span>';
         const n = Number(v);
-        if (isNaN(n)) return '<span class="f1ip-empty">-</span>';
+        if (v === '' || v === null || v === undefined || isNaN(n) || n === 0) {
+            return '<span class="f1ip-empty">-</span>';
+        }
         return n.toLocaleString();
     }
 
-    /* 입력칸에서 읽은 값을 정규화합니다. 빈 칸은 null(=미입력)로 둡니다. */
+    /* 입력칸 값을 정규화합니다. 빈 칸과 0 은 같은 것으로 봅니다.
+       (화면에서 둘 다 '-' 로 보이므로 다르게 저장할 이유가 없습니다) */
     function normVal(v) {
-        if (v === '' || v === null || v === undefined) return null;
+        if (v === '' || v === null || v === undefined) return 0;
         const n = Number(v);
-        return isNaN(n) ? null : n;
+        return isNaN(n) ? 0 : n;
+    }
+
+    /* DB 원본 스냅샷 — { roll, memo } 또는 행이 없으면 null */
+    function snapOf(dateStr, itemCode) {
+        const row = state.snapshot[dateStr];
+        return (row && row[itemCode]) || null;
     }
 
     function cellKey(dateStr, itemCode) {
@@ -633,7 +643,8 @@
         const dateStr = inp.dataset.date;
         const itemCode = inp.dataset.item;
         const now = normVal(inp.value);
-        const orig = normVal((state.snapshot[dateStr] || {})[itemCode]);
+        const snap = snapOf(dateStr, itemCode);
+        const orig = snap ? snap.roll : 0;   // 행이 없으면 0 과 같습니다
 
         if (!state.cache[dateStr]) state.cache[dateStr] = {};
         state.cache[dateStr][itemCode] = now;
@@ -670,13 +681,14 @@
                 const td = tr.querySelector(`td[data-col="${c.col}"]`);
                 if (!td) return;
 
-                const val = cachedVal(dateStr, c.itemCode);
+                // 0 은 빈 칸으로 띄웁니다. 0 을 지우고 새로 치는 수고를 없앱니다.
+                const val = normVal(cachedVal(dateStr, c.itemCode));
 
                 const inp = document.createElement('input');
                 inp.type = 'number';
                 inp.min = '0';
                 inp.className = 'f1ip-input';
-                inp.value = (val === null || val === undefined) ? '' : val;
+                inp.value = val === 0 ? '' : val;
                 inp.dataset.date = dateStr;
                 inp.dataset.item = c.itemCode;
                 if (state.dirty.has(cellKey(dateStr, c.itemCode))) inp.classList.add('f1ip-dirty');
@@ -780,15 +792,27 @@
             const sep = key.indexOf('|');
             const dateStr = key.slice(0, sep);
             const itemCode = key.slice(sep + 1);
-            const val = cachedVal(dateStr, itemCode);
+            const val = normVal(cachedVal(dateStr, itemCode));
+            const snap = snapOf(dateStr, itemCode);
 
-            if (val === null || val === undefined) {
-                // 값을 지운 셀 → 행을 삭제해 '미입력' 상태로 되돌립니다.
-                deletes.push({ ipgo_date: dateStr, item_code: itemCode });
-            } else {
+            if (val > 0) {
                 upserts.push({ ipgo_date: dateStr, item_code: itemCode, roll_qty: val });
+            } else if (snap && snap.memo) {
+                // 메모가 달린 칸은 지우지 않고 0 으로 남깁니다 (메모 보존)
+                upserts.push({ ipgo_date: dateStr, item_code: itemCode, roll_qty: 0 });
+            } else if (snap) {
+                // 값을 지운 칸 → 행을 삭제합니다. 0 은 저장하지 않습니다.
+                deletes.push({ ipgo_date: dateStr, item_code: itemCode });
             }
+            // 원래 행도 없고 값도 0 이면 저장할 게 없습니다.
         });
+
+        if (!upserts.length && !deletes.length) {
+            state.dirty.clear();
+            state.isChanged = false;
+            if (App.headerApi && App.headerApi.toggleEditMode) App.headerApi.toggleEditMode();
+            return;
+        }
 
         const ok = await App.saveDirty(upserts, deletes);
         if (!ok) return;
@@ -796,11 +820,14 @@
         // 저장 성공 → 원본 스냅샷을 갱신하고 변경 표시를 해제합니다.
         upserts.forEach(r => {
             if (!state.snapshot[r.ipgo_date]) state.snapshot[r.ipgo_date] = {};
-            state.snapshot[r.ipgo_date][r.item_code] = r.roll_qty;
+            const prev = state.snapshot[r.ipgo_date][r.item_code];
+            state.snapshot[r.ipgo_date][r.item_code] = {
+                roll: r.roll_qty,
+                memo: prev ? prev.memo : null
+            };
         });
         deletes.forEach(r => {
-            if (!state.snapshot[r.ipgo_date]) state.snapshot[r.ipgo_date] = {};
-            state.snapshot[r.ipgo_date][r.item_code] = null;
+            if (state.snapshot[r.ipgo_date]) delete state.snapshot[r.ipgo_date][r.item_code];
         });
 
         const saved = upserts.length + deletes.length;

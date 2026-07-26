@@ -24,7 +24,7 @@
     App.fetchRange = async function (from, to) {
         const { data, error } = await supabase
             .from(App.TABLE)
-            .select('ipgo_date, item_code, roll_qty')
+            .select('ipgo_date, item_code, roll_qty, memo')
             .gte('ipgo_date', from)
             .lte('ipgo_date', to);
 
@@ -38,8 +38,10 @@
             if (!state.cache[d]) state.cache[d] = {};
             if (!state.snapshot[d]) state.snapshot[d] = {};
 
-            const v = (r.roll_qty === null || r.roll_qty === undefined) ? null : Number(r.roll_qty);
-            state.snapshot[d][r.item_code] = v;
+            const v = Number(r.roll_qty) || 0;
+
+            // memo 는 롤 수가 0 이어도 행을 지우면 안 되는 경우를 가리는 데 씁니다.
+            state.snapshot[d][r.item_code] = { roll: v, memo: r.memo || null };
 
             // 저장 전 입력값이 남아 있는 셀은 덮어쓰지 않습니다.
             if (!state.dirty.has(`${d}|${r.item_code}`)) {
