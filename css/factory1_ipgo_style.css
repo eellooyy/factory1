@@ -64,42 +64,93 @@
     flex-direction: column;
 }
 
-/* 블록들이 어느 날짜 기준인지 알려주는 제목 */
-.f1ip-side-date {
+/* 카드 상단 — 기준 날짜 + 총무국/공무국 전환 */
+.f1ip-side-head {
     flex: none;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 800;
-    color: #636366;
-    letter-spacing: -0.2px;
-    padding-bottom: 10px;
-    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 9px;
+    margin-bottom: 12px;
     border-bottom: 1px solid #ebebeb;
 }
+
+.f1ip-side-date {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1d1d1f;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+}
+
+/* 총무국 / 공무국 전환 — factory1_ft_io 의 R/L·Kg 스위처와 같은 형태 */
+.unit-switcher {
+    position: relative;
+    display: flex;
+    flex: none;
+    background: #eef0f4;
+    border-radius: 14px;
+    padding: 2px;
+    width: 108px;
+    height: 24px;
+    align-items: center;
+    border: 1px solid #d1d1d6;
+    overflow: hidden;
+    cursor: pointer;
+}
+.selection-bg {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: calc(50% - 2px); height: calc(100% - 4px);
+    background-color: #000000;
+    border-radius: 12px;
+    transition: transform 0.25s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    will-change: transform;
+    z-index: 1;
+}
+.selection-bg.mode-left  { transform: translateX(0); }
+.selection-bg.mode-right { transform: translateX(100%); }
+.unit-btn {
+    position: relative; z-index: 2; flex: 1; border: none;
+    background: transparent !important;
+    font-size: 11px; font-weight: 600; color: #55555d;
+    display: flex; align-items: center; justify-content: center;
+    height: 100%;
+    white-space: nowrap;
+    cursor: pointer; outline: none;
+    transition: color 0.2s ease;
+}
+.unit-btn.active { color: #ffffff !important; }
 
 .f1ip-side-list {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 8px;
+    /* 블록이 숨겨져 수가 줄어도 간격이 벌어지지 않도록 가운데로 모읍니다 */
+    justify-content: center;
+    gap: 12px;
     overflow-y: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
 .f1ip-side-list::-webkit-scrollbar { display: none; }
 
+/* ── 블록 안의 글자는 크기·굵기를 하나로 통일합니다 ────────────
+   제목만 색과 굵기를 한 단계 올려 구분하고, 볼드는 쓰지 않습니다. */
 .f1ip-side-block {
     text-align: center;
-    line-height: 1.45;
+    line-height: 1.5;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #3a3a3c;
+    letter-spacing: -0.2px;
 }
 
 .f1ip-side-title {
-    font-size: 13.5px;
-    font-weight: 800;
+    font-weight: 600;
     color: #1d1d1f;
-    letter-spacing: -0.2px;
 }
 
 /* 지폭별 "지폭 - N롤" 한 줄 */
@@ -107,42 +158,37 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 18px;
-    margin-top: 2px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #1d1d1f;
+    flex-wrap: wrap;
+    gap: 2px 12px;
     white-space: nowrap;
 }
 
-/* 롤 수 — DB 연동 후 채워지는 값 */
 .f1ip-side-roll {
     display: inline-block;
-    min-width: 18px;
+    min-width: 14px;
     text-align: right;
-    font-weight: 700;
 }
 
 .f1ip-side-kg {
-    margin-top: 1px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: #3a3a3c;
+    color: #636366;
     white-space: nowrap;
 }
 
-/* kg 값 — DB 연동 후 채워지는 값 */
-.f1ip-side-kg-val {
-    display: inline-block;
-    min-width: 42px;
-    text-align: right;
-    font-weight: 700;
+.f1ip-side-kg-val { display: inline-block; }
+
+.f1ip-side-empty { color: #c7c7cc; }
+
+/* 한 블록 안의 두 번째 줄(대한제지 본관의 48.8g)만 앞 줄과 살짝 띄웁니다 */
+.f1ip-side-kg + .f1ip-side-specs { margin-top: 6px; }
+
+/* 내용이 아직 정해지지 않은 화면 (공무국) */
+.f1ip-side-pending {
+    margin: auto;
+    text-align: center;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #a1a1a8;
 }
-
-.f1ip-side-empty { color: #c7c7cc; font-weight: 400; }
-
-/* 한 블록 안의 두 번째 줄(대한제지 본관의 48.8g)은 앞 줄과 살짝 띄웁니다 */
-.f1ip-side-kg + .f1ip-side-specs { margin-top: 7px; }
 
 /* 층(레이아웃) 외곽 프레임 — 이 안에 개별 패널(레이아웃 안의 레이아웃)이 들어갑니다 */
 .f1ip-floor-container {
@@ -585,8 +631,8 @@
     .f1ip-table { table-layout: auto; min-width: 620px; }
     .f1ip-plan-table { min-width: 0; }
 
-    /* 세로로 쌓일 때는 블록 사이 여백을 고정 */
-    .f1ip-side-list { justify-content: flex-start; gap: 16px; }
+    /* 세로로 쌓일 때는 위에서부터 채우되 간격은 동일하게 유지 */
+    .f1ip-side-list { justify-content: flex-start; gap: 12px; }
 }
 
 @media (max-width: 640px) {

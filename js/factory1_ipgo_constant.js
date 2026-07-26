@@ -174,6 +174,10 @@
             selectedPanel: null,
             selectedCol: null,
 
+            // 우측 카드 표시 대상 — 'chongmu'(총무국) | 'gongmu'(공무국)
+            // 공무국 표시 내용은 추후 확정 예정입니다.
+            dept: 'chongmu',
+
             /* ── 입력 데이터 캐시 / 변경분 추적 ────────────────────
                cache    : 화면에 표시 중인 값   cache[날짜][itemCode] = 롤수 or null
                snapshot : DB 에서 읽어온 원본값 (변경 여부 판단 기준)

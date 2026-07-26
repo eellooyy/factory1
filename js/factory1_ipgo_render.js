@@ -172,9 +172,38 @@
             dateEl.textContent = utils ? utils.formatKoDate(target) : target;
         }
 
+        // 공무국 표시 내용은 아직 미확정입니다.
+        if (state.dept === 'gongmu') {
+            const host = document.getElementById('f1ipSideBody');
+            if (host) host.innerHTML = '<div class="f1ip-side-pending">공무국 표시 내용 준비 중</div>';
+            return;
+        }
+
         if (!App.fetchSideData) { App.renderSideBlocks(); return; }
         App.renderSideBlocks(await App.fetchSideData(target));
     };
+
+    /* 총무국 / 공무국 전환 */
+    function bindDeptToggle() {
+        const toggle = document.getElementById('f1ipDeptToggle');
+        if (!toggle) return;
+
+        const bg = document.getElementById('f1ipDeptSwitcherBg');
+        const btns = toggle.querySelectorAll('.unit-btn');
+
+        btns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const dept = btn.getAttribute('data-dept');
+                if (dept === state.dept) return;
+                state.dept = dept;
+
+                btns.forEach(b => b.classList.toggle('active', b === btn));
+                if (bg) bg.className = 'selection-bg ' + (dept === 'gongmu' ? 'mode-right' : 'mode-left');
+
+                App.refreshSideBlocks();
+            });
+        });
+    }
 
     /* ────────────────────────────────────────────────────────────
        스크롤 잠금 / 패널 간 스크롤 동기화
@@ -789,6 +818,7 @@
         bindBodyClicks();
         bindKeyboardNav();
         bindEditInput();
+        bindDeptToggle();
     };
 
 })();
