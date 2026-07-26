@@ -542,13 +542,6 @@
        원본(snapshot)과 비교해 달라진 셀만 dirty 에 담습니다.
        값을 원래대로 되돌리면 dirty 에서 자동으로 빠집니다.
        ──────────────────────────────────────────────────────────── */
-    function updateSaveLabel() {
-        const btn = (App.headerApi && App.headerApi.elements) ? App.headerApi.elements.saveBtn : null;
-        if (!btn) return;
-        const n = state.dirty.size;
-        btn.textContent = n > 0 ? `저장 (${n})` : '저장';
-    }
-
     function markDirty(inp) {
         const dateStr = inp.dataset.date;
         const itemCode = inp.dataset.item;
@@ -567,14 +560,15 @@
         }
 
         state.isChanged = state.dirty.size > 0;
-        updateSaveLabel();
     }
 
     function enterEditMode() {
         const body = document.getElementById(LEDGER.bodyId);
         if (!body) return;
 
-        let firstInput = null;
+        const today = todayStr();
+        let firstInput = null;   // 수정 구간의 첫 칸 (오늘 행이 없을 때의 대비책)
+        let todayInput = null;   // 오늘 행의 첫 칸 — 기본 포커스 위치
 
         body.querySelectorAll('tr[data-date]').forEach(tr => {
             const dateStr = tr.getAttribute('data-date');
@@ -606,14 +600,16 @@
                 td.appendChild(inp);
 
                 if (!firstInput) firstInput = inp;
+                if (dateStr === today && !todayInput) todayInput = inp;
             });
         });
 
-        updateSaveLabel();
-
-        if (firstInput) {
-            firstInput.focus();
-            firstInput.select();
+        // 입력은 대부분 오늘 자로 하므로 오늘 행 첫 칸에서 시작합니다.
+        const focusTarget = todayInput || firstInput;
+        if (focusTarget) {
+            focusTarget.focus();
+            focusTarget.select();
+            focusTarget.scrollIntoView({ block: 'center' });
         }
     }
 
@@ -635,8 +631,6 @@
                 td.classList.toggle('f1ip-dirty-cell', state.dirty.has(cellKey(dateStr, c.itemCode)));
             });
         });
-
-        updateSaveLabel();
     }
 
     /* 입력 이벤트는 tbody 에 한 번만 위임해 둡니다. */
@@ -678,7 +672,6 @@
         App.renderSideBlocks();   // 우측 지종별 재고 — DB 연동 후 값 전달
         await App.loadRows('none');
         state.isChanged = state.dirty.size > 0;
-        updateSaveLabel();
     };
 
     /* 변경된 셀만 저장합니다. 화면에 보이는 구간을 통째로 덮어쓰지 않습니다. */

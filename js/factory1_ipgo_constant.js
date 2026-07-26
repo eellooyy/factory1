@@ -15,7 +15,8 @@
     window.Factory1Ipgo = {
         SUPABASE_URL: base.SUPABASE_URL || 'https://npiflqoscsvnnauvqhrr.supabase.co',
         SUPABASE_KEY: base.SUPABASE_KEY || 'sb_publishable_ir-mHSsX6SSIQwHerkLbfA_2qCOP3KW',
-        TABLE: 'factory1_ipgo',   // (ipgo_date, item_code) 유니크 · 셀 하나당 한 줄
+        TABLE: 'factory1_ipgo',              // (ipgo_date, item_code) 유니크 · 셀 하나당 한 줄
+        ITEM_TABLE: 'factory1_paper_item',   // 품목 마스터 (열 정의 / kg 환산 계수)
 
         WD_KR: ['일', '월', '화', '수', '목', '금', '토'],
 
@@ -37,8 +38,9 @@
            sep      : 그룹 시작 열 → 좌측 구분선 표시
            itemCode : factory1_ipgo.item_code 와 1:1 대응하는 품목 키
 
-           itemCode 는 추후 paper_item 마스터 테이블이 생기면 그쪽에서 읽어옵니다.
-           그때는 이 배열을 만드는 부분만 교체하면 되고, 렌더/저장 로직은 그대로입니다.
+           이 배열은 추후 ITEM_TABLE(factory1_paper_item)에서 sort_order 순으로
+           읽어오도록 교체할 예정입니다. 그때 바뀌는 건 배열을 만드는 부분뿐이고
+           렌더/저장 로직은 그대로 갑니다.
            ──────────────────────────────────────────────────────── */
         COLUMNS: [
             { col: 1,  group: 'daehan-ad',     label: 'A',     itemCode: 'daehan_a' },

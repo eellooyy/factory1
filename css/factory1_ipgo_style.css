@@ -527,11 +527,6 @@
     margin: 0;
 }
 
-.f1ip-input:focus {
-    background: #e8f0fe;
-    box-shadow: inset 0 0 0 2px #007aff;
-}
-
 /* 원본과 달라진 셀 — 저장 전까지 유지되며, 되돌리면 자동으로 해제됩니다 */
 .f1ip-input.f1ip-dirty {
     background: #fff3cd;
