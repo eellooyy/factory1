@@ -64,6 +64,19 @@
     flex-direction: column;
 }
 
+/* 블록들이 어느 날짜 기준인지 알려주는 제목 */
+.f1ip-side-date {
+    flex: none;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 800;
+    color: #636366;
+    letter-spacing: -0.2px;
+    padding-bottom: 10px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #ebebeb;
+}
+
 .f1ip-side-list {
     flex: 1;
     min-height: 0;
@@ -127,6 +140,9 @@
 }
 
 .f1ip-side-empty { color: #c7c7cc; font-weight: 400; }
+
+/* 한 블록 안의 두 번째 줄(대한제지 본관의 48.8g)은 앞 줄과 살짝 띄웁니다 */
+.f1ip-side-kg + .f1ip-side-specs { margin-top: 7px; }
 
 /* 층(레이아웃) 외곽 프레임 — 이 안에 개별 패널(레이아웃 안의 레이아웃)이 들어갑니다 */
 .f1ip-floor-container {

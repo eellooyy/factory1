@@ -51,6 +51,42 @@
     };
 
     /* ────────────────────────────────────────────────────────────
+       우측 블록용 — 선택한 날짜 하루치 입고 현황
+       1공장: v_factory1_ipgo 에서 롤 수와 kg(= roll_qty × roll_kg)를 함께
+       3공장(별관): factory3_io 의 in_a/in_d(롤) 와 in_a_kg/in_d_kg(kg)
+       ──────────────────────────────────────────────────────────── */
+    App.fetchSideData = async function (dateStr) {
+        const [ipgoRes, f3Res] = await Promise.all([
+            supabase.from(App.VIEW)
+                .select('item_code, roll_qty, inbound_qty')
+                .eq('ipgo_date', dateStr),
+            supabase.from(App.FACTORY3_TABLE)
+                .select('in_a, in_d, in_a_kg, in_d_kg')
+                .eq('date', dateStr)
+                .maybeSingle()
+        ]);
+
+        if (ipgoRes.error) console.error('[factory1_ipgo] 우측 블록 조회 실패:', ipgoRes.error.message);
+        if (f3Res.error)   console.error('[factory1_ipgo] 별관(3공장) 조회 실패:', f3Res.error.message);
+
+        const ipgo = {};
+        (ipgoRes.data || []).forEach(r => {
+            ipgo[r.item_code] = {
+                roll: Number(r.roll_qty) || 0,
+                kg: Number(r.inbound_qty) || 0
+            };
+        });
+
+        const f3row = f3Res.data || null;
+        const factory3 = f3row ? {
+            a: { roll: Number(f3row.in_a) || 0, kg: Number(f3row.in_a_kg) || 0 },
+            d: { roll: Number(f3row.in_d) || 0, kg: Number(f3row.in_d_kg) || 0 }
+        } : {};
+
+        return { ipgo, factory3 };
+    };
+
+    /* ────────────────────────────────────────────────────────────
        변경분 저장
        upserts : 값이 있는 셀 → (ipgo_date, item_code) 충돌 시 UPDATE
        deletes : 값을 비운 셀 → 행 자체를 지워 '미입력' 상태로 되돌림

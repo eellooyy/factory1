@@ -100,39 +100,80 @@
        롤 수 / kg 값은 DB 연동 후 채워집니다. (지금은 '-' 표기)
        추후 App.renderSideBlocks(data) 형태로 값만 넘기면 됩니다.
        ──────────────────────────────────────────────────────────── */
+    /* 항목 하나의 { roll, kg } 를 데이터 묶음에서 꺼냅니다.
+       1공장은 item_code 로, 별관(3공장)은 a/d 필드로 찾습니다. */
+    function sideItemValue(block, item, data) {
+        const src = block.source === 'factory3' ? data.factory3 : data.ipgo;
+        if (!src) return null;
+        return src[block.source === 'factory3' ? item.field : item.itemCode] || null;
+    }
+
     App.renderSideBlocks = function (data) {
         const host = document.getElementById('f1ipSideBody');
         if (!host) return;
 
-        const values = data || {};
+        const values = data || { ipgo: {}, factory3: {} };
 
-        host.innerHTML = App.SIDE_BLOCKS.map(block => {
-            const blockVal = values[block.key] || {};
+        const blocksHtml = App.SIDE_BLOCKS.map(block => {
+            let blockRoll = 0;   // 블록 전체 롤 수 — 0 이면 비정기 거래처는 통째로 숨김
+
+            /* 줄 단위로 항목을 추리고 kg 합계를 냅니다.
+               always: false 인 항목은 입고가 없으면 그 칸만 빠집니다. */
+            const lines = block.lines.map(line => {
+                let kgSum = 0;
+                let hasValue = false;
+
+                const specs = line.items.map(item => {
+                    const val = sideItemValue(block, item, values);
+                    const roll = val ? val.roll : 0;
+                    const kg = val ? val.kg : 0;
+
+                    blockRoll += roll;
+                    kgSum += kg;
+                    if (roll > 0) hasValue = true;
+
+                    if (roll === 0 && !item.always) return null;   // 비정기 항목 → 숨김
+                    return `<span class="f1ip-side-spec">${item.label} - <span class="f1ip-side-roll">${roll.toLocaleString()}</span>롤</span>`;
+                }).filter(Boolean);
+
+                if (!specs.length) return null;   // 표시할 항목이 하나도 없는 줄
+                return { specsHtml: specs.join(''), kgSum, hasValue };
+            }).filter(Boolean);
+
+            // 비정기 거래처(always: false)는 그 날 입고가 없으면 블록째 사라집니다.
+            if (!block.always && blockRoll === 0) return null;
+            if (!lines.length) return null;
 
             const titleHtml = block.title
-                .map(line => `<div class="f1ip-side-title">${line}</div>`)
+                .map(t => `<div class="f1ip-side-title">${t}</div>`)
                 .join('');
 
-            const specsHtml = block.specs.map(spec => {
-                const roll = blockVal[spec];
-                // 값이 없을 때는 "1576 - -롤" 처럼 대시가 겹쳐 보이므로 빈 칸으로 자리만 잡습니다.
-                const rollHtml = (roll === undefined || roll === null || roll === '')
-                    ? '&nbsp;'
-                    : Number(roll).toLocaleString();
-                return `<span class="f1ip-side-spec">${spec} - <span class="f1ip-side-roll" data-spec="${spec}">${rollHtml}</span>롤</span>`;
-            }).join('');
-
-            const kg = blockVal.kg;
-            const kgHtml = (kg === undefined || kg === null || kg === '')
-                ? '<span class="f1ip-side-empty">-</span>'
-                : Number(kg).toLocaleString();
+            const linesHtml = lines.map(l => `
+                <div class="f1ip-side-specs">${l.specsHtml}</div>
+                <div class="f1ip-side-kg">(<span class="f1ip-side-kg-val">${l.kgSum.toLocaleString()}</span> kg)</div>`
+            ).join('');
 
             return `<div class="f1ip-side-block" data-key="${block.key}">
                 ${titleHtml}
-                <div class="f1ip-side-specs">${specsHtml}</div>
-                <div class="f1ip-side-kg">(<span class="f1ip-side-kg-val">${kgHtml}</span> kg)</div>
+                ${linesHtml}
             </div>`;
-        }).join('');
+        }).filter(Boolean).join('');
+
+        host.innerHTML = blocksHtml;
+    };
+
+    /* 우측 블록을 선택한 날짜 기준으로 다시 그립니다. */
+    App.refreshSideBlocks = async function (dateStr) {
+        const target = dateStr || state.selectedDate || state.baseDate || todayStr();
+
+        const dateEl = document.getElementById('f1ipSideDate');
+        if (dateEl) {
+            const utils = window.Factory3Utils || window.CommonUtils;
+            dateEl.textContent = utils ? utils.formatKoDate(target) : target;
+        }
+
+        if (!App.fetchSideData) { App.renderSideBlocks(); return; }
+        App.renderSideBlocks(await App.fetchSideData(target));
     };
 
     /* ────────────────────────────────────────────────────────────
@@ -243,6 +284,15 @@
         cursorEl.classList.add('active');
     }
 
+    let sideRefreshTimer = null;
+    function scheduleSideRefresh(dateStr) {
+        if (sideRefreshTimer) clearTimeout(sideRefreshTimer);
+        sideRefreshTimer = setTimeout(() => {
+            sideRefreshTimer = null;
+            if (App.refreshSideBlocks) App.refreshSideBlocks(dateStr);
+        }, 150);
+    }
+
     function clearHighlights() {
         document.querySelectorAll('.f1ip-selected-row').forEach(el => el.classList.remove('f1ip-selected-row'));
         document.querySelectorAll('.f1ip-selected-cell').forEach(el => el.classList.remove('f1ip-selected-cell'));
@@ -257,10 +307,13 @@
         state.selectedCol = colNum;
 
         // 선택한 행의 날짜를 공통 헤더 날짜에 반영 (false = 데이터 재조회 없이 표시만 갱신)
-        // DB 연동 후에는 이 시점에 우측 영역도 해당 날짜 기준으로 다시 그리면 됩니다.
         if (dateStr && App.headerApi && App.headerApi.setCurrentDate) {
             App.headerApi.setCurrentDate(dateStr, false);
         }
+
+        // 우측 블록도 선택한 날짜 기준으로 갱신
+        // (방향키를 연타할 때 조회가 매번 나가지 않도록 잠깐 모아서 처리합니다)
+        if (dateStr) scheduleSideRefresh(dateStr);
 
         // 행 강조는 두 패널 모두 적용 (같은 날짜 행이 함께 강조됨)
         PANELS.forEach(p => {
@@ -675,7 +728,7 @@
         state.cache = keep;
         state.snapshot = {};
 
-        App.renderSideBlocks();   // 우측 지종별 재고 — DB 연동 후 값 전달
+        await App.refreshSideBlocks(state.baseDate);   // 우측 거래처별 입고 현황
         await App.loadRows('none');
         state.isChanged = state.dirty.size > 0;
     };
@@ -726,6 +779,7 @@
         state.isChanged = false;
 
         if (App.headerApi && App.headerApi.toggleEditMode) App.headerApi.toggleEditMode();
+        await App.refreshSideBlocks();   // 저장한 값이 우측 블록에 바로 반영되도록
         alert(`${saved}건이 저장되었습니다.`);
     };
 

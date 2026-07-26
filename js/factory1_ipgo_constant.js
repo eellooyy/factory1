@@ -17,6 +17,7 @@
         SUPABASE_KEY: base.SUPABASE_KEY || 'sb_publishable_ir-mHSsX6SSIQwHerkLbfA_2qCOP3KW',
         TABLE: 'factory1_ipgo',              // (ipgo_date, item_code) 유니크 · 셀 하나당 한 줄
         ITEM_TABLE: 'factory1_paper_item',   // 품목 마스터 (열 정의 / kg 환산 계수)
+        VIEW: 'v_factory1_ipgo',             // 입고 + 마스터 조인 (inbound_qty = 롤 × roll_kg)
 
         WD_KR: ['일', '월', '화', '수', '목', '금', '토'],
 
@@ -64,18 +65,78 @@
             { col: 3, group: 'byeolswae', label: '수정2' }
         ],
 
-        /* ── 우측 영역: 지종별 재고 표시 블록 ─────────────────────
-           title : 제목 (배열 요소 하나가 한 줄)
-           specs : 지폭 목록 — 각 지폭마다 "지폭 - N롤" 한 칸이 생깁니다.
-           롤 수와 kg 값은 DB 연동 후 채워집니다. (지금은 '-' 표기)
+        /* ── 우측 영역: 거래처별 입고 현황 블록 ───────────────────
+           선택한 날짜의 입고를 거래처 단위로 묶어 "지폭 - N롤" 과 kg 합계를
+           보여줍니다.
+
+           title  : 제목 (배열 요소 하나가 한 줄)
+           source : 'ipgo'     → factory1_ipgo (1공장)
+                    'factory3' → factory3_io   (3공장 = 별관)
+           always : false 면 그 날 입고가 하나도 없을 때 블록째 숨깁니다.
+                    (비정기 입고 거래처)
+           lines  : 한 블록 안에서 kg 합계를 따로 내는 묶음입니다.
+                    대한제지 본관은 일반 지종 줄과 48.8g 줄의 kg 를 따로 냅니다.
+           items[].always : false 면 값이 없을 때 그 항목만 사라집니다.
+                    (블록이 보이더라도 해당 칸은 빠짐)
            ──────────────────────────────────────────────────────── */
         SIDE_BLOCKS: [
-            { key: 'daehan-main',  title: ['대한제지 본관'],           specs: [1576, 788] },
-            { key: 'paperkorea',   title: ['페이퍼코리아 본관'],       specs: [1576] },
-            { key: 'jeonju-bonji', title: ['전주제지 본관', '본 지'],  specs: [1576, 788] },
-            { key: 'jeonja-news',  title: ['전자신문'],                specs: [1576, 788] },
-            { key: 'daehan-annex', title: ['대한제지 별관'],           specs: [1576, 788] }
+            {
+                key: 'daehan-main', title: ['대한제지 본관'],
+                source: 'ipgo', always: true,
+                lines: [
+                    { items: [
+                        { itemCode: 'daehan_a',   label: '1576', always: true  },
+                        { itemCode: 'daehan_c',   label: '1182', always: false },
+                        { itemCode: 'daehan_d',   label: '788',  always: true  }
+                    ] },
+                    { items: [
+                        { itemCode: 'daehan_488', label: '1576 48.8g', always: false }
+                    ] }
+                ]
+            },
+            {
+                key: 'paperkorea', title: ['페이퍼코리아 본관'],
+                source: 'ipgo', always: true,
+                lines: [
+                    { items: [
+                        { itemCode: 'paperkorea', label: '1576', always: true }
+                    ] }
+                ]
+            },
+            {
+                key: 'jeonju-bonji', title: ['전주제지 본관', '본 지'],
+                source: 'ipgo', always: false,
+                lines: [
+                    { items: [
+                        { itemCode: 'jj_bonji_a', label: '1576', always: true },
+                        { itemCode: 'jj_bonji_d', label: '788',  always: true }
+                    ] }
+                ]
+            },
+            {
+                key: 'jeonja-news', title: ['전자신문'],
+                source: 'ipgo', always: false,
+                lines: [
+                    { items: [
+                        { itemCode: 'jj_jeonja_a', label: '1576', always: true },
+                        { itemCode: 'jj_jeonja_d', label: '788',  always: true }
+                    ] }
+                ]
+            },
+            {
+                key: 'daehan-annex', title: ['대한제지 별관'],
+                source: 'factory3', always: true,
+                lines: [
+                    { items: [
+                        { field: 'a', label: '1576', always: true },
+                        { field: 'd', label: '788',  always: true }
+                    ] }
+                ]
+            }
         ],
+
+        // 별관(3공장) 입고 테이블 — in_a/in_d = 롤, in_a_kg/in_d_kg = kg
+        FACTORY3_TABLE: 'factory3_io',
 
         // 한 번에 불러오는 일수 / 과거로 조회 가능한 최대치
         RANGE: 15,
