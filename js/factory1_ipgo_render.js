@@ -500,14 +500,19 @@
 
             // 오늘 행이 '위에서 TODAY_ROW_FROM_TOP 번째 줄'에 오도록 스크롤
             // (sticky 헤더 아래로 오늘 위에 TODAY_ROW_FROM_TOP - 1 개의 행이 보입니다)
+            //
+            // smooth 로 움직이면 rAF 재보정이 애니메이션을 가로채면서 최종 위치가
+            // 행 경계에서 소수점만큼 어긋납니다. 최초 배치는 즉시 이동시키고
+            // 정수로 반올림해 행이 잘려 보이지 않게 합니다.
             const todayRow = ledgerBody.querySelector(`tr[data-date="${today}"]`) || ledgerBody.lastElementChild;
             if (todayRow) {
                 applyScrollTwice(() => {
                     const thead = ledgerPanel.querySelector('thead');
                     const theadH = thead ? thead.getBoundingClientRect().height : 0;
                     const rowH = todayRow.offsetHeight;
-                    return todayRow.offsetTop - theadH - (App.TODAY_ROW_FROM_TOP - 1) * rowH;
-                }, true);
+                    const rowTop = getOffsetRelativeToPanel(todayRow, ledgerPanel).top;
+                    return Math.round(rowTop - theadH - (App.TODAY_ROW_FROM_TOP - 1) * rowH);
+                }, false);
             }
 
             if (state.isInitialLoad) {
@@ -604,12 +609,13 @@
             });
         });
 
-        // 입력은 대부분 오늘 자로 하므로 오늘 행 첫 칸에서 시작합니다.
+        /* 입력은 대부분 오늘 자로 하므로 오늘 행 첫 칸에서 시작합니다.
+           preventScroll 이 없으면 좌측 패널만 스크롤되어 우측 별쇄 패널과
+           행이 어긋납니다. (스크롤 동기화는 잠금 해제 상태에서만 동작) */
         const focusTarget = todayInput || firstInput;
         if (focusTarget) {
-            focusTarget.focus();
+            focusTarget.focus({ preventScroll: true });
             focusTarget.select();
-            focusTarget.scrollIntoView({ block: 'center' });
         }
     }
 
