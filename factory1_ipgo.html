@@ -110,7 +110,7 @@
                                 <th colspan="2" class="f1ip-group-th f1ip-sep" data-group="daehan-c">대한제지</th>
                                 <th colspan="3" class="f1ip-group-th f1ip-sep" data-group="ft">F.T</th>
                                 <!-- 별관(3공장) 참조 열 — 값은 3공장 페이지에서 입력합니다 -->
-                                <th colspan="2" class="f1ip-group-th f1ip-sep" data-group="daehan-annex">대한제지<br>별관</th>
+                                <th colspan="2" class="f1ip-group-th f1ip-sep" data-group="daehan-annex">대한제지 별관</th>
                             </tr>
                             <tr class="f1ip-thead-lv2">
                                 <th class="f1ip-leaf-th" data-col="1" data-parent-group="daehan-ad">A</th>
@@ -158,7 +158,9 @@
         </div>
     </div>
 
-    <!-- 우측 3 영역: 선택한 날짜의 거래처별 입고 현황 -->
+    <!-- 우측 영역: 선택한 날짜의 거래처별 입고 현황 + 그 아래 메모 요약 -->
+    <div class="f1ip-side-column">
+
     <div class="f1ip-floor-container f1ip-side-card" id="f1ipSideCard">
         <div class="f1ip-side-head">
             <div class="unit-switcher shadow-sm" id="f1ipDeptToggle">
@@ -172,6 +174,14 @@
         <div class="f1ip-side-date" id="f1ipSideDate"></div>
         <div class="f1ip-side-list" id="f1ipSideBody"></div>
     </div>
+
+    <!-- 메모 요약 — 화면에 불러온 구간의 셀 메모를 최근 날짜부터 정리 -->
+    <div class="f1ip-floor-container f1ip-memo-card" id="f1ipMemoCard">
+        <div class="f1ip-memo-head">메모</div>
+        <div class="f1ip-memo-list" id="f1ipMemoBody"></div>
+    </div>
+
+    </div><!-- /f1ip-side-column -->
 
     </div><!-- /f1ip-top-grid -->
 </div>

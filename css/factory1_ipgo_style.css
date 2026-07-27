@@ -20,9 +20,19 @@
 
     /*
       [표 높이 옵션]
-      입고/별쇄 스크롤 영역과 우측 추가 영역의 높이를 함께 맞춥니다.
+      입고/별쇄 스크롤 영역의 높이입니다. 우측 영역은 여기에 맞춰 늘어납니다.
+      계산식: 헤더 2줄(44px × 2 = 88px) + 행 높이 44px × 보고 싶은 일수
+              7일  → 88 + 44 × 7  = 396px (이전 값)
+              11일 → 88 + 44 × 11 = 572px
     */
-    --ipgo-scroll-height: 396px;
+    --ipgo-scroll-height: 572px;
+
+    /*
+      [우측 하단 메모 카드 높이]
+      좌측 표가 길어지면서 남는 우측 공간에 들어가는 작은 카드입니다.
+      (테두리·안쪽 여백을 포함한 전체 높이입니다)
+    */
+    --ipgo-memo-height: 176px;
 
     /*
       [좌우 레이아웃 비율 옵션]
@@ -58,10 +68,19 @@
     flex: 0 0 calc(var(--ipgo-main-width) - var(--ipgo-grid-gap) / 2);
     min-width: 0;
 }
-.f1ip-side-card {
+/* 우측 열 — 입고 현황 카드 + 그 아래 메모 카드를 세로로 쌓습니다 */
+.f1ip-side-column {
     flex: 0 0 calc(var(--ipgo-side-width) - var(--ipgo-grid-gap) / 2);
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ipgo-grid-gap);
 }
+
+/* 입고 현황 카드가 남는 높이를 모두 차지하고, 메모 카드는 고정 높이입니다 */
+.f1ip-side-card { flex: 1; min-height: 0; }
+/* box-sizing 을 지정해야 변수 값이 안쪽 여백을 포함한 전체 높이가 됩니다 */
+.f1ip-memo-card { flex: none; height: var(--ipgo-memo-height); box-sizing: border-box; }
 
 /* ================================================
    우측 영역: 지종별 재고 블록
@@ -84,17 +103,19 @@
     border-bottom: 1px solid #ebebeb;
 }
 
-/* 기준 날짜 — 첫 블록(대한제지 본관) 바로 윗줄.
-   목록 안이 아니라 바깥에 두어, 블록이 숨겨져도 위치가 흔들리지 않습니다. */
+/* 기준 날짜 — 맨 위에 고정하고 아래로 한 줄(약 19px)을 비웁니다.
+   "날짜 / 빈 줄 / 대한제지 본관" 순서가 날짜와 무관하게 항상 같습니다.
+   목록 바깥에 두었으므로 블록이 숨겨져도 이 위치는 움직이지 않습니다. */
 .f1ip-side-date {
     flex: none;
     text-align: center;
     font-size: 12.5px;
     font-weight: 500;
+    line-height: 1.5;
     color: #1d1d1f;
     letter-spacing: -0.2px;
     white-space: nowrap;
-    margin-bottom: 12px;
+    margin-bottom: 19px;
 }
 
 /* 총무국 / 공무국 전환 — factory1_ft_io 의 R/L·Kg 스위처와 같은 형태 */
@@ -141,8 +162,9 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    /* 블록이 숨겨져 수가 줄어도 간격이 벌어지지 않도록 가운데로 모읍니다 */
-    justify-content: center;
+    /* 위에서부터 채웁니다. 그 날 입고가 없어 블록이 빠지면 아래쪽이 비고,
+       남은 블록들의 위치는 그대로 유지됩니다. */
+    justify-content: flex-start;
     gap: 12px;
     overflow-y: auto;
     scrollbar-width: none;
@@ -183,6 +205,72 @@
 
 /* 한 블록 안의 두 번째 줄(대한제지 본관의 48.8g)만 앞 줄과 살짝 띄웁니다 */
 .f1ip-side-kg + .f1ip-side-specs { margin-top: 6px; }
+
+/* ================================================
+   우측 하단: 메모 요약 카드
+   화면에 불러온 구간의 셀 메모를 최근 날짜부터 한 줄씩 정리합니다.
+   ================================================ */
+.f1ip-memo-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.f1ip-memo-head {
+    flex: none;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1d1d1f;
+    letter-spacing: -0.2px;
+    padding-bottom: 9px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ebebeb;
+}
+
+.f1ip-memo-list {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.f1ip-memo-list::-webkit-scrollbar { display: none; }
+
+/* 한 줄 = 날짜 · 열 이름 · 메모 내용 (길면 말줄임, 전체는 툴팁으로) */
+.f1ip-memo-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #1d1d1f;
+    letter-spacing: -0.2px;
+}
+
+.f1ip-memo-date,
+.f1ip-memo-label {
+    flex: none;
+    color: #636366;
+    white-space: nowrap;
+}
+
+.f1ip-memo-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.f1ip-memo-empty {
+    margin: auto;
+    text-align: center;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #a1a1a8;
+}
 
 /* 내용이 아직 정해지지 않은 화면 (공무국) */
 .f1ip-side-pending {
@@ -631,21 +719,9 @@
     color: #8a6d00 !important;
 }
 
-/* ================================================
-   별관(3공장) 참조 열 — 이 페이지에서는 읽기 전용입니다.
-   값 입력은 3공장 페이지에서 하고, 여기서는 보기만 한다는 걸
-   배경을 살짝 눌러 구분해 줍니다. (메모도 붙지 않습니다)
-   ================================================ */
-.f1ip-table td.f1ip-mirror-cell {
-    background: #fafafc;
-    color: #6e6e76;
-}
-
-/* 편집 모드에서는 입력칸이 생기지 않는 열이라는 게 분명히 보이도록 */
-.f1ip-wrapper.edit-mode .f1ip-table td.f1ip-mirror-cell {
-    background: #f2f2f5 !important;
-    cursor: not-allowed;
-}
+/* 별관(3공장) 참조 열(.f1ip-mirror-cell)은 별도 배경 없이 일반 셀과
+   똑같이 보여 줍니다. 편집 모드에서 입력칸(연노랑 배경)이 생기지 않는
+   것만으로 읽기 전용이라는 게 구분됩니다. */
 
 /* 수정 구간 밖(±7일 초과) — 편집 모드에서만 잠긴 것으로 표시 */
 .f1ip-wrapper.edit-mode .f1ip-row-locked td.f1ip-data-cell {
@@ -660,7 +736,10 @@
 @media (max-width: 1100px) {
     /* 좌우 레이아웃과 두 패널을 모두 세로로 쌓고, 우측 패널에도 날짜 열을 표시 */
     .f1ip-top-grid { flex-direction: column; }
-    .f1ip-main-card, .f1ip-side-card { flex: none; width: 100%; }
+    .f1ip-main-card, .f1ip-side-column { flex: none; width: 100%; }
+    /* 세로로 쌓이면 높이를 내용에 맡깁니다 */
+    .f1ip-side-card { flex: none; }
+    .f1ip-memo-card { height: var(--ipgo-memo-height); }
 
     .f1ip-panels-outer { flex-direction: column; }
     .f1ip-panel-ledger, .f1ip-panel-plan { flex: none; width: 100%; }

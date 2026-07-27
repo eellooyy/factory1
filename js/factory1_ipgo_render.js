@@ -210,6 +210,48 @@
         host.innerHTML = blocksHtml;
     };
 
+    /* ────────────────────────────────────────────────────────────
+       우측 하단: 메모 요약
+       지금 화면에 불러와 있는 구간(state.memo)의 셀 메모를 최근 날짜부터
+       한 줄씩 정리합니다. 스크롤로 과거를 더 불러오면 같이 늘어납니다.
+       ──────────────────────────────────────────────────────────── */
+    function memoColLabel(itemCode) {
+        const c = App.COLUMNS.find(x => x.itemCode === itemCode);
+        if (!c) return itemCode;
+        const groupName = App.GROUPS[c.group] || c.group;
+        return c.label ? `${groupName} ${c.label}` : groupName;
+    }
+
+    App.renderMemoList = function () {
+        const host = document.getElementById('f1ipMemoBody');
+        if (!host) return;
+
+        const items = [];
+        Object.keys(state.memo).forEach(dateStr => {
+            const row = state.memo[dateStr] || {};
+            Object.keys(row).forEach(itemCode => {
+                const text = row[itemCode];
+                if (!text) return;
+                items.push({ dateStr, label: memoColLabel(itemCode), text });
+            });
+        });
+
+        if (!items.length) {
+            host.innerHTML = '<div class="f1ip-memo-empty">메모 없음</div>';
+            return;
+        }
+
+        // 최근 날짜가 위로 오게 정렬합니다.
+        items.sort((a, b) => (a.dateStr < b.dateStr ? 1 : a.dateStr > b.dateStr ? -1 : 0));
+
+        host.innerHTML = items.map(it => `
+            <div class="f1ip-memo-item">
+                <span class="f1ip-memo-date">${fmtDateShort(it.dateStr)}</span>
+                <span class="f1ip-memo-label">${escapeAttr(it.label)}</span>
+                <span class="f1ip-memo-text" title="${escapeAttr(it.text)}">${escapeAttr(it.text)}</span>
+            </div>`).join('');
+    };
+
     /* 우측 블록을 선택한 날짜 기준으로 다시 그립니다. */
     App.refreshSideBlocks = async function (dateStr) {
         const target = dateStr || state.selectedDate || state.baseDate || todayStr();
@@ -683,6 +725,9 @@
             applyScrollTwice(() => prevScrollTop + (ledgerPanel.scrollHeight - prevScrollHeight), false);
         }
 
+        // 새로 읽어온 구간의 메모를 우측 하단 요약에 반영합니다.
+        App.renderMemoList();
+
         state.loading = false;
     };
 
@@ -840,8 +885,11 @@
             if (!ok) {
                 state.memo[dateStr][itemCode] = current || null;
                 applyMemoMark(td, dateStr, itemCode);
+                App.renderMemoList();
                 return;
             }
+
+            App.renderMemoList();   // 우측 하단 요약에 즉시 반영
 
             // 메모만 남기려고 만든 행 / 지우면서 없어진 행을 스냅샷에 반영
             if (!state.snapshot[dateStr]) state.snapshot[dateStr] = {};
