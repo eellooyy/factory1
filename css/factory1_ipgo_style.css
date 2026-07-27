@@ -33,10 +33,13 @@
       표시할 내용이 많고 적음에 따라 카드가 늘었다 줄었다 하지 않도록
       고정해 두었습니다. 넘치면 카드 안에서 스크롤됩니다.
 
-      좌측 카드 전체 높이(713px) = 이 값 + 간격 14px + 메모 카드 200px
+      좌우 카드의 아래끝이 나란히 서도록 좌측 카드 높이에 맞춰 둡니다.
+        좌측 카드 656px = 안쪽 여백 36 + 제목줄 32 + 제목 아래 여백 14 + 표 574
+        우측 열   656px = 이 값 442 + 간격 14 + 메모 카드 200
       좌측 표 높이(--ipgo-scroll-height)를 바꾸면 이 값도 함께 맞춰 주세요.
+      (표를 44px = 하루치 늘리면 이 값도 44px 늘리면 됩니다)
     */
-    --ipgo-side-card-height: 499px;
+    --ipgo-side-card-height: 442px;
 
     /*
       [우측 하단 메모 카드 높이]
@@ -92,14 +95,19 @@
    카드 크기가 흔들리지 않고, 넘치면 카드 안에서 스크롤됩니다.
    메모 카드가 남는 높이를 가져가므로 두 카드 합은 항상 좌측과 같습니다.
    box-sizing 을 지정해야 변수 값이 안쪽 여백을 포함한 전체 높이가 됩니다. */
+/* 두 카드 모두 높이를 못박아 둡니다.
+   flex 로 남는 높이를 나눠 갖게 하면 높이가 확정되지 않아, 메모가 많은
+   날 메모 카드가 내용만큼 길어지면서 우측 열 전체가 늘어납니다. 그러면
+   align-items: stretch 때문에 좌측 카드까지 같이 늘어나 표 아래가 빕니다.
+   box-sizing 을 지정해야 변수 값이 안쪽 여백을 포함한 전체 높이가 됩니다. */
 .f1ip-side-card {
     flex: none;
     height: var(--ipgo-side-card-height);
     box-sizing: border-box;
 }
 .f1ip-memo-card {
-    flex: 1;
-    min-height: var(--ipgo-memo-height);
+    flex: none;
+    height: var(--ipgo-memo-height);
     box-sizing: border-box;
 }
 
@@ -187,11 +195,19 @@
        남은 블록들의 위치는 그대로 유지됩니다. */
     justify-content: flex-start;
     gap: 12px;
+    /* 카드 높이가 고정이라 입고가 많은 날(블록 5개)에는 넘칠 수 있습니다.
+       잘린 채 숨지 않도록 메모 카드와 같은 얇은 스크롤바를 띄웁니다. */
     overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    scrollbar-width: thin;
+    scrollbar-color: #c7c7cc transparent;
 }
-.f1ip-side-list::-webkit-scrollbar { display: none; }
+.f1ip-side-list::-webkit-scrollbar { width: 6px; }
+.f1ip-side-list::-webkit-scrollbar-track { background: transparent; }
+.f1ip-side-list::-webkit-scrollbar-thumb {
+    background-color: #c7c7cc;
+    border-radius: 8px;
+}
+.f1ip-side-list::-webkit-scrollbar-thumb:hover { background-color: #a1a1a6; }
 
 /* ── 블록 안의 글자는 크기·굵기·색을 전부 동일하게 씁니다 ──────
    제목/지폭/kg 을 구분하지 않고 한 가지 서식으로만 표시합니다. */
@@ -824,8 +840,7 @@
     /* 좌우 레이아웃과 두 패널을 모두 세로로 쌓고, 우측 패널에도 날짜 열을 표시 */
     .f1ip-top-grid { flex-direction: column; }
     .f1ip-main-card, .f1ip-side-column { flex: none; width: 100%; }
-    /* 세로로 쌓여도 두 카드의 높이는 그대로 고정입니다 */
-    .f1ip-memo-card { flex: none; height: var(--ipgo-memo-height); }
+    /* 두 카드 높이는 기본 규칙(고정)을 그대로 씁니다 */
 
     .f1ip-panels-outer { flex-direction: column; }
     .f1ip-panel-ledger, .f1ip-panel-plan { flex: none; width: 100%; }
