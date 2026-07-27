@@ -257,11 +257,26 @@
 }
 
 .f1ip-memo-day {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
     font-size: 11px;
     font-weight: 700;
     color: #8e8e93;
     letter-spacing: -0.2px;
 }
+
+/* 어느 공장 메모인지 — 날짜 옆 작은 배지 */
+.f1ip-memo-factory {
+    flex: none;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    padding: 1px 5px;
+    border-radius: 4px;
+}
+.f1ip-memo-factory-1 { color: #1c6ec4; background: #e8f1fb; }
+.f1ip-memo-factory-3 { color: #9a5b00; background: #fdf0dd; }
 
 /* 한 항목 = 열 이름 + 메모 내용 (날짜는 묶음 머리에 있습니다).
    내용은 자르지 않습니다. 길면 다음 줄로 넘어가고, 카드를 넘치면
@@ -468,8 +483,9 @@
 .f1ip-scroll-area::-webkit-scrollbar { display: none; }
 
 /* 스크롤 잠금 시 시각적 반응 및 마우스 커서 제어 */
+/* 내부 스크롤만 막고, 휠/터치는 페이지 전체 스크롤로 넘어가도록 둡니다 */
 .f1ip-scroll-area.locked {
-    touch-action: none;
+    touch-action: pan-y;
     overflow-y: hidden !important;
 }
 

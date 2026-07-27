@@ -91,28 +91,48 @@
        최근 것부터 limit 개를 받아 화면에서 오래된 순으로 뒤집어 씁니다.
        ──────────────────────────────────────────────────────────── */
     App.fetchMemoList = async function (limit) {
-        const { data, error } = await supabase
-            .from(App.TABLE)
-            .select('ipgo_date, item_code, memo')
-            .not('memo', 'is', null)
-            .order('ipgo_date', { ascending: false })
-            .limit(limit || App.MEMO_LIST_LIMIT);
+        const max = limit || App.MEMO_LIST_LIMIT;
 
-        if (error) {
-            console.error('[factory1_ipgo] 메모 목록 조회 실패:', error.message);
-            return false;
-        }
+        // 1공장은 값과 같은 행에, 3공장은 별도 메모 테이블에 저장돼 있어
+        // 두 곳을 각각 읽은 뒤 하나로 합칩니다.
+        const [f1Res, f3Res] = await Promise.all([
+            supabase.from(App.TABLE)
+                .select('ipgo_date, item_code, memo')
+                .not('memo', 'is', null)
+                .order('ipgo_date', { ascending: false })
+                .limit(max),
+            supabase.from(App.FACTORY3_MEMO_TABLE)
+                .select('date, col_id, memo_text')
+                .not('memo_text', 'is', null)
+                .order('date', { ascending: false })
+                .limit(max)
+        ]);
+
+        if (f1Res.error) console.error('[factory1_ipgo] 1공장 메모 조회 실패:', f1Res.error.message);
+        if (f3Res.error) console.error('[factory1_ipgo] 3공장 메모 조회 실패:', f3Res.error.message);
 
         // 빈 문자열이 저장된 행은 메모가 없는 것으로 봅니다.
-        state.memoList = (data || [])
+        const f1 = (f1Res.data || [])
             .filter(r => r.memo && String(r.memo).trim() !== '')
             .map(r => ({
                 dateStr: r.ipgo_date,
-                itemCode: r.item_code,
+                factory: 1,
+                key: r.item_code,
                 text: String(r.memo).trim()
             }));
 
-        return true;
+        const f3 = (f3Res.data || [])
+            .filter(r => r.memo_text && String(r.memo_text).trim() !== '')
+            .map(r => ({
+                dateStr: r.date,
+                factory: 3,
+                key: r.col_id,
+                text: String(r.memo_text).trim()
+            }));
+
+        state.memoList = f1.concat(f3);
+
+        return !f1Res.error && !f3Res.error;
     };
 
     /* ────────────────────────────────────────────────────────────

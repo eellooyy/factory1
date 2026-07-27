@@ -216,9 +216,14 @@
        읽어와(state.memoList) 한 줄씩 정리합니다. 표를 스크롤하지 않아도
        예전에 남긴 메모가 그대로 보입니다.
        ──────────────────────────────────────────────────────────── */
-    function memoColLabel(itemCode) {
-        const c = App.COLUMNS.find(x => x.itemCode === itemCode);
-        if (!c) return itemCode;
+    /* 메모가 달린 칸의 이름.
+       1공장은 열 정의(COLUMNS)에서, 3공장은 col_id 대응표에서 찾습니다. */
+    function memoColLabel(m) {
+        if (m.factory === 3) {
+            return App.FACTORY3_MEMO_LABELS[m.key] || m.key;
+        }
+        const c = App.COLUMNS.find(x => x.itemCode === m.key);
+        if (!c) return m.key;
         const groupName = App.GROUPS[c.group] || c.group;
         return c.label ? `${groupName} ${c.label}` : groupName;
     }
@@ -234,24 +239,34 @@
             return;
         }
 
-        // 오래된 날짜가 위, 최근 날짜가 아래로 오게 정렬합니다.
-        list.sort((a, b) => (a.dateStr < b.dateStr ? -1 : a.dateStr > b.dateStr ? 1 : 0));
+        /* 오래된 날짜가 위, 최근 날짜가 아래.
+           같은 날짜 안에서는 1공장을 먼저 놓습니다. */
+        list.sort((a, b) => {
+            if (a.dateStr !== b.dateStr) return a.dateStr < b.dateStr ? -1 : 1;
+            return a.factory - b.factory;
+        });
 
-        /* 같은 날짜끼리 묶습니다. 날짜를 줄마다 되풀이하지 않고 묶음 머리에
-           한 번만 적으면, 좁은 카드에서 메모 내용에 쓸 폭이 그만큼 늘어납니다. */
+        /* 날짜 + 공장이 같은 것끼리 묶습니다. 날짜와 공장을 줄마다 되풀이하지
+           않고 묶음 머리에 한 번만 적으면, 좁은 카드에서 메모 내용에 쓸 폭이
+           그만큼 늘어납니다. */
         const groups = [];
         list.forEach(m => {
             const last = groups[groups.length - 1];
-            if (last && last.dateStr === m.dateStr) last.items.push(m);
-            else groups.push({ dateStr: m.dateStr, items: [m] });
+            if (last && last.dateStr === m.dateStr && last.factory === m.factory) {
+                last.items.push(m);
+            } else {
+                groups.push({ dateStr: m.dateStr, factory: m.factory, items: [m] });
+            }
         });
 
         /* 내용은 자르지 않고 그대로 흘려 씁니다. 길면 다음 줄로 넘어가고,
            카드를 넘치면 목록 자체를 스크롤합니다. */
         host.innerHTML = groups.map(g => {
+            const factoryName = `${g.factory}공장`;
+
             const rows = g.items.map(m => {
-                const col = memoColLabel(m.itemCode);
-                const tip = `${fmtDateShort(g.dateStr)} [${col}] ${m.text}`;
+                const col = memoColLabel(m);
+                const tip = `${fmtDateShort(g.dateStr)} ${factoryName} [${col}] ${m.text}`;
                 return `<div class="f1ip-memo-item" title="${escapeAttr(tip)}">`
                     + `<span class="f1ip-memo-label">${escapeAttr(col)}</span>`
                     + `<span class="f1ip-memo-text">${escapeAttr(m.text)}</span>`
@@ -259,7 +274,10 @@
             }).join('');
 
             return `<div class="f1ip-memo-group">`
-                + `<div class="f1ip-memo-day">${fmtDateShort(g.dateStr)}</div>`
+                + `<div class="f1ip-memo-day">`
+                + `<span class="f1ip-memo-daytext">${fmtDateShort(g.dateStr)}</span>`
+                + `<span class="f1ip-memo-factory f1ip-memo-factory-${g.factory}">${factoryName}</span>`
+                + `</div>`
                 + rows
                 + `</div>`;
         }).join('');
@@ -347,10 +365,9 @@
             const el = document.getElementById(p.scrollId);
             if (!el) return;
 
-            // 스크롤 잠금 상태 시 마우스 휠 동작 차단
-            el.addEventListener('wheel', (e) => {
-                if (!state.isScrollUnlocked) e.preventDefault();
-            }, { passive: false });
+            // 잠금 상태의 내부 스크롤 차단은 CSS(.f1ip-scroll-area.locked)가 담당합니다.
+            // 여기서 wheel 을 preventDefault 하면 페이지 전체 스크롤까지 막힙니다.
+            // (factory1_ft_io 페이지에서 고친 것과 같은 문제입니다)
 
             el.addEventListener('scroll', () => {
                 if (!state.isScrollUnlocked) return;
@@ -803,9 +820,15 @@
                 // 0 은 빈 칸으로 띄웁니다. 0 을 지우고 새로 치는 수고를 없앱니다.
                 const val = normVal(cachedVal(dateStr, c.itemCode));
 
+                /* type="number" 를 쓰면 입력칸에 포커스가 있는 동안 마우스 휠과
+                   위/아래 방향키가 값을 올리고 내립니다. 표를 훑어보려고 스크롤한
+                   것뿐인데 숫자가 바뀌어 버리므로 텍스트 입력칸으로 두고,
+                   숫자만 받도록 아래 input 이벤트에서 걸러 냅니다.
+                   inputmode 를 주면 휴대폰에서는 숫자 자판이 그대로 뜹니다. */
                 const inp = document.createElement('input');
-                inp.type = 'number';
-                inp.min = '0';
+                inp.type = 'text';
+                inp.inputMode = 'numeric';
+                inp.autocomplete = 'off';
                 inp.className = 'f1ip-input';
                 inp.value = val === 0 ? '' : val;
                 inp.dataset.date = dateStr;
@@ -852,6 +875,67 @@
                 td.classList.toggle('f1ip-dirty-cell', state.dirty.has(cellKey(dateStr, c.itemCode)));
                 applyMemoMark(td, dateStr, c.itemCode);
             });
+        });
+    }
+
+    /* ────────────────────────────────────────────────────────────
+       편집 모드 방향키 — 값 증감이 아니라 칸 이동으로만 씁니다.
+       (보기 모드의 커서 이동은 bindKeyboardNav 가 따로 담당합니다)
+       ──────────────────────────────────────────────────────────── */
+    function inputAt(tr, col) {
+        if (!tr) return null;
+        const td = tr.querySelector(`td[data-col="${col}"]`);
+        return td ? td.querySelector('.f1ip-input') : null;
+    }
+
+    function focusInput(inp) {
+        if (!inp) return;
+        // preventScroll 이 없으면 좌측 패널만 움직여 우측 별쇄 패널과 행이 어긋납니다.
+        inp.focus({ preventScroll: true });
+        inp.select();
+    }
+
+    function moveEditFocus(inp, key) {
+        const td = inp.closest('td[data-col]');
+        const tr = inp.closest('tr[data-date]');
+        if (!td || !tr) return;
+
+        const col = Number(td.getAttribute('data-col'));
+
+        if (key === 'ArrowUp' || key === 'ArrowDown') {
+            // 수정 구간 밖의 행에는 입력칸이 없으므로 있는 행이 나올 때까지 건너뜁니다.
+            const step = key === 'ArrowUp' ? 'previousElementSibling' : 'nextElementSibling';
+            for (let row = tr[step]; row; row = row[step]) {
+                const target = inputAt(row, col);
+                if (target) { focusInput(target); return; }
+            }
+            return;
+        }
+
+        // 좌우 — 같은 행에서 입력칸이 있는(별관 참조 열을 건너뛴) 이웃 열로
+        const cols = App.COLUMNS.filter(c => !isMirrorCol(c)).map(c => c.col);
+        const idx = cols.indexOf(col);
+        if (idx < 0) return;
+
+        const nextIdx = key === 'ArrowLeft' ? idx - 1 : idx + 1;
+        if (nextIdx < 0 || nextIdx >= cols.length) return;
+
+        focusInput(inputAt(tr, cols[nextIdx]));
+    }
+
+    function bindEditKeyboardNav() {
+        const body = document.getElementById(LEDGER.bodyId);
+        if (!body) return;
+
+        body.addEventListener('keydown', e => {
+            if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+
+            const inp = e.target.closest('.f1ip-input');
+            if (!inp) return;
+
+            // 기본 동작(글자 사이 캐럿 이동)을 막고 칸 이동으로만 씁니다.
+            e.preventDefault();
+            moveEditFocus(inp, e.key);
         });
     }
 
@@ -927,7 +1011,15 @@
 
         body.addEventListener('input', e => {
             const inp = e.target.closest('.f1ip-input');
-            if (inp) markDirty(inp);
+            if (!inp) return;
+
+            // 텍스트 입력칸이므로 숫자가 아닌 글자는 여기서 걸러 냅니다.
+            const cleaned = inp.value.replace(/[^0-9]/g, '');
+            if (cleaned !== inp.value) {
+                inp.value = cleaned;
+            }
+
+            markDirty(inp);
         });
     }
 
@@ -1031,6 +1123,7 @@
         bindBodyClicks();
         bindKeyboardNav();
         bindEditInput();
+        bindEditKeyboardNav();
         bindBodyDoubleClicks();
         bindDeptToggle();
     };
