@@ -24,6 +24,15 @@
         return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`;
     }
 
+    /* 사용량 표의 기준은 '오늘'이 아니라 '어제'입니다.
+       야간 배치가 어제까지의 급지 실적만 가져오므로 오늘 행은 언제나
+       비어 있습니다. 표의 마지막 행도, 파란 강조도 어제에 맞춥니다. */
+    function yesterdayStr() {
+        const t = new Date();
+        t.setDate(t.getDate() - 1);
+        return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`;
+    }
+
     function addDays(dateStr, diff) {
         const d = new Date(dateStr + 'T00:00:00');
         d.setDate(d.getDate() + diff);
@@ -214,7 +223,7 @@
 
     /* ── 행 렌더링 ─────────────────────────────────────────────── */
     function rowClasses(r) {
-        return (r.date === todayStr()) ? 'f1us-row-today f1us-data-row' : 'f1us-data-row';
+        return (r.date === yesterdayStr()) ? 'f1us-row-yesterday f1us-data-row' : 'f1us-data-row';
     }
 
     function rowHtml(r) {
@@ -267,32 +276,31 @@
         const body = document.getElementById(PANEL.bodyId);
         if (!panel || !body) { state.loading = false; return; }
 
-        const today = todayStr();
-        const minDate = addDays(today, -App.MAX_PAST_DAYS);
+        const latest = yesterdayStr();
+        const minDate = addDays(todayStr(), -App.MAX_PAST_DAYS);
 
         let from, to;
         if (direction === 'prev') {
             const first = body.firstElementChild
                 ? body.firstElementChild.getAttribute('data-date')
-                : today;
+                : latest;
             from = addDays(first, -App.RANGE);
             to = addDays(first, -1);
         } else if (direction === 'next') {
             const last = body.lastElementChild
                 ? body.lastElementChild.getAttribute('data-date')
-                : today;
+                : latest;
             from = addDays(last, 1);
             to = addDays(last, App.RANGE);
         } else {
-            const base = state.baseDate || today;
+            const base = state.baseDate || latest;
             from = addDays(base, -App.RANGE);
             to = addDays(base, App.RANGE);
         }
 
-        /* 사용량은 이미 지난 실적이라 오늘 이후 행은 만들지 않습니다.
-           다만 오늘 행 자체는 (아직 실적이 없어 전부 '–' 이더라도) 렌더링합니다.
-           오늘이 어디인지 배경색으로 바로 보이게 하기 위해서입니다. */
-        if (to > today) to = today;
+        /* 어제까지만 만듭니다. 오늘 행은 실적이 아직 안 들어와 항상 비어 있어
+           표에 넣으면 "왜 오늘은 빈칸이냐"는 오해만 남습니다. */
+        if (to > latest) to = latest;
         if (from < minDate) from = minDate;
 
         if (from > to) {
@@ -323,8 +331,9 @@
         } else {
             body.innerHTML = rows.map(rowHtml).join('');
 
-            // 기준일 아래로 2줄이 더 보이도록 배치합니다.
-            // (기준일이 어제면 그 아래 오늘 행까지 화면에 들어옵니다)
+            /* 기준일을 맨 아랫줄에 두어 그 앞 4일이 함께 보이게 합니다.
+               표가 5줄뿐이라 기준일을 위쪽에 두면 정작 비교할 과거가
+               화면 밖으로 밀립니다. (아래로 스크롤하면 이후 날짜가 나옵니다) */
             const baseRow = body.querySelector(`tr[data-date="${state.baseDate}"]`) || body.lastElementChild;
             if (baseRow) {
                 applyScrollTwice(() => {
@@ -332,7 +341,7 @@
                     const theadH = thead ? thead.getBoundingClientRect().height : 0;
                     const rowH = baseRow.offsetHeight || 44;
                     const rowTop = getOffsetRelativeToPanel(baseRow, panel).top;
-                    return Math.round(rowTop - theadH - (visibleRowCount() - 3) * rowH);
+                    return Math.round(rowTop - theadH - (visibleRowCount() - 1) * rowH);
                 });
             }
 
@@ -357,7 +366,7 @@
 
     // 상단 달력에서 날짜를 바꾸면 그 날짜를 마지막 행으로 두고 다시 그립니다.
     App.loadData = function (dateStr) {
-        state.baseDate = dateStr || todayStr();
+        state.baseDate = dateStr || yesterdayStr();
         state.hasPrev = true;
         state.hasNext = true;
         clearHighlights();

@@ -25,10 +25,14 @@
     /*
       [표 높이]
       계산식: 헤더 2줄(44px × 2 = 88px) + 행 높이 44px × 보고 싶은 일수
+               5일 → 88 + 44 ×  5 = 308px  ← 3공장 io 페이지와 동일
               11일 → 88 + 44 × 11 = 572px
               15일 → 88 + 44 × 15 = 748px
+
+      2층(매체별 사용량)을 위아래로 쌓을 예정이라, 두 층이 한 화면에
+      들어오도록 3공장 io 와 같은 5일치로 맞춰 두었습니다.
     */
-    --f1us-scroll-height: 572px;
+    --f1us-scroll-height: 308px;
 
     /*
       [데이터 열 개수]
@@ -355,14 +359,18 @@
 }
 
 /* ================================================
-   오늘 / 선택 행 강조
+   최신 실적일(어제) / 선택 행 강조
+
+   입고 페이지는 '오늘' 행을 강조하지만 사용량은 다릅니다.
+   급지 실적은 야간 배치가 '어제까지'만 가져오므로 오늘 행은 항상 비어
+   있습니다. 그래서 강조 대상도, 표의 마지막 행도 어제로 둡니다.
    ================================================ */
-.f1us-row-today td { background: #e8f4fd !important; }
-.f1us-row-today .f1us-date-td { background: #bbdefb !important; }
+.f1us-row-yesterday td { background: #e8f4fd !important; }
+.f1us-row-yesterday .f1us-date-td { background: #bbdefb !important; }
 .f1us-selected-row td { background: #f4f4f8 !important; }
 .f1us-selected-row .f1us-date-td { background: #ebebf0 !important; }
-.f1us-row-today.f1us-selected-row td { background: #daedf9 !important; }
-.f1us-row-today.f1us-selected-row .f1us-date-td { background: #bbd8f0 !important; }
+.f1us-row-yesterday.f1us-selected-row td { background: #daedf9 !important; }
+.f1us-row-yesterday.f1us-selected-row .f1us-date-td { background: #bbd8f0 !important; }
 
 /* 활성화된 헤더 — 선택한 그룹(1레벨) + 선택한 열(2레벨) */
 .f1us-thead-lv1 th.f1us-header-active,
@@ -386,9 +394,10 @@
 .f1us-table tbody tr:not(.f1us-selected-row):hover td { background: #f7f7fa; }
 .f1us-data-cell { cursor: pointer; }
 
-/* 별관(3공장) 참조 열 — 이 페이지에서 관리하는 값이 아니라는 표시 */
-.f1us-table td.f1us-mirror-cell { color: #6e6e73; background: #fbfbfd; }
-.f1us-row-today td.f1us-mirror-cell { background: #e2eef8 !important; }
+/* 별관(3공장) 참조 열(.f1us-mirror-cell)은 별도 배경·글자색 없이 일반 셀과
+   똑같이 보여 줍니다. 입고 페이지(.f1ip-mirror-cell)와 같은 처리입니다.
+   이 표는 전 열이 조회 전용이라 굳이 구분할 이유가 없고, 색이 섞이면
+   오히려 읽기 불편합니다. 구분은 상단 '대한제지 별관' 헤더로 충분합니다. */
 
 /* ================================================
    좁은 화면
