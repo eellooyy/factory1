@@ -226,22 +226,46 @@
     border-bottom: 1px solid #ebebeb;
 }
 
+/* 목록 — 우측에 얇은 스크롤바를 띄워 위아래로 훑을 수 있게 합니다.
+   (다른 영역은 스크롤바를 숨기지만, 여기는 내용이 더 있다는 걸
+    알려 주는 편이 낫습니다) */
 .f1ip-memo-list {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 10px;
+    padding-right: 8px;
     overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    scrollbar-width: thin;
+    scrollbar-color: #c7c7cc transparent;
 }
-.f1ip-memo-list::-webkit-scrollbar { display: none; }
+.f1ip-memo-list::-webkit-scrollbar { width: 6px; }
+.f1ip-memo-list::-webkit-scrollbar-track { background: transparent; }
+.f1ip-memo-list::-webkit-scrollbar-thumb {
+    background-color: #c7c7cc;
+    border-radius: 8px;
+}
+.f1ip-memo-list::-webkit-scrollbar-thumb:hover { background-color: #a1a1a6; }
 
-/* 한 항목 = 날짜 + 열 이름 + 메모 내용.
-   카드 폭이 좁아 한 줄에 나란히 놓으면 내용이 몇 글자 안 보입니다.
-   앞쪽 두 개만 작게 붙이고 내용이 그 뒤로 줄바꿈되게 흘려 보냅니다.
-   두 줄을 넘기면 말줄임하고 전문은 툴팁(title)으로 확인합니다. */
+/* 같은 날짜 메모 묶음 — 날짜는 묶음 머리에 한 번만 적습니다 */
+.f1ip-memo-group {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.f1ip-memo-day {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8e8e93;
+    letter-spacing: -0.2px;
+}
+
+/* 한 항목 = 열 이름 + 메모 내용 (날짜는 묶음 머리에 있습니다).
+   내용은 자르지 않습니다. 길면 다음 줄로 넘어가고, 카드를 넘치면
+   목록이 스크롤됩니다. 줄 수를 제한하면 글자가 잘려 읽을 수 없습니다. */
 .f1ip-memo-item {
     font-size: 11.5px;
     font-weight: 500;
@@ -249,18 +273,7 @@
     color: #1d1d1f;
     letter-spacing: -0.2px;
     word-break: break-word;
-
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
-    /* line-clamp 가 안 먹는 환경에서도 두 줄에서 잘리도록 (말줄임만 없음) */
-    max-height: calc(1.45em * 2);
-}
-
-.f1ip-memo-date {
-    color: #8e8e93;
-    margin-right: 4px;
+    padding-left: 8px;
 }
 
 .f1ip-memo-label {
