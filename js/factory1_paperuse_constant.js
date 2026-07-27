@@ -79,6 +79,7 @@
             isScrollUnlocked: false,
             loading: false,
             hasPrev: true,
+            hasNext: true,
             isInitialLoad: true,
 
             selectedDate: null,

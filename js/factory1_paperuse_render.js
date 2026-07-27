@@ -86,7 +86,9 @@
         el.addEventListener('scroll', () => {
             if (!state.isScrollUnlocked) return;
             hideCursor();
-            if (el.scrollTop <= 100) App.loadRows('prev');
+            const threshold = 100;
+            if (el.scrollTop <= threshold) App.loadRows('prev');
+            if (el.scrollTop + el.clientHeight >= el.scrollHeight - threshold) App.loadRows('next');
         });
     }
 
@@ -155,6 +157,14 @@
         state.selectedDate = dateStr;
         state.selectedCol = colNum;
 
+        /* 선택한 행의 날짜를 상단 공통 헤더에 반영합니다.
+           두 번째 인자 false = 표를 다시 불러오지 않고 표시만 갱신.
+           (true 로 주면 onDateChange 가 돌아 표가 통째로 다시 그려지면서
+            방금 클릭한 위치로 스크롤이 튑니다) */
+        if (dateStr && App.headerApi && App.headerApi.setCurrentDate) {
+            App.headerApi.setCurrentDate(dateStr, false);
+        }
+
         const body = document.getElementById(PANEL.bodyId);
         const scrollPanelEl = document.getElementById(PANEL.scrollId);
         if (!body || !scrollPanelEl) return;
@@ -162,6 +172,9 @@
         const row = body.querySelector(`tr[data-date="${dateStr}"]`);
         if (!row) return;
         row.classList.add('f1us-selected-row');
+
+        // 날짜 칸을 클릭했을 때는 행만 강조하고 셀 커서는 띄우지 않습니다.
+        if (colNum === null || colNum === undefined) return;
 
         const targetTd = row.querySelector(`td[data-col="${colNum}"]`);
         if (targetTd) {
@@ -189,8 +202,13 @@
             if (!tr) return;
 
             const dateStr = tr.getAttribute('data-date');
-            const colNum = td.getAttribute('data-col') || '1';
-            applyHighlight(dateStr, colNum);
+
+            // 날짜 셀 클릭 시에는 행만 강조 (입고 페이지와 동일한 동작)
+            if (td.classList.contains('f1us-date-td')) {
+                applyHighlight(dateStr, null);
+                return;
+            }
+            applyHighlight(dateStr, td.getAttribute('data-col'));
         });
     }
 
@@ -241,6 +259,7 @@
     App.loadRows = async function (direction) {
         if (state.loading) return;
         if (direction === 'prev' && !state.hasPrev) return;
+        if (direction === 'next' && !state.hasNext) return;
 
         state.loading = true;
 
@@ -258,17 +277,27 @@
                 : today;
             from = addDays(first, -App.RANGE);
             to = addDays(first, -1);
+        } else if (direction === 'next') {
+            const last = body.lastElementChild
+                ? body.lastElementChild.getAttribute('data-date')
+                : today;
+            from = addDays(last, 1);
+            to = addDays(last, App.RANGE);
         } else {
-            // 선택한 날짜를 기준으로 다시 그립니다. 미래 행은 만들지 않습니다.
             const base = state.baseDate || today;
             from = addDays(base, -App.RANGE);
-            to = base > today ? today : base;
+            to = addDays(base, App.RANGE);
         }
 
+        /* 사용량은 이미 지난 실적이라 오늘 이후 행은 만들지 않습니다.
+           다만 오늘 행 자체는 (아직 실적이 없어 전부 '–' 이더라도) 렌더링합니다.
+           오늘이 어디인지 배경색으로 바로 보이게 하기 위해서입니다. */
+        if (to > today) to = today;
         if (from < minDate) from = minDate;
 
         if (from > to) {
             if (direction === 'prev') state.hasPrev = false;
+            if (direction === 'next') state.hasNext = false;
             state.loading = false;
             return;
         }
@@ -288,26 +317,29 @@
             // 새로 붙은 높이만큼 밀어 화면이 튀지 않게 합니다.
             applyScrollTwice(() => prevScrollTop + (panel.scrollHeight - prevScrollHeight));
 
+        } else if (direction === 'next') {
+            body.insertAdjacentHTML('beforeend', rows.map(rowHtml).join(''));
+
         } else {
             body.innerHTML = rows.map(rowHtml).join('');
 
-            // 기준일이 아래쪽에 오도록 배치합니다.
-            // (사용량은 지난 실적이라 기준일 아래로는 볼 것이 없습니다)
-            const baseRow = body.querySelector(`tr[data-date="${to}"]`) || body.lastElementChild;
+            // 기준일 아래로 2줄이 더 보이도록 배치합니다.
+            // (기준일이 어제면 그 아래 오늘 행까지 화면에 들어옵니다)
+            const baseRow = body.querySelector(`tr[data-date="${state.baseDate}"]`) || body.lastElementChild;
             if (baseRow) {
                 applyScrollTwice(() => {
                     const thead = panel.querySelector('thead');
                     const theadH = thead ? thead.getBoundingClientRect().height : 0;
                     const rowH = baseRow.offsetHeight || 44;
                     const rowTop = getOffsetRelativeToPanel(baseRow, panel).top;
-                    return Math.round(rowTop - theadH - (visibleRowCount() - 1) * rowH);
+                    return Math.round(rowTop - theadH - (visibleRowCount() - 3) * rowH);
                 });
             }
 
             if (state.isInitialLoad) {
                 state.isInitialLoad = false;
                 setTimeout(() => {
-                    const row = body.querySelector(`tr[data-date="${to}"]`) || body.lastElementChild;
+                    const row = body.querySelector(`tr[data-date="${state.baseDate}"]`) || body.lastElementChild;
                     if (row) applyHighlight(row.getAttribute('data-date'), '1');
                 }, 150);
             }
@@ -327,6 +359,7 @@
     App.loadData = function (dateStr) {
         state.baseDate = dateStr || todayStr();
         state.hasPrev = true;
+        state.hasNext = true;
         clearHighlights();
         App.loadRows('none');
     };
