@@ -29,6 +29,7 @@
             'jeonju-jeonja': '전주전자',
             'daehan-c':      '대한제지',
             'ft':            'F.T',
+            'daehan-annex':  '대한제지 별관',
             'byeolswae':     '별쇄 계획표'
         },
 
@@ -38,6 +39,12 @@
            label    : 2레벨 헤더 라벨 (빈 값이면 하위 구분 없이 1레벨이 두 행 병합)
            sep      : 그룹 시작 열 → 좌측 구분선 표시
            itemCode : factory1_ipgo.item_code 와 1:1 대응하는 품목 키
+           source   : 생략하면 factory1_ipgo (이 페이지에서 입력하는 열)
+                      'factory3' 이면 factory3_io 에서 읽어오는 참조 열입니다.
+           field    : source === 'factory3' 인 열이 볼 factory3_io 컬럼
+                      ('a' → in_a, 'd' → in_d)
+           readonly : true 인 열은 입력칸/메모/저장 대상에서 제외됩니다.
+                      값 입력은 3공장 페이지에서만 하고 여기서는 보기만 합니다.
 
            이 배열은 추후 ITEM_TABLE(factory1_paper_item)에서 sort_order 순으로
            읽어오도록 교체할 예정입니다. 그때 바뀌는 건 배열을 만드는 부분뿐이고
@@ -55,7 +62,11 @@
             { col: 9,  group: 'daehan-c',      label: '48.8g', itemCode: 'daehan_488' },
             { col: 10, group: 'ft',            label: 'A',     itemCode: 'ft_a',        sep: true },
             { col: 11, group: 'ft',            label: 'C',     itemCode: 'ft_c' },
-            { col: 12, group: 'ft',            label: 'D',     itemCode: 'ft_d' }
+            { col: 12, group: 'ft',            label: 'D',     itemCode: 'ft_d' },
+
+            // 별관(3공장) 참조 열 — factory3_io 의 in_a / in_d 를 그대로 보여만 줍니다.
+            { col: 13, group: 'daehan-annex',  label: 'A',     source: 'factory3', field: 'a', readonly: true, sep: true },
+            { col: 14, group: 'daehan-annex',  label: 'D',     source: 'factory3', field: 'd', readonly: true }
         ],
 
         // ── 우측 패널: 별쇄 계획표 열 정의 ────────────────────────
@@ -195,6 +206,10 @@
             // 셀별 메모  memo[날짜][itemCode] = 문자열 or null
             // 롤 수와 달리 더블클릭 즉시 저장되므로 dirty 추적 대상이 아닙니다.
             memo: {},
+
+            // 별관(3공장) 참조 열 값  factory3[날짜] = { a: 롤수, d: 롤수 }
+            // 읽기 전용이라 snapshot/dirty 없이 조회 결과만 담아 둡니다.
+            factory3: {},
 
             isChanged: false
         },

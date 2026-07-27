@@ -16,6 +16,9 @@
             App.headerApi = window.CommonHeader.init({
                 idPrefix: 'f1Ipgo',
                 wrapperSelector: '.gf3-wrapper',
+                // 입고 페이지는 마스터(0000)만 수정할 수 있습니다.
+                // (edit0000 = admin 계정은 보기 전용 — 셀 메모는 남길 수 있습니다)
+                requireMaster: true,
                 onDateChange: App.loadData,
                 onSave: App.saveData,
                 onEditModeChange: function (isEdit) {

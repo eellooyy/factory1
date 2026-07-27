@@ -54,6 +54,35 @@
     };
 
     /* ────────────────────────────────────────────────────────────
+       구간 조회 — 별관(3공장) 참조 열
+       factory3_io 는 날짜당 한 행에 in_a / in_d 컬럼을 갖는 구조라
+       (ipgo_date, item_code) 로 펼쳐진 factory1_ipgo 와 형태가 다릅니다.
+       이 페이지에서는 읽기만 하므로 롤 수만 날짜별로 담아 둡니다.
+       (입력은 3공장 페이지에서만 합니다 — snapshot/dirty 대상이 아닙니다)
+       ──────────────────────────────────────────────────────────── */
+    App.fetchFactory3Range = async function (from, to) {
+        const { data, error } = await supabase
+            .from(App.FACTORY3_TABLE)
+            .select('date, in_a, in_d')
+            .gte('date', from)
+            .lte('date', to);
+
+        if (error) {
+            console.error('[factory1_ipgo] 별관(3공장) 구간 조회 실패:', error.message);
+            return false;
+        }
+
+        (data || []).forEach(r => {
+            state.factory3[r.date] = {
+                a: Number(r.in_a) || 0,
+                d: Number(r.in_d) || 0
+            };
+        });
+
+        return true;
+    };
+
+    /* ────────────────────────────────────────────────────────────
        셀 메모 즉시 저장
        롤 수와 달리 편집 모드/저장 버튼과 무관하게 그 자리에서 반영합니다.
 

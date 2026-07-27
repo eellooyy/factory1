@@ -74,6 +74,10 @@ window.CommonHeader = (function() {
         // 콜백으로 위임할 수 있습니다. 3공장처럼 inputSelector 하나로 충분한
         // 페이지는 그냥 생략하면 됩니다. (기존 3공장 동작에는 영향 없음)
         const onEditModeChange = config.onEditModeChange || null;
+        // (페이지 전용 추가 옵션) true 로 주면 그 페이지만 master(0000) 계정에게만
+        // 수정 권한을 줍니다. 생략하면 기존대로 master + admin(edit0000) 둘 다
+        // 수정할 수 있습니다. — 다른 페이지 동작에는 영향이 없습니다.
+        const requireMaster = !!config.requireMaster;
 
         const state = {
             currentDate: null,
@@ -178,7 +182,10 @@ window.CommonHeader = (function() {
 
         state.role = accessRole;
         // master나 admin일 경우 편집 권한을 true로 설정
-        state.isAdmin = (accessRole === 'master' || accessRole === 'admin');
+        // 단 requireMaster 페이지는 master(0000) 에게만 열어 줍니다.
+        state.isAdmin = requireMaster
+            ? (accessRole === 'master')
+            : (accessRole === 'master' || accessRole === 'admin');
 
         window.addEventListener('beforeunload', function(e) {
             if (state.isEditMode) {

@@ -103,6 +103,22 @@
         return row ? row[itemCode] : undefined;
     }
 
+    /* 별관(3공장) 참조 열인지 — 편집 / 메모 / 저장 대상에서 모두 빠집니다. */
+    function isMirrorCol(c) {
+        return c.source === 'factory3';
+    }
+
+    /* 별관 열 값 (factory3_io 의 in_a / in_d). 그 날 행이 없으면 undefined 입니다. */
+    function factory3Val(dateStr, field) {
+        const row = state.factory3[dateStr];
+        return row ? row[field] : undefined;
+    }
+
+    /* 열 하나의 표시값 — 1공장 열은 입력 캐시에서, 별관 열은 3공장 캐시에서 */
+    function colValue(dateStr, c) {
+        return isMirrorCol(c) ? factory3Val(dateStr, c.field) : cachedVal(dateStr, c.itemCode);
+    }
+
     /* 수정 가능 구간: 오늘 기준 -EDIT_PAST_DAYS ~ +EDIT_FUTURE_DAYS */
     function isEditableDate(dateStr) {
         const t = todayStr();
@@ -498,6 +514,13 @@
         let cells = '';
         App.COLUMNS.forEach(c => {
             const sepCls = c.sep ? ' f1ip-sep' : '';
+
+            // 별관(3공장) 참조 열 — 변경 표시도 메모도 붙지 않습니다.
+            if (isMirrorCol(c)) {
+                cells += `<td class="f1ip-data-cell f1ip-mirror-cell${sepCls}" data-col="${c.col}">${fmtVal(r.values[c.col])}</td>`;
+                return;
+            }
+
             // 저장 전 변경분은 편집 모드를 빠져나가도 계속 표시해 둡니다.
             const dirtyCls = state.dirty.has(cellKey(r.date, c.itemCode)) ? ' f1ip-dirty-cell' : '';
 
@@ -554,7 +577,7 @@
         const rows = [];
         for (let d = from; d <= to; d = addDays(d, 1)) {
             const values = {};
-            App.COLUMNS.forEach(c => { values[c.col] = cachedVal(d, c.itemCode); });
+            App.COLUMNS.forEach(c => { values[c.col] = colValue(d, c); });
             rows.push({ date: d, weekday: weekdayKr(d), values, plan: {} });
         }
         return rows;
@@ -605,7 +628,10 @@
             return;
         }
 
-        if (App.fetchRange) await App.fetchRange(from, to);
+        await Promise.all([
+            App.fetchRange ? App.fetchRange(from, to) : null,
+            App.fetchFactory3Range ? App.fetchFactory3Range(from, to) : null
+        ]);
 
         const rows = buildRows(from, to);
         const prevScrollHeight = ledgerPanel.scrollHeight;
@@ -704,6 +730,8 @@
             }
 
             App.COLUMNS.forEach(c => {
+                if (isMirrorCol(c)) return;   // 별관 참조 열은 입력칸을 만들지 않습니다
+
                 const td = tr.querySelector(`td[data-col="${c.col}"]`);
                 if (!td) return;
 
@@ -748,6 +776,8 @@
             const dateStr = tr.getAttribute('data-date');
 
             App.COLUMNS.forEach(c => {
+                if (isMirrorCol(c)) return;   // 입력칸으로 바꾼 적이 없으니 되돌릴 것도 없습니다
+
                 const td = tr.querySelector(`td[data-col="${c.col}"]`);
                 if (!td) return;
 
@@ -778,12 +808,15 @@
             const tr = td.closest('tr[data-date]');
             if (!tr) return;
 
-            // 읽기 전용 계정은 메모도 남길 수 없습니다.
-            if (!App.headerApi || !App.headerApi.state || !App.headerApi.state.isAdmin) return;
+            // 메모는 수정 권한과 무관하게 모든 계정에 열려 있습니다.
+            // (롤 수는 마스터만 고칠 수 있지만, 메모는 누구나 남길 수 있습니다)
 
             const dateStr = tr.getAttribute('data-date');
             const colDef = App.COLUMNS.find(c => String(c.col) === String(td.getAttribute('data-col')));
             if (!colDef) return;
+
+            // 별관 열은 factory1_ipgo 에 대응하는 행이 없어 메모를 붙일 수 없습니다.
+            if (isMirrorCol(colDef)) return;
 
             const itemCode = colDef.itemCode;
             const current = memoOf(dateStr, itemCode) || '';
@@ -856,6 +889,7 @@
         state.cache = keep;
         state.snapshot = {};
         state.memo = {};   // 메모는 즉시 저장되므로 남겨둘 미저장분이 없습니다
+        state.factory3 = {};   // 별관 참조 값도 새로 읽어옵니다
 
         await App.refreshSideBlocks(state.baseDate);   // 우측 거래처별 입고 현황
         await App.loadRows('none');

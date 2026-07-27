@@ -26,12 +26,20 @@
 
     /*
       [좌우 레이아웃 비율 옵션]
-      좌측(입고 및 별쇄 계획표) : 우측(추가 영역) = 7 : 3 입니다.
+      좌측(입고 및 별쇄 계획표) : 우측(추가 영역) 비율입니다.
       비율을 바꾸려면 두 값의 합이 100%가 되도록 함께 수정하세요.
+      ※ 별관(3공장) 2열이 늘어난 만큼 좌측을 70% → 75% 로 넓혔습니다.
     */
-    --ipgo-main-width: 70%;
-    --ipgo-side-width: 30%;
+    --ipgo-main-width: 75%;
+    --ipgo-side-width: 25%;
     --ipgo-grid-gap: 14px;
+
+    /*
+      [데이터 열 개수]
+      좌측 입고 대장의 품목 열 수입니다. 열을 추가/삭제하면 HTML 의
+      colgroup span 과 이 값을 함께 맞춰 주세요.
+    */
+    --ipgo-data-col-count: 14;
 }
 
 .f1ip-wrapper {
@@ -64,24 +72,29 @@
     flex-direction: column;
 }
 
-/* 카드 상단 — 기준 날짜 + 총무국/공무국 전환 */
+/* 카드 상단 — 총무국/공무국 전환 (기준 날짜는 아래 블록 위로 내렸습니다) */
 .f1ip-side-head {
     flex: none;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 8px;
     padding-bottom: 9px;
     margin-bottom: 12px;
     border-bottom: 1px solid #ebebeb;
 }
 
+/* 기준 날짜 — 첫 블록(대한제지 본관) 바로 윗줄.
+   목록 안이 아니라 바깥에 두어, 블록이 숨겨져도 위치가 흔들리지 않습니다. */
 .f1ip-side-date {
+    flex: none;
+    text-align: center;
     font-size: 12.5px;
     font-weight: 500;
     color: #1d1d1f;
     letter-spacing: -0.2px;
     white-space: nowrap;
+    margin-bottom: 12px;
 }
 
 /* 총무국 / 공무국 전환 — factory1_ft_io 의 R/L·Kg 스위처와 같은 형태 */
@@ -384,9 +397,9 @@
     table-layout: fixed;
 }
 
-/* 열 너비 — 날짜는 고정, 품목 12열은 남은 폭을 균등 분할 */
+/* 열 너비 — 날짜는 고정, 품목 열은 남은 폭을 균등 분할 */
 .f1ip-table col.f1ip-col-date { width: var(--ipgo-date-col-width); }
-.f1ip-table col.f1ip-col-data { width: calc((100% - var(--ipgo-date-col-width)) / 12); }
+.f1ip-table col.f1ip-col-data { width: calc((100% - var(--ipgo-date-col-width)) / var(--ipgo-data-col-count)); }
 
 /* 별쇄 계획표(우측 패널) — 3개 열이 남은 폭을 균등 분할 (colgroup 없이 colspan으로 자동 분배) */
 .f1ip-plan-table { table-layout: fixed; }
@@ -616,6 +629,22 @@
     background: #fff3cd !important;
     font-weight: 800 !important;
     color: #8a6d00 !important;
+}
+
+/* ================================================
+   별관(3공장) 참조 열 — 이 페이지에서는 읽기 전용입니다.
+   값 입력은 3공장 페이지에서 하고, 여기서는 보기만 한다는 걸
+   배경을 살짝 눌러 구분해 줍니다. (메모도 붙지 않습니다)
+   ================================================ */
+.f1ip-table td.f1ip-mirror-cell {
+    background: #fafafc;
+    color: #6e6e76;
+}
+
+/* 편집 모드에서는 입력칸이 생기지 않는 열이라는 게 분명히 보이도록 */
+.f1ip-wrapper.edit-mode .f1ip-table td.f1ip-mirror-cell {
+    background: #f2f2f5 !important;
+    cursor: not-allowed;
 }
 
 /* 수정 구간 밖(±7일 초과) — 편집 모드에서만 잠긴 것으로 표시 */
