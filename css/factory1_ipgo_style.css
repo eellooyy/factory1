@@ -32,7 +32,7 @@
       좌측 표가 길어지면서 남는 우측 공간에 들어가는 작은 카드입니다.
       (테두리·안쪽 여백을 포함한 전체 높이입니다)
     */
-    --ipgo-memo-height: 176px;
+    --ipgo-memo-height: 200px;
 
     /*
       [좌우 레이아웃 비율 옵션]
@@ -238,30 +238,35 @@
 }
 .f1ip-memo-list::-webkit-scrollbar { display: none; }
 
-/* 한 줄 = 날짜 · 열 이름 · 메모 내용 (길면 말줄임, 전체는 툴팁으로) */
+/* 한 항목 = 날짜 + 열 이름 + 메모 내용.
+   카드 폭이 좁아 한 줄에 나란히 놓으면 내용이 몇 글자 안 보입니다.
+   앞쪽 두 개만 작게 붙이고 내용이 그 뒤로 줄바꿈되게 흘려 보냅니다.
+   두 줄을 넘기면 말줄임하고 전문은 툴팁(title)으로 확인합니다. */
 .f1ip-memo-item {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
     font-size: 11.5px;
     font-weight: 500;
+    line-height: 1.45;
     color: #1d1d1f;
     letter-spacing: -0.2px;
-}
+    word-break: break-word;
 
-.f1ip-memo-date,
-.f1ip-memo-label {
-    flex: none;
-    color: #636366;
-    white-space: nowrap;
-}
-
-.f1ip-memo-text {
-    flex: 1;
-    min-width: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    /* line-clamp 가 안 먹는 환경에서도 두 줄에서 잘리도록 (말줄임만 없음) */
+    max-height: calc(1.45em * 2);
+}
+
+.f1ip-memo-date {
+    color: #8e8e93;
+    margin-right: 4px;
+}
+
+.f1ip-memo-label {
+    color: #636366;
+    font-weight: 700;
+    margin-right: 5px;
 }
 
 .f1ip-memo-empty {

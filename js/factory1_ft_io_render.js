@@ -37,6 +37,15 @@
         return n.toLocaleString();
     }
 
+    /* 월별 출고 현황 전용 — 값이 모두 kg 이라 숫자 뒤에 단위를 붙입니다.
+       (입고 현황은 R/L · Kg 스위처로 단위가 바뀌므로 여기 쓰지 않습니다) */
+    function fmtKg(v) {
+        if (v === '' || v === null || v === undefined) return '<span class="comp-empty">-</span>';
+        const n = Number(v);
+        if (isNaN(n)) return '<span class="comp-empty">-</span>';
+        return `${n.toLocaleString()}<span class="io-unit">Kg</span>`;
+    }
+
     App.setReadOnlyMode = function (isReadOnly) {
         const wrapper = App.elements.wrapper;
         if (!wrapper) return;
@@ -431,9 +440,9 @@
         return `
             <tr data-month="${r.month}">
                 <td class="fw-bold">${r.date_display}</td>
-                <td class="text-center">${fmtVal(r.A)}</td>
-                <td class="text-center">${fmtVal(r.C)}</td>
-                <td class="text-center">${fmtVal(r.D)}</td>
+                <td class="text-center">${fmtKg(r.A)}</td>
+                <td class="text-center">${fmtKg(r.C)}</td>
+                <td class="text-center">${fmtKg(r.D)}</td>
             </tr>`;
     }
 

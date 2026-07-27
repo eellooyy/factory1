@@ -296,6 +296,15 @@
 .io-split-table .io-col-date { width: 34%; }
 .io-split-table col:not(.io-col-date) { width: 22%; }
 
+/* 값 뒤에 붙는 단위 (월별 출고 현황의 Kg)
+   숫자가 먼저 읽히도록 조금 작고 흐리게 둡니다. */
+.io-unit {
+    margin-left: 3px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #8e8e93;
+}
+
 /* 헤더 테이블 — 데이터 영역과 동일한 스크롤바 폭을 '투명하게' 점유시켜
    브라우저 종류에 상관없이 열 위치가 1px 오차 없이 맞도록 합니다. */
 .io-table-head {

@@ -43,6 +43,12 @@
         return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} (${App.WD_KR[d.getDay()]})`;
     }
 
+    /* 폭이 좁은 곳(우측 메모 카드)용 — 요일을 빼고 날짜만 씁니다. */
+    function fmtDateCompact(dateStr) {
+        const d = new Date(dateStr + 'T00:00:00');
+        return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
+    }
+
     function weekdayKr(dateStr) {
         const d = new Date(dateStr + 'T00:00:00');
         return App.WD_KR[d.getDay()];
@@ -232,7 +238,7 @@
             Object.keys(row).forEach(itemCode => {
                 const text = row[itemCode];
                 if (!text) return;
-                items.push({ dateStr, label: memoColLabel(itemCode), text });
+                items.push({ dateStr, col: memoColLabel(itemCode), text });
             });
         });
 
@@ -241,15 +247,28 @@
             return;
         }
 
-        // 최근 날짜가 위로 오게 정렬합니다.
-        items.sort((a, b) => (a.dateStr < b.dateStr ? 1 : a.dateStr > b.dateStr ? -1 : 0));
+        /* 오래된 날짜가 위, 최근 날짜가 아래로 오게 정렬합니다.
+           같은 날짜 안에서는 표에 놓인 열 순서를 그대로 따릅니다. */
+        items.sort((a, b) => {
+            if (a.dateStr !== b.dateStr) return a.dateStr < b.dateStr ? -1 : 1;
+            return 0;
+        });
 
-        host.innerHTML = items.map(it => `
-            <div class="f1ip-memo-item">
-                <span class="f1ip-memo-date">${fmtDateShort(it.dateStr)}</span>
-                <span class="f1ip-memo-label">${escapeAttr(it.label)}</span>
-                <span class="f1ip-memo-text" title="${escapeAttr(it.text)}">${escapeAttr(it.text)}</span>
-            </div>`).join('');
+        /* 카드가 작아서 한 줄에 다 담으면 정작 내용이 몇 글자 안 보입니다.
+           날짜(요일 생략)와 위치만 앞에 작게 붙이고 내용이 그 뒤로 흐르게 두면
+           같은 높이에 글자가 훨씬 많이 들어갑니다. 두 줄을 넘기면 말줄임하고
+           전문은 툴팁으로 보여 줍니다. */
+        host.innerHTML = items.map(it => {
+            const tip = `${fmtDateShort(it.dateStr)} [${it.col}] ${it.text}`;
+            return `<div class="f1ip-memo-item" title="${escapeAttr(tip)}">`
+                + `<span class="f1ip-memo-date">${fmtDateCompact(it.dateStr)}</span>`
+                + `<span class="f1ip-memo-label">${escapeAttr(it.col)}</span>`
+                + `<span class="f1ip-memo-text">${escapeAttr(it.text)}</span>`
+                + `</div>`;
+        }).join('');
+
+        // 최근 메모가 맨 아래에 있으므로, 열자마자 그게 보이도록 끝으로 붙입니다.
+        host.scrollTop = host.scrollHeight;
     };
 
     /* 우측 블록을 선택한 날짜 기준으로 다시 그립니다. */
