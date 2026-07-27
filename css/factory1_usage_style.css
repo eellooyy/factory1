@@ -1,0 +1,376 @@
+/* factory1_usage_style.css — 1공장 사용량 페이지 스타일
+   ────────────────────────────────────────────────────────────────
+   입고 페이지(factory1_ipgo_style.css)의 표 규격을 그대로 따르되,
+   별쇄 계획표(우측 패널)와 우측 카드가 없어 표가 화면 전체 폭을 씁니다.
+   그만큼 열이 넓어져 3~5자리 숫자가 잘리지 않습니다.
+
+   [1층] 용지별 사용량  .f1us-*
+   [2층] 매체별 사용량  — 추후 추가
+   ──────────────────────────────────────────────────────────────── */
+
+/* ================================================
+   [옵션 설정] CSS 변수
+   ================================================ */
+:root {
+    --panel-title-left-offset: 12px;
+
+    /*
+      [날짜 열 너비]
+      좌측 고정(sticky) 날짜 열의 너비입니다.
+      입고 페이지(72px)보다 넓게 잡았습니다. 표 전체 폭에 여유가 있어
+      "7/26(일)" 이 한 줄에 편하게 들어갑니다.
+    */
+    --f1us-date-col-width: 84px;
+
+    /*
+      [표 높이]
+      계산식: 헤더 2줄(44px × 2 = 88px) + 행 높이 44px × 보고 싶은 일수
+              11일 → 88 + 44 × 11 = 572px
+              15일 → 88 + 44 × 15 = 748px
+    */
+    --f1us-scroll-height: 572px;
+
+    /*
+      [데이터 열 개수]
+      열을 추가/삭제하면 HTML 의 colgroup span 과 이 값,
+      그리고 factory1_paperuse_constant.js 의 COLUMNS 를 함께 맞춰 주세요.
+    */
+    --f1us-data-col-count: 14;
+}
+
+.f1us-wrapper {
+    gap: 14px;
+}
+
+/* 층(레이아웃) 외곽 프레임 — 이 안에 개별 패널이 들어갑니다 */
+.f1us-floor-container {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    margin-bottom: 14px;
+}
+
+/* ================================================
+   패널 상단 제목줄
+   ================================================ */
+.panel-header-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    width: 100%;
+}
+
+.panel-header-grid .header-left {
+    justify-self: start;
+    padding-left: var(--panel-title-left-offset);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.panel-header-grid .header-center { justify-self: center; }
+.panel-header-grid .header-right  { justify-self: end; }
+
+.panel-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #1d1d1f;
+    letter-spacing: -0.3px;
+}
+
+.panel-subtitle {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8e8e93;
+}
+
+.panel-toggle-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1d1d1f;
+    margin-right: 4px;
+}
+
+/* ================================================
+   토글 스위치 (스크롤 ON/OFF)
+   ================================================ */
+.f1-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.f1-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.f1-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #e9e9eb;
+    transition: 0.25s;
+    border-radius: 22px;
+}
+
+.f1-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
+    background-color: #ffffff;
+    transition: 0.25s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.f1-toggle-switch input:checked + .f1-toggle-slider { background-color: #34c759; }
+.f1-toggle-switch input:checked + .f1-toggle-slider:before { transform: translateX(18px); }
+
+/* ================================================
+   유틸리티
+   ================================================ */
+.d-flex { display: flex; }
+.justify-content-end { justify-content: flex-end; }
+.align-items-center { align-items: center; }
+.gap-2 { gap: 8px; }
+.text-center { text-align: center; }
+.mb-3 { margin-bottom: 14px; }
+
+/* ================================================
+   패널 / 스크롤 영역
+   ================================================ */
+.f1us-panels-outer {
+    display: flex;
+    gap: 0;
+    width: 100%;
+}
+
+.f1us-panel {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.f1us-scroll-area {
+    position: relative;
+    height: var(--f1us-scroll-height);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+}
+
+.f1us-scroll-area::-webkit-scrollbar { display: none; }
+
+/* 잠금 시에는 내부 스크롤만 막고, 휠/터치는 페이지 전체 스크롤로 넘깁니다 */
+.f1us-scroll-area.locked {
+    overflow-y: hidden;
+    cursor: default;
+}
+
+/* ================================================
+   셀 선택 커서
+   ================================================ */
+.f1us-cursor {
+    position: absolute;
+    border: 2px solid #ff9500;
+    border-radius: 4px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s;
+    z-index: 8;
+    box-sizing: border-box;
+}
+
+.f1us-cursor.active { opacity: 1; }
+
+/* ================================================
+   테이블
+   ================================================ */
+.f1us-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+}
+
+/* 열 너비 — 날짜는 고정, 품목 열은 남은 폭을 균등 분할 */
+.f1us-table col.f1us-col-date { width: var(--f1us-date-col-width); }
+.f1us-table col.f1us-col-data { width: calc((100% - var(--f1us-date-col-width)) / var(--f1us-data-col-count)); }
+
+.f1us-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #ffffff;
+}
+
+/* ─ 1레벨 헤더 행 ─ */
+.f1us-thead-lv1 th {
+    padding: 8px 2px 5px;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #1d1d1f;
+    text-align: center;
+    border-bottom: 1px solid #e0e0e0;
+    background: #ffffff;
+    white-space: nowrap;
+    height: 44px;
+    box-sizing: border-box;
+}
+
+.f1us-group-th {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #1d1d1f;
+    padding: 8px 2px 5px;
+    background: #ffffff;
+    letter-spacing: -0.3px;
+}
+
+/* 하위 구분이 없어 두 행을 병합한 1레벨 헤더 (페이퍼 코리아) */
+.f1us-single-th {
+    vertical-align: middle;
+    white-space: normal !important;
+    line-height: 1.2;
+    font-size: 11.5px;
+    letter-spacing: -0.4px;
+    padding: 4px 2px !important;
+}
+
+/* ─ 2레벨 헤더 행 ─ */
+.f1us-thead-lv2 th {
+    padding: 6px 1px 7px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #636366;
+    text-align: center;
+    border-bottom: 1px solid #e0e0e0;
+    background: #ffffff;
+    white-space: nowrap;
+    height: 44px;
+    box-sizing: border-box;
+}
+
+.f1us-leaf-th {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #636366 !important;
+    text-align: center;
+    letter-spacing: -0.3px;
+}
+
+/* ─ 그룹 구분선 ─ */
+.f1us-sep {
+    border-left: 1px solid #e0e0e0 !important;
+}
+
+/* ─ 데이터 셀 ─
+   입고(12px)보다 한 단계 키웠습니다. 사용량은 3~5자리라 숫자가
+   길어지는데, 표가 화면 전체 폭을 쓰므로 여유가 있습니다. */
+.f1us-table td {
+    padding: 9px 4px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px solid #ebebeb;
+    color: #1d1d1f;
+    transition: background 0.12s;
+    height: 44px;
+    box-sizing: border-box;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ─ 날짜 헤더 & 셀 (좌측 고정) ─ */
+.f1us-date-th {
+    position: sticky;
+    left: 0;
+    background: #ffffff !important;
+    z-index: 11;
+    text-align: center;
+    min-width: var(--f1us-date-col-width) !important;
+    width: var(--f1us-date-col-width) !important;
+    border-right: 1px solid #e0e0e0 !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #1d1d1f;
+    box-sizing: border-box;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.f1us-table td.f1us-date-td,
+.f1us-date-td {
+    position: sticky;
+    left: 0;
+    background: #ffffff;
+    z-index: 5;
+    text-align: center;
+    white-space: nowrap;
+    border-right: 1px solid #e0e0e0 !important;
+    font-size: 12px;
+    font-weight: 700;
+    min-width: var(--f1us-date-col-width) !important;
+    width: var(--f1us-date-col-width) !important;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+/* ================================================
+   오늘 / 선택 행 강조
+   ================================================ */
+.f1us-row-today td { background: #e8f4fd !important; }
+.f1us-row-today .f1us-date-td { background: #bbdefb !important; }
+.f1us-selected-row td { background: #f4f4f8 !important; }
+.f1us-selected-row .f1us-date-td { background: #ebebf0 !important; }
+.f1us-row-today.f1us-selected-row td { background: #daedf9 !important; }
+.f1us-row-today.f1us-selected-row .f1us-date-td { background: #bbd8f0 !important; }
+
+/* 활성화된 헤더 — 선택한 그룹(1레벨) + 선택한 열(2레벨) */
+.f1us-thead-lv1 th.f1us-header-active,
+.f1us-thead-lv2 th.f1us-header-active,
+.f1us-group-th.f1us-header-active {
+    background-color: rgba(255, 160, 50, 0.18) !important;
+    color: #c05a00 !important;
+}
+
+.f1us-selected-cell {
+    position: relative;
+    z-index: 10;
+    font-weight: 900 !important;
+    color: #000000 !important;
+}
+
+/* ─ 색상 / 호버 ─ */
+.f1us-sat { color: #007aff !important; }
+.f1us-sun { color: #ff3b30 !important; }
+.f1us-empty { color: #c7c7cc; font-weight: 400; }
+.f1us-table tbody tr:not(.f1us-selected-row):hover td { background: #f7f7fa; }
+.f1us-data-cell { cursor: pointer; }
+
+/* 별관(3공장) 참조 열 — 이 페이지에서 관리하는 값이 아니라는 표시 */
+.f1us-table td.f1us-mirror-cell { color: #6e6e73; background: #fbfbfd; }
+.f1us-row-today td.f1us-mirror-cell { background: #e2eef8 !important; }
+
+/* ================================================
+   좁은 화면
+   ================================================ */
+@media (max-width: 1200px) {
+    :root { --f1us-date-col-width: 72px; }
+    .f1us-table td { font-size: 12px; padding: 9px 2px; }
+    .f1us-thead-lv1 th, .f1us-group-th { font-size: 11.5px; }
+    .f1us-thead-lv2 th, .f1us-leaf-th { font-size: 10.5px; }
+}
+
+@media (max-width: 900px) {
+    .f1us-scroll-area { overflow-x: auto; }
+    .f1us-table { min-width: 900px; }
+}
