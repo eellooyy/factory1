@@ -218,8 +218,9 @@
 
     /* ────────────────────────────────────────────────────────────
        우측 하단: 메모 요약
-       지금 화면에 불러와 있는 구간(state.memo)의 셀 메모를 최근 날짜부터
-       한 줄씩 정리합니다. 스크롤로 과거를 더 불러오면 같이 늘어납니다.
+       표에 보이는 날짜 구간과 무관하게, 메모가 달린 행을 DB 에서 따로
+       읽어와(state.memoList) 한 줄씩 정리합니다. 표를 스크롤하지 않아도
+       예전에 남긴 메모가 그대로 보입니다.
        ──────────────────────────────────────────────────────────── */
     function memoColLabel(itemCode) {
         const c = App.COLUMNS.find(x => x.itemCode === itemCode);
@@ -232,15 +233,11 @@
         const host = document.getElementById('f1ipMemoBody');
         if (!host) return;
 
-        const items = [];
-        Object.keys(state.memo).forEach(dateStr => {
-            const row = state.memo[dateStr] || {};
-            Object.keys(row).forEach(itemCode => {
-                const text = row[itemCode];
-                if (!text) return;
-                items.push({ dateStr, col: memoColLabel(itemCode), text });
-            });
-        });
+        const items = (state.memoList || []).map(m => ({
+            dateStr: m.dateStr,
+            col: memoColLabel(m.itemCode),
+            text: m.text
+        }));
 
         if (!items.length) {
             host.innerHTML = '<div class="f1ip-memo-empty">메모 없음</div>';
@@ -269,6 +266,12 @@
 
         // 최근 메모가 맨 아래에 있으므로, 열자마자 그게 보이도록 끝으로 붙입니다.
         host.scrollTop = host.scrollHeight;
+    };
+
+    /* 메모 목록을 DB 에서 다시 읽어 우측 하단 카드에 반영합니다. */
+    App.refreshMemoList = async function () {
+        if (App.fetchMemoList) await App.fetchMemoList();
+        App.renderMemoList();
     };
 
     /* 우측 블록을 선택한 날짜 기준으로 다시 그립니다. */
@@ -744,8 +747,6 @@
             applyScrollTwice(() => prevScrollTop + (ledgerPanel.scrollHeight - prevScrollHeight), false);
         }
 
-        // 새로 읽어온 구간의 메모를 우측 하단 요약에 반영합니다.
-        App.renderMemoList();
 
         state.loading = false;
     };
@@ -904,11 +905,10 @@
             if (!ok) {
                 state.memo[dateStr][itemCode] = current || null;
                 applyMemoMark(td, dateStr, itemCode);
-                App.renderMemoList();
                 return;
             }
 
-            App.renderMemoList();   // 우측 하단 요약에 즉시 반영
+            await App.refreshMemoList();   // 우측 하단 요약에 즉시 반영
 
             // 메모만 남기려고 만든 행 / 지우면서 없어진 행을 스냅샷에 반영
             if (!state.snapshot[dateStr]) state.snapshot[dateStr] = {};
@@ -959,6 +959,7 @@
         state.factory3 = {};   // 별관 참조 값도 새로 읽어옵니다
 
         await App.refreshSideBlocks(state.baseDate);   // 우측 거래처별 입고 현황
+        await App.refreshMemoList();                   // 우측 하단 메모 요약
         await App.loadRows('none');
         state.isChanged = state.dirty.size > 0;
     };

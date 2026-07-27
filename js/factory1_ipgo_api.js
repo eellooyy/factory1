@@ -83,6 +83,39 @@
     };
 
     /* ────────────────────────────────────────────────────────────
+       우측 하단 메모 요약 전용 조회
+       표에 불러온 날짜 구간과 무관하게, 메모가 달린 행만 따로 읽어옵니다.
+       (구간에 묶어두면 오래된 메모가 스크롤로 과거를 불러오기 전까지
+        목록에 나타나지 않습니다)
+
+       최근 것부터 limit 개를 받아 화면에서 오래된 순으로 뒤집어 씁니다.
+       ──────────────────────────────────────────────────────────── */
+    App.fetchMemoList = async function (limit) {
+        const { data, error } = await supabase
+            .from(App.TABLE)
+            .select('ipgo_date, item_code, memo')
+            .not('memo', 'is', null)
+            .order('ipgo_date', { ascending: false })
+            .limit(limit || App.MEMO_LIST_LIMIT);
+
+        if (error) {
+            console.error('[factory1_ipgo] 메모 목록 조회 실패:', error.message);
+            return false;
+        }
+
+        // 빈 문자열이 저장된 행은 메모가 없는 것으로 봅니다.
+        state.memoList = (data || [])
+            .filter(r => r.memo && String(r.memo).trim() !== '')
+            .map(r => ({
+                dateStr: r.ipgo_date,
+                itemCode: r.item_code,
+                text: String(r.memo).trim()
+            }));
+
+        return true;
+    };
+
+    /* ────────────────────────────────────────────────────────────
        셀 메모 즉시 저장
        롤 수와 달리 편집 모드/저장 버튼과 무관하게 그 자리에서 반영합니다.
 
