@@ -378,8 +378,9 @@
 .comp-scroll-area::-webkit-scrollbar { display: none; }
 
 /* 스크롤 잠금 시 시각적 반응 및 마우스 커서 제어 */
+/* 내부 스크롤만 막고, 휠/터치는 페이지 전체 스크롤로 넘어가도록 둔다 */
 .comp-scroll-area.locked {
-    touch-action: none;
+    touch-action: pan-y;
     overflow-y: hidden !important;
 }
 

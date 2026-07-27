@@ -72,12 +72,8 @@
             const el = document.getElementById(id);
             if (!el) return;
 
-            // 스크롤 잠금 상태 시 마우스 휠 동작 차단
-            el.addEventListener('wheel', (e) => {
-                if (!state.isScrollUnlocked) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
+            // 잠금 상태의 내부 스크롤 차단은 CSS(.comp-scroll-area.locked)가 담당한다.
+            // 여기서 wheel 이벤트를 preventDefault 하면 페이지 전체 스크롤까지 막히므로 하지 않는다.
 
             el.addEventListener('scroll', () => {
                 if (!state.isScrollUnlocked) return; // 잠금 상태 시 동기화 및 로드 차단
