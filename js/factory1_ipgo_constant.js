@@ -146,6 +146,35 @@
             }
         ],
 
+        /* ── 우측 영역: 공무국 표시 ───────────────────────────────
+           총무국이 거래처별로 "지폭 - N롤"을 보는 것과 달리, 공무국은
+           지종을 묶은 kg 합계만 봅니다.
+
+           label  : 왼쪽에 적을 이름
+           items  : 합산할 factory1_ipgo.item_code 들
+           always : false 면 합계가 0 일 때 줄째 숨깁니다.
+                    (48.8g 은 입고가 있는 날만 따로 표기)
+
+           ※ 48.8g 은 같은 대한제지이지만 첫 줄 합계에 넣지 않고 뺍니다.
+           ──────────────────────────────────────────────────────── */
+        GONGMU_LINES: [
+            {
+                label: '대한 + 페이퍼',
+                items: ['daehan_a', 'daehan_c', 'daehan_d', 'paperkorea'],
+                always: true
+            },
+            {
+                label: '1576 - 48.8g',
+                items: ['daehan_488'],
+                always: false
+            },
+            {
+                label: '전주 본지',
+                items: ['jj_bonji_a', 'jj_bonji_d'],
+                always: true
+            }
+        ],
+
         // 별관(3공장) 입고 테이블 — in_a/in_d = 롤, in_a_kg/in_d_kg = kg
         FACTORY3_TABLE: 'factory3_io',
 

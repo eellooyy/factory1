@@ -286,6 +286,36 @@
         host.scrollTop = host.scrollHeight;
     };
 
+    /* ────────────────────────────────────────────────────────────
+       우측 영역: 공무국 표시
+       거래처별 롤 수 대신, 지종을 묶은 kg 합계만 줄 단위로 보여 줍니다.
+       총무국과 같은 조회 결과(fetchSideData)를 그대로 쓰므로 추가 조회가
+       없습니다.
+       ──────────────────────────────────────────────────────────── */
+    App.renderGongmuBlocks = function (data) {
+        const host = document.getElementById('f1ipSideBody');
+        if (!host) return;
+
+        const ipgo = (data && data.ipgo) || {};
+
+        const cells = (App.GONGMU_LINES || []).map(line => {
+            const kg = line.items.reduce((sum, code) => {
+                const v = ipgo[code];
+                return sum + (v ? Number(v.kg) || 0 : 0);
+            }, 0);
+
+            // 48.8g 처럼 비정기 항목은 입고가 없으면 줄째 사라집니다.
+            if (!line.always && kg === 0) return null;
+
+            return `<div class="f1ip-gongmu-label">${escapeAttr(line.label)} :</div>`
+                + `<div class="f1ip-gongmu-val">(<span class="f1ip-side-kg-val">${kg.toLocaleString()}</span> kg)</div>`;
+        }).filter(Boolean).join('');
+
+        host.innerHTML = cells
+            ? `<div class="f1ip-gongmu-grid">${cells}</div>`
+            : '<div class="f1ip-side-pending">그 날 입고가 없습니다</div>';
+    };
+
     /* 메모 목록을 DB 에서 다시 읽어 우측 하단 카드에 반영합니다. */
     App.refreshMemoList = async function () {
         if (App.fetchMemoList) await App.fetchMemoList();
@@ -302,15 +332,18 @@
             dateEl.textContent = utils ? utils.formatKoDate(target) : target;
         }
 
-        // 공무국 표시 내용은 아직 미확정입니다.
-        if (state.dept === 'gongmu') {
-            const host = document.getElementById('f1ipSideBody');
-            if (host) host.innerHTML = '<div class="f1ip-side-pending">공무국 표시 내용 준비 중</div>';
+        const isGongmu = (state.dept === 'gongmu');
+
+        if (!App.fetchSideData) {
+            if (isGongmu) App.renderGongmuBlocks();
+            else App.renderSideBlocks();
             return;
         }
 
-        if (!App.fetchSideData) { App.renderSideBlocks(); return; }
-        App.renderSideBlocks(await App.fetchSideData(target));
+        // 총무국·공무국이 같은 조회 결과를 쓰므로 한 번만 읽습니다.
+        const data = await App.fetchSideData(target);
+        if (isGongmu) App.renderGongmuBlocks(data);
+        else App.renderSideBlocks(data);
     };
 
     /* 총무국 / 공무국 전환 */
