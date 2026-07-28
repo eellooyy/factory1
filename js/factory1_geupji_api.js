@@ -185,6 +185,13 @@
 
         const { upserts, deletes, keep } = App.collectRows(logDate);
 
+        // 저장할 것도 지울 것도 없는 경우 — 조용히 빠져나가면 눌린 건지 아닌지 알 수 없습니다
+        if (!upserts.length && !deletes.length) {
+            alert('저장할 내용이 없습니다.');
+            if (App.headerApi && App.headerApi.toggleEditMode) App.headerApi.toggleEditMode();
+            return true;
+        }
+
         if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '저장 중...'; }
 
         const fail = (msg, err) => {
@@ -230,6 +237,15 @@
 
         // 편집 모드 종료
         if (App.headerApi && App.headerApi.toggleEditMode) App.headerApi.toggleEditMode();
+
+        /* 저장이 끝났다는 것을 반드시 알립니다. 아무 반응이 없으면 눌리지 않은 건지
+           실패한 건지 알 수가 없습니다. (FT · 입고 페이지도 같은 방식입니다)
+
+           건수는 '바뀐 칸'이 아니라 '저장된 급지대'입니다. 이 페이지는 하루 최대
+           21행이라 변경분만 가리지 않고 값이 있는 급지대를 통째로 다시 씁니다. */
+        const parts = [`급지대 ${upserts.length}칸`];
+        if (deletes.length) parts.push(`${deletes.length}칸 비움`);
+        alert(`저장되었습니다. (${parts.join(', ')})`);
 
         return true;
     };
