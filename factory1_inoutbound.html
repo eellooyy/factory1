@@ -92,252 +92,151 @@
 <div class="gf3-wrapper f1iob-wrapper" data-page-module="Factory1InoutboundModule" style="padding-top: 16px;">
 
     <!-- ============================================================
-         1층: 스캔 요약
-         이 페이지의 현실적인 목표는 롤 1:1 대사가 아니라 "일 단위 롤 수
-         비교 + 미해석 건수 추적" 입니다. 그래서 상세 표보다 이 카드 세 장이
-         먼저 옵니다. 오늘 몇 롤이 찍혔고 그 중 몇 건이 깨졌는지가 한 눈에
-         보여야 아래 표를 볼지 말지 정할 수 있습니다.
+         1층: 입고 (B5 · B6 합산)
 
-         ※ 카드의 숫자는 아래 상태 필터와 무관하게 언제나 전체를 셉니다.
-           필터를 걸었다고 그날 들어온 롤 수가 줄어드는 것처럼 보이면
-           안 되기 때문입니다.
+         B5 와 B6 는 스캔 테이블이 둘로 나뉘어 있을 뿐 같은 입고입니다.
+         화면에서는 하나로 합치고, 어느 층 것인지는 행의 floor 값으로만
+         남깁니다(3층 '확인 필요'의 구분 열에서만 드러납니다).
+
+         표에는 **해석이 끝난 값**이 들어갑니다. 오독을 되살린 행도 되살린
+         값 그대로입니다 — 원본을 늘어놓으면 사람이 매번 60=62, 4372=1404 를
+         암산해야 하니까요. 되살리지 못한 행은 3층으로 갑니다.
+
+         우측 칸은 품목별 롤 수 요약입니다. 표 카드와 높이가 서로 맞아
+         (.f1iob-split 의 align-items: stretch) 상세와 합계를 눈을 위아래로
+         옮기지 않고 나란히 읽습니다.
+
+         ※ 전산 입고는 실측 오류율이 0% 라 품질이 좋습니다. 웹 입고
+           페이지(factory1_ipgo)의 오타를 잡는 용도로 거의 그대로 쓸 수 있습니다.
+
+         ※ thead / colgroup 은 constant.js 의 COLUMNS 순서와 짝입니다.
+           열을 넣거나 빼면 2층 표도 같이 고쳐야 합니다.
          ============================================================ -->
     <div class="f1iob-floor-container">
         <div class="panel-header-grid mb-3">
             <div class="header-left">
-                <span class="panel-title">스캔 요약</span>
-                <span class="panel-subtitle" id="f1iobSubtitle"></span>
+                <span class="panel-title">입고</span>
+                <span class="panel-subtitle">B5 · B6 합산</span>
             </div>
             <div class="header-center text-center"></div>
             <div class="header-right">
-                <!-- 상태 필터 — 아래 세 표에 동시에 걸립니다. 표마다 따로 두면
-                     서로 다른 조건을 보면서 비교하게 되어 두지 않았습니다. -->
-                <div class="f1iob-filter" id="f1iobFilter" title="상태 필터 (세 표에 동시 적용)">
-                    <button type="button" class="f1iob-filter-btn active" data-filter="all">전체</button>
-                    <button type="button" class="f1iob-filter-btn" data-filter="problem">오독·미해석만</button>
-                </div>
+                <span class="f1iob-count" id="f1iobSubtitle"></span>
             </div>
         </div>
 
-        <div class="f1iob-summary-grid">
-            <!-- 입고 B5 -->
-            <div class="f1iob-card" id="f1iobCardInB5">
-                <div class="f1iob-card-head">
-                    <span class="f1iob-dir-dot in"></span>
-                    <span class="f1iob-card-title">입고 B5</span>
-                </div>
-                <div class="f1iob-card-total">
-                    <span class="num" data-stat="total">0</span><span class="unit">롤</span>
-                </div>
-                <div class="f1iob-card-stats">
-                    <div class="f1iob-stat ok">
-                        <span class="f1iob-stat-value" data-stat="ok">0</span>
-                        <span class="f1iob-stat-label">정상</span>
-                    </div>
-                    <div class="f1iob-stat fixed">
-                        <span class="f1iob-stat-value" data-stat="fixed">0</span>
-                        <span class="f1iob-stat-label">오독 보정</span>
-                    </div>
-                    <div class="f1iob-stat none">
-                        <span class="f1iob-stat-value" data-stat="none">0</span>
-                        <span class="f1iob-stat-label">미해석</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 입고 B6 -->
-            <div class="f1iob-card" id="f1iobCardInB6">
-                <div class="f1iob-card-head">
-                    <span class="f1iob-dir-dot in"></span>
-                    <span class="f1iob-card-title">입고 B6</span>
-                </div>
-                <div class="f1iob-card-total">
-                    <span class="num" data-stat="total">0</span><span class="unit">롤</span>
-                </div>
-                <div class="f1iob-card-stats">
-                    <div class="f1iob-stat ok">
-                        <span class="f1iob-stat-value" data-stat="ok">0</span>
-                        <span class="f1iob-stat-label">정상</span>
-                    </div>
-                    <div class="f1iob-stat fixed">
-                        <span class="f1iob-stat-value" data-stat="fixed">0</span>
-                        <span class="f1iob-stat-label">오독 보정</span>
-                    </div>
-                    <div class="f1iob-stat none">
-                        <span class="f1iob-stat-value" data-stat="none">0</span>
-                        <span class="f1iob-stat-label">미해석</span>
+        <div class="f1iob-split">
+            <div class="f1iob-split-main">
+                <div class="inner-layout-card">
+                    <div class="f1iob-table-scroll">
+                        <table class="f1iob-table">
+                            <colgroup>
+                                <col class="f1iob-col-time">
+                                <col class="f1iob-col-vendor">
+                                <col class="f1iob-col-grade">
+                                <col class="f1iob-col-roll">
+                                <col class="f1iob-col-weight">
+                                <col class="f1iob-col-pcode">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>시간</th>
+                                    <th>회사</th>
+                                    <th>권종</th>
+                                    <th>RollNo</th>
+                                    <th>중량</th>
+                                    <th>물류코드</th>
+                                </tr>
+                            </thead>
+                            <tbody id="f1iobInBody">
+                                <tr class="f1iob-placeholder"><td colspan="6">불러오는 중...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <!-- 출고 B6 -->
-            <div class="f1iob-card" id="f1iobCardOutB6">
-                <div class="f1iob-card-head">
-                    <span class="f1iob-dir-dot out"></span>
-                    <span class="f1iob-card-title">출고 B6</span>
-                </div>
-                <div class="f1iob-card-total">
-                    <span class="num" data-stat="total">0</span><span class="unit">롤</span>
-                </div>
-                <div class="f1iob-card-stats">
-                    <div class="f1iob-stat ok">
-                        <span class="f1iob-stat-value" data-stat="ok">0</span>
-                        <span class="f1iob-stat-label">정상</span>
-                    </div>
-                    <div class="f1iob-stat fixed">
-                        <span class="f1iob-stat-value" data-stat="fixed">0</span>
-                        <span class="f1iob-stat-label">오독 보정</span>
-                    </div>
-                    <div class="f1iob-stat none">
-                        <span class="f1iob-stat-value" data-stat="none">0</span>
-                        <span class="f1iob-stat-label">미해석</span>
-                    </div>
-                </div>
-            </div>
+            <!-- 품목별 롤 수 — 순서 고정, 0롤도 줄을 지킵니다 (render.js 가 채웁니다) -->
+            <div class="f1iob-split-side" id="f1iobInSide"></div>
         </div>
     </div>
 
     <!-- ============================================================
-         2층 이하: 구획별 상세 표 (입고 B5 · 입고 B6 · 출고 B6)
+         2층: 출고 (B6)
 
-         세 표의 열 구성이 완전히 같습니다. 같은 자리에서 같은 항목을 읽어야
-         입고와 출고를 맞대 볼 수 있기 때문이며, "출고에는 이 열이 잘 비니까
-         빼자" 같은 정리는 하지 않습니다.
-
-         좌우로 나누지 않고 위아래로 쌓는 이유는 한 줄에 원본 6칸 + 해석 3칸이
-         들어가야 하기 때문입니다. 반으로 접으면 롤번호와 물류코드가 먼저
-         뭉개집니다. 대신 표마다 높이를 가두고 헤더를 붙여 두었습니다.
-         (--iob-table-max-height)
-
-         ※ thead / colgroup 은 constant.js 의 COLUMNS 순서와 짝입니다.
-           열을 넣거나 빼면 세 구획을 모두 같이 고쳐야 합니다.
-         ============================================================ -->
-
-    <!-- ── 입고 B5 ──────────────────────────────────────────────
-         B5 에는 바코드 인식 불가 롤(0000 / 000 / 00)이 섞여 들어옵니다.
-         물건은 실제로 들어왔으니 롤 수는 세되 품목만 미상으로 둡니다.
-         ──────────────────────────────────────────────────────── -->
-    <div class="f1iob-floor-container">
-        <div class="panel-header-grid mb-3">
-            <div class="header-left">
-                <span class="panel-title">입고 B5</span>
-                <span class="panel-subtitle">지하 5층 입고 스캔</span>
-            </div>
-            <div class="header-center text-center"></div>
-            <div class="header-right">
-                <span class="f1iob-count" id="f1iobInB5Count"></span>
-            </div>
-        </div>
-
-        <div class="inner-layout-card">
-            <div class="f1iob-table-scroll">
-                <table class="f1iob-table">
-                    <colgroup>
-                        <col class="f1iob-col-time">
-                        <col class="f1iob-col-make">
-                        <col class="f1iob-col-type">
-                        <col class="f1iob-col-weight">
-                        <col class="f1iob-col-roll">
-                        <col class="f1iob-col-pcode">
-                        <col class="f1iob-col-vendor">
-                        <col class="f1iob-col-item">
-                        <col class="f1iob-col-status">
-                    </colgroup>
-                    <thead>
-                        <tr class="f1iob-thead-lv1">
-                            <th rowspan="2">시각</th>
-                            <th colspan="5" class="f1iob-sep">스캔 원본</th>
-                            <th colspan="3" class="f1iob-sep">해석 결과</th>
-                        </tr>
-                        <tr class="f1iob-thead-lv2">
-                            <th class="f1iob-sep">제조사코드</th>
-                            <th>규격</th>
-                            <th>중량</th>
-                            <th>롤번호</th>
-                            <th>물류코드</th>
-                            <th class="f1iob-sep">회사</th>
-                            <th>품목</th>
-                            <th>상태</th>
-                        </tr>
-                    </thead>
-                    <tbody id="f1iobInB5Body">
-                        <tr class="f1iob-placeholder"><td colspan="9">불러오는 중...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── 입고 B6 ──────────────────────────────────────────────
-         실측 오류율 0%. 전산 입고는 품질이 좋아 웹 입고 페이지(factory1_ipgo)의
-         오타를 잡는 용도로 거의 그대로 쓸 수 있습니다.
-         ──────────────────────────────────────────────────────── -->
-    <div class="f1iob-floor-container">
-        <div class="panel-header-grid mb-3">
-            <div class="header-left">
-                <span class="panel-title">입고 B6</span>
-                <span class="panel-subtitle">지하 6층 입고 스캔</span>
-            </div>
-            <div class="header-center text-center"></div>
-            <div class="header-right">
-                <span class="f1iob-count" id="f1iobInB6Count"></span>
-            </div>
-        </div>
-
-        <div class="inner-layout-card">
-            <div class="f1iob-table-scroll">
-                <table class="f1iob-table">
-                    <colgroup>
-                        <col class="f1iob-col-time">
-                        <col class="f1iob-col-make">
-                        <col class="f1iob-col-type">
-                        <col class="f1iob-col-weight">
-                        <col class="f1iob-col-roll">
-                        <col class="f1iob-col-pcode">
-                        <col class="f1iob-col-vendor">
-                        <col class="f1iob-col-item">
-                        <col class="f1iob-col-status">
-                    </colgroup>
-                    <thead>
-                        <tr class="f1iob-thead-lv1">
-                            <th rowspan="2">시각</th>
-                            <th colspan="5" class="f1iob-sep">스캔 원본</th>
-                            <th colspan="3" class="f1iob-sep">해석 결과</th>
-                        </tr>
-                        <tr class="f1iob-thead-lv2">
-                            <th class="f1iob-sep">제조사코드</th>
-                            <th>규격</th>
-                            <th>중량</th>
-                            <th>롤번호</th>
-                            <th>물류코드</th>
-                            <th class="f1iob-sep">회사</th>
-                            <th>품목</th>
-                            <th>상태</th>
-                        </tr>
-                    </thead>
-                    <tbody id="f1iobInB6Body">
-                        <tr class="f1iob-placeholder"><td colspan="9">불러오는 중...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── 출고 B6 ──────────────────────────────────────────────
          전주 98.5% · 페이퍼 87% 가 깨져 들어옵니다(대한은 100% 정상).
          그래도 남겨 두는 이유는 정확해서가 아니라 계산 출고(지고 재고 차이)와
          출처가 다르기 때문입니다. 둘이 같이 틀리면 실사 쪽, 하나만 틀리면
          그쪽 문제로 범위가 좁혀집니다.
-         ──────────────────────────────────────────────────────── -->
+         ============================================================ -->
     <div class="f1iob-floor-container">
         <div class="panel-header-grid mb-3">
             <div class="header-left">
-                <span class="panel-title">출고 B6</span>
-                <span class="panel-subtitle">지하 6층 출고 스캔</span>
+                <span class="panel-title">출고</span>
+                <span class="panel-subtitle">B6</span>
+            </div>
+            <div class="header-center text-center"></div>
+            <div class="header-right"></div>
+        </div>
+
+        <div class="f1iob-split">
+            <div class="f1iob-split-main">
+                <div class="inner-layout-card">
+                    <div class="f1iob-table-scroll">
+                        <table class="f1iob-table">
+                            <colgroup>
+                                <col class="f1iob-col-time">
+                                <col class="f1iob-col-vendor">
+                                <col class="f1iob-col-grade">
+                                <col class="f1iob-col-roll">
+                                <col class="f1iob-col-weight">
+                                <col class="f1iob-col-pcode">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>시간</th>
+                                    <th>회사</th>
+                                    <th>권종</th>
+                                    <th>RollNo</th>
+                                    <th>중량</th>
+                                    <th>물류코드</th>
+                                </tr>
+                            </thead>
+                            <tbody id="f1iobOutBody">
+                                <tr class="f1iob-placeholder"><td colspan="6">불러오는 중...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="f1iob-split-side" id="f1iobOutSide"></div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         3층: 확인 필요 — 자동 해석이 안 된 행
+
+         위 두 표에서 걸러져 내려온 행들입니다. 지우지 않고 모아 두는 이유는
+         ① 그 건수가 곧 "오늘 스캔이 얼마나 깨졌나" 이고,
+         ② 인식 불가 롤(B5 의 0000/000/00)도 물건은 실제로 들어왔기 때문입니다.
+            여기서 빼면 입고량이 조용히 줄어듭니다.
+
+         값은 **원본 그대로**입니다. 판단 근거가 되어야 하므로 회사 자리에
+         해석 결과 대신 원본 제조사코드를 둡니다. 입고·출고가 섞이므로 맨 앞에
+         구분 열을 두고 시각순으로 세웁니다.
+
+         ※ 나중에 여기에 수기 보정을 붙일 자리입니다. (규칙을 추가할지,
+           행 단위로 사람이 품목을 지정할지는 아직 정하지 않았습니다)
+         ============================================================ -->
+    <div class="f1iob-floor-container f1iob-review">
+        <div class="panel-header-grid mb-3">
+            <div class="header-left">
+                <span class="panel-title">확인 필요</span>
+                <span class="panel-subtitle">자동 해석이 안 된 스캔 (원본 그대로)</span>
             </div>
             <div class="header-center text-center"></div>
             <div class="header-right">
-                <span class="f1iob-count" id="f1iobOutB6Count"></span>
+                <span class="f1iob-count warn" id="f1iobReviewCount"></span>
             </div>
         </div>
 
@@ -345,40 +244,33 @@
             <div class="f1iob-table-scroll">
                 <table class="f1iob-table">
                     <colgroup>
+                        <col class="f1iob-col-origin">
                         <col class="f1iob-col-time">
-                        <col class="f1iob-col-make">
-                        <col class="f1iob-col-type">
-                        <col class="f1iob-col-weight">
-                        <col class="f1iob-col-roll">
-                        <col class="f1iob-col-pcode">
                         <col class="f1iob-col-vendor">
-                        <col class="f1iob-col-item">
-                        <col class="f1iob-col-status">
+                        <col class="f1iob-col-grade">
+                        <col class="f1iob-col-roll">
+                        <col class="f1iob-col-weight">
+                        <col class="f1iob-col-pcode">
                     </colgroup>
                     <thead>
-                        <tr class="f1iob-thead-lv1">
-                            <th rowspan="2">시각</th>
-                            <th colspan="5" class="f1iob-sep">스캔 원본</th>
-                            <th colspan="3" class="f1iob-sep">해석 결과</th>
-                        </tr>
-                        <tr class="f1iob-thead-lv2">
-                            <th class="f1iob-sep">제조사코드</th>
-                            <th>규격</th>
+                        <tr>
+                            <th>구분</th>
+                            <th>시간</th>
+                            <th>제조사코드</th>
+                            <th>권종</th>
+                            <th>RollNo</th>
                             <th>중량</th>
-                            <th>롤번호</th>
                             <th>물류코드</th>
-                            <th class="f1iob-sep">회사</th>
-                            <th>품목</th>
-                            <th>상태</th>
                         </tr>
                     </thead>
-                    <tbody id="f1iobOutB6Body">
-                        <tr class="f1iob-placeholder"><td colspan="9">불러오는 중...</td></tr>
+                    <tbody id="f1iobReviewBody">
+                        <tr class="f1iob-placeholder"><td colspan="7">불러오는 중...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
 
 </div>
 

@@ -22,7 +22,6 @@
             if (!App.elements.wrapper) return;
 
             App.elements.subtitle = document.getElementById('f1iobSubtitle');
-            App.elements.filterWrap = document.getElementById('f1iobFilter');
 
             App.headerApi = window.CommonHeader.init({
                 idPrefix: 'f1Iob',
@@ -42,7 +41,6 @@
                         backgroundColor: '#f5f5f7',
                         hideDuringCapture: [
                             document.getElementById('f3iNoticeTicker'),
-                            document.getElementById('f1iobFilter'),
                             App.headerApi.elements.todayBtn,
                             App.headerApi.elements.editBtn,
                             App.headerApi.elements.saveBtn,
@@ -60,14 +58,6 @@
                 }
             });
             if (!App.headerApi) return;
-
-            // 상태 필터 스위처 — 표시만 거르고 요약 카드의 숫자는 건드리지 않습니다
-            if (App.elements.filterWrap) {
-                App.elements.filterWrap.addEventListener('click', function (e) {
-                    const btn = e.target.closest('.f1iob-filter-btn');
-                    if (btn) App.setFilter(btn.dataset.filter);
-                });
-            }
 
             App.loadData(App.headerApi.getCurrentDate());
         }
