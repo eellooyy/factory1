@@ -17,7 +17,9 @@
 
    [읽기 전용 열]
      원칙: 전용 관리 페이지가 있는 품목은 그 페이지가 입력 주인이고,
-     여기서는 보여주기만 합니다. 지금은 F.T 3종이 해당합니다.
+     여기서는 보여주기만 합니다. F.T 3종이 그렇습니다.
+     대한 C · 48.8g 2열도 전용 페이지로 넘기기로 하고 입력을 막아 두었습니다.
+     아직 그 페이지가 없어 읽어올 곳이 없으므로 지금은 늘 '–' 입니다.
      factory1_ft.html 의 '지고 재고' 표(A/C/D × 5층/6층)가 이미 그 값을
      factory1_ft_jigo 에 저장하고 있어, 여기서 또 입력하면 두 값이 갈라집니다.
      (입고 페이지가 별관 2열을 readonly 로 두고 3공장 테이블을 읽어오는 것과
@@ -27,9 +29,12 @@
      48.8g 은 나라사랑(월 1회 제작) 전용 용지라 잔량이 한 달 내내 그대로입니다.
      매일 같은 숫자를 치는 건 낭비이고 매일 오타 기회만 늘어납니다. 그래서
      값이 바뀐 날만 입력하고, 그 뒤로는 직전 값을 이어서 옅게 표시합니다.
-     ※ 이걸 DB 에서 어떻게 담을지(바뀐 날만 저장 vs 매일 복사)는 아직
-       미정입니다. 화면 쪽은 state.carried 로 이미 구분해 두었으므로,
-       어느 쪽으로 정해지든 렌더는 손대지 않습니다.
+     담는 방식은 '바뀐 날만 저장'으로 정했습니다. 매일 복사해 넣으면 실제로
+     센 날과 그냥 이어진 날이 구분되지 않아, 나중에 출고를 역산할 때
+     "안 센 날"과 "안 바뀐 날"을 가릴 수 없습니다.
+     ※ 48.8g 은 나라사랑 페이지로 넘겨 여기서는 입력하지 않습니다. 승계 계산
+       (applyCarry / carrySeed)은 그 페이지에서 그대로 쓸 물건이라 남겨 둡니다.
+       지금은 채워질 값이 없어 조용히 아무 일도 하지 않습니다.
    ──────────────────────────────────────────────────────────────── */
 (function () {
     'use strict';
@@ -38,15 +43,19 @@
         SUPABASE_URL: 'https://npiflqoscsvnnauvqhrr.supabase.co',
         SUPABASE_KEY: 'sb_publishable_ir-mHSsX6SSIQwHerkLbfA_2qCOP3KW',
 
-        /* ── DB 연결 예정 자리 ────────────────────────────────────
-           테이블 설계가 확정되면 여기에 이름을 적고 factory1_jigo_api.js 를
-           추가합니다. 지금은 레이아웃 확인 단계라 비어 있습니다.
+        /* ── DB ───────────────────────────────────────────────────
+           이 페이지가 입력하는 유일한 대상입니다.
+           PK (inv_date, floor, item_code) · floor 는 'B5' | 'B6' · roll_qty >= 0
+           숫자가 없는 칸은 행을 만들지 않습니다 → 비우면 UPDATE 가 아니라 DELETE.
            ──────────────────────────────────────────────────────── */
-        TABLE: null,                    // 예) 'factory1_jigo_inventory'
+        TABLE: 'factory1_jigo_real',
 
         // F.T 3종을 읽어올 곳 — factory1_ft.html 의 '지고 재고' 표가 쓰는 테이블
         // (location = '5F' | '6F', item_name = 'A' | 'C' | 'D', date, stock_qty, stock_weight)
         FT_TABLE: 'factory1_ft_jigo',
+
+        // 롤당 무게(ROLL_KG)를 읽어오는 곳 — 페이지가 뜰 때 한 번
+        PAPER_TABLE: 'factory1_paper_item',
 
         WD_KR: ['일', '월', '화', '수', '목', '금', '토'],
 
@@ -86,10 +95,16 @@
             { col: 5,  group: 'jeonju-bonji',  label: 'D',     itemCode: 'jj_bonji_d' },
             { col: 6,  group: 'jeonju-jeonja', label: 'A',     itemCode: 'jj_jeonja_a', sep: true },
             { col: 7,  group: 'jeonju-jeonja', label: 'D',     itemCode: 'jj_jeonja_d' },
-            { col: 8,  group: 'daehan-c',      label: 'C',     itemCode: 'daehan_c',    sep: true },
+            /* 대한 C · 48.8g — 각자 전용 페이지에서 관리하기로 하고 여기서는 보류했습니다.
+               (대한 C = 1182 전용 페이지, 48.8g = 나라사랑 페이지)
+               열은 자리를 지켜야 하므로 남기고 입력만 막습니다. 전용 페이지가 생기면
+               source 를 붙여 F.T 3열과 똑같이 읽어오게 하면 됩니다. 지금은 읽을 곳이
+               없어 늘 '–' 입니다. 이 페이지에서 입력을 다시 열려면 readonly 만 지우면
+               되고, 저장 대상은 readonly 가 아닌 열에서 자동으로 정해집니다. */
+            { col: 8,  group: 'daehan-c',      label: 'C',     itemCode: 'daehan_c',   sep: true, readonly: true },
 
             // 나라사랑 전용 용지 — 월 1회만 값이 바뀝니다 (위 [승계 열] 설명 참고)
-            { col: 9,  group: 'daehan-c',      label: '48.8g', itemCode: 'daehan_488', carry: true },
+            { col: 9,  group: 'daehan-c',      label: '48.8g', itemCode: 'daehan_488', carry: true, readonly: true },
 
             // F.T 3종 — 입력은 'FT 일지' 페이지에서만 합니다 (위 [읽기 전용 열] 참고)
             { col: 10, group: 'ft', label: 'A', itemCode: 'ft_a', sep: true, readonly: true, source: 'ft', ftGroup: 'A' },
@@ -110,11 +125,11 @@
            R/L ↔ Kg 스위처가 쓰는 환산 계수입니다. 입력과 저장은 언제나 롤이고,
            Kg 은 표시할 때만 곱합니다.
 
-           ※ 지금 값이 들어 있는 건 F.T 3종뿐입니다. factory1_ft_constant.js 의
-             JIGO_WEIGHT_MULTIPLIER 에 이미 있던 숫자를 그대로 옮겼습니다.
-             나머지 9개 열은 factory1_paper_item.roll_kg 에 들어 있는 값이라
-             DB 를 붙일 때 거기서 읽어옵니다. 그때까지는 Kg 모드에서 '–' 로
-             뜹니다. (모르는 값을 지어내지 않으려고 비워 두었습니다)
+           ※ 여기 적힌 값은 factory1_paper_item.roll_kg 를 못 읽었을 때만 쓰는
+             대비책입니다. 페이지가 뜰 때 App.loadRollKg() 가 마스터에서 12개 열을
+             전부 덮어씁니다 — 롤당 중량이 바뀌면 마스터만 고치면 됩니다.
+             F.T 3종은 factory1_ft_constant.js 의 JIGO_WEIGHT_MULTIPLIER 와 같은
+             숫자이고, 마스터에도 같은 값이 들어 있습니다.
            ──────────────────────────────────────────────────────── */
         ROLL_KG: {
             daehan_a:     null,
@@ -142,22 +157,6 @@
                      (입고 페이지가 지금 EDIT_PAST_DAYS: 40 으로 그렇게 하고 있습니다) */
         EDIT_PAST_DAYS: 7,
         EDIT_FUTURE_DAYS: 1,
-
-        /* ── 화면 확인용 임시 숫자 ────────────────────────────────
-           DB 가 아직 없어 표가 통째로 비면 열 너비도 자릿수도 확인할 수 없어
-           넣어 둔 값입니다. 같은 (층·날짜·품목)이면 언제나 같은 숫자가 나오게
-           만들어, 스크롤할 때 숫자가 달라지지 않습니다.
-           DB 를 붙이는 순간 false 로 바꾸고 SAMPLE_* 항목과
-           factory1_jigo_render.js 의 sample 관련 함수를 지우면 됩니다.
-           ──────────────────────────────────────────────────────── */
-        USE_SAMPLE_DATA: true,
-
-        // 임시 숫자에서 "그 층에 안 쌓는 품목"으로 취급할 열 (전부 0 으로 나옵니다)
-        // 실제 운영 규칙이 아니라 '–' 가 깔린 모습을 보기 위한 장치입니다.
-        SAMPLE_ABSENT: {
-            B5: ['paperkorea', 'jj_bonji_d', 'jj_jeonja_d'],
-            B6: ['daehan_488']
-        },
 
         state: {
             // 표시 단위 — 'RL'(롤) | 'KG'. 편집 모드에서는 항상 RL 로 고정됩니다.

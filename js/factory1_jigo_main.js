@@ -12,32 +12,6 @@
     const App = window.Factory1JigoInv;
     if (!App) return;
 
-    /* 저장 — DB 연결 전이라 아직 보낼 곳이 없습니다.
-       테이블이 확정되면 이 함수의 몸통을 factory1_jigo_api.js 의
-       App.saveData 로 옮기고 여기서는 호출만 남깁니다. dirty 집합의
-       모양('층|날짜|itemCode')이 곧 보낼 행의 모양입니다. */
-    function saveData() {
-        const rows = Array.from(App.state.dirty).map(key => {
-            const [floor, date, itemCode] = key.split('|');
-            const bucket = App.state.values[floor] || {};
-            return {
-                floor: floor,
-                inv_date: date,
-                item_code: itemCode,
-                roll_qty: (bucket[date] && bucket[date][itemCode]) || 0
-            };
-        });
-
-        if (!rows.length) {
-            alert('변경된 칸이 없습니다.');
-            return;
-        }
-
-        // 어떤 값이 나갈지 눈으로 확인할 수 있게 남겨 둡니다.
-        console.table(rows);
-        alert(`아직 DB 연결 전입니다. (레이아웃 확인 단계)\n\n저장 대상 ${rows.length}칸을 콘솔에 출력했습니다.`);
-    }
-
     const Factory1JigoInventoryModule = {
         init: function () {
             App.elements.wrapper = document.querySelector('.f1jg-wrapper');
@@ -48,7 +22,7 @@
                 wrapperSelector: '.gf3-wrapper',
                 requireMaster: true,
                 onDateChange: App.loadData,
-                onSave: saveData,
+                onSave: App.saveData,
                 onEditModeChange: function (isEdit) {
                     if (App.setReadOnlyMode) App.setReadOnlyMode(!isEdit);
                 },
@@ -88,7 +62,11 @@
             const today = (window.Factory3Utils || window.CommonUtils).getTodayStr();
             App.headerApi.setCurrentDate(today, false);
 
-            App.loadData(App.headerApi.getCurrentDate());
+            /* 롤당 중량을 먼저 받아 둡니다. Kg 스위처가 첫 클릭부터 제대로 나와야
+               하고, 실패해도 롤 표시는 멀쩡하므로 결과와 무관하게 표를 그립니다. */
+            App.loadRollKg().then(function () {
+                App.loadData(App.headerApi.getCurrentDate());
+            });
         }
     };
 
