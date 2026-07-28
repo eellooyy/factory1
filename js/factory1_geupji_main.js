@@ -57,6 +57,7 @@
 
             App.bindInputFormatters();
             App.bindKeyboardNavigation();
+            App.bindAllocPopovers();
             App.setReadOnlyMode(true); // 페이지 진입 시 항상 보기 모드로 시작
 
             App.loadData(App.headerApi.getCurrentDate());

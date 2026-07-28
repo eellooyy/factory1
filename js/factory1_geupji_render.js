@@ -45,6 +45,172 @@
        읽은 뒤 여기서 만들어 넣습니다. 마스터에 행을 하나 추가하면 42개 급지대
        드롭다운에 한꺼번에 나타납니다.
        ──────────────────────────────────────────────────────────────────────── */
+    /* ── 우측 두 표 만들기 ────────────────────────────────────────────────────
+       행이 HTML 에 적혀 있지 않습니다. 용지 마스터를 읽은 뒤 여기서 만듭니다.
+       마스터에 용지를 하나 넣으면 두 표에 함께 나타납니다.
+
+       [전주 배분 하위 줄]
+       한 급지 그룹에 ERP 품목이 둘 이상이면 그 아래에 품목별 하위 줄이 붙습니다.
+       지금은 전주 1404 · 전주 702 만 해당합니다(본지 = 자사, 전자 = 사급).
+       급지 현장에서는 같은 롤이라 구분하지 않지만 회계상으로는 다른 물건이라,
+       재고 총계를 회계용으로 나눠 둘 필요가 있습니다.
+
+       규칙은 "마지막 품목이 나머지를 받는다" 입니다. 마스터의 sort_order 상
+       본지가 앞, 전자가 뒤라서 본지에만 적으면 남는 만큼이 전부 전자로 갑니다.
+       아무것도 안 적은 날은 전액 전자입니다 — 평상시 루틴이 그렇기 때문입니다.
+
+       배분은 재고 열에만 걸립니다. 출고 · 실사용 · ERP · 오차는 전주 총계
+       그대로입니다. 그 넷까지 나누려면 매일 배분을 적어야 하는데, 배분은
+       회계 처리할 때만 필요한 값입니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    function td(child, cls) {
+        const cell = document.createElement('td');
+        cell.className = 'f1il-td' + (cls ? ' ' + cls : '');
+        cell.appendChild(child);
+        return cell;
+    }
+
+    function readonlyCell(field, key, text) {
+        const span = document.createElement('span');
+        span.className = 'f1il-panel-cell readonly';
+        span.dataset.field = field;
+        span.dataset.type = key;
+        span.textContent = text;
+        return span;
+    }
+
+    function inputCell(field, key) {
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'f1il-cell f1il-panel-cell numeric-input';
+        inp.dataset.field = field;
+        inp.dataset.type = key;
+        inp.inputMode = 'decimal';
+        inp.readOnly = true;   // 편집 모드에서만 열립니다 (setReadOnlyMode)
+        return inp;
+    }
+
+    function rowTitle(text, cls) {
+        const th = document.createElement('th');
+        th.className = 'f1il-th f1il-row-title' + (cls ? ' ' + cls : '');
+        th.textContent = text;
+        return th;
+    }
+
+    // 품목이 둘 이상인 그룹만 하위 줄을 갖습니다
+    function subItems(key) {
+        const codes = App.ITEM_CODES[key] || [];
+        return codes.length > 1 ? codes : [];
+    }
+
+    /* 배분 팝오버 — 용지 이름 옆 [+] 를 누르면 그 행 오른쪽에 떠오릅니다.
+       표에 하위 줄로 붙이면 우측 카드가 좌측 3적층 높이에 맞춰 늘어나는 구조라
+       행이 늘어난 만큼 전체가 눌립니다. 게다가 배분은 회계 처리할 때만 쓰는
+       값이라 평상시 화면을 차지할 이유가 없습니다. */
+    function buildAllocPop(key, codes) {
+        const pop = document.createElement('div');
+        pop.className = 'f1il-alloc-pop';
+        pop.dataset.type = key;
+
+        const head = document.createElement('div');
+        head.className = 'f1il-alloc-pop-head';
+
+        const headText = document.createElement('span');
+        headText.textContent = `${App.TYPE_LABELS[key]} 재고 배분`;
+        head.appendChild(headText);
+
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'f1il-alloc-close';
+        close.title = '닫기';
+        close.innerHTML = '<span class="material-symbols-outlined">close</span>';
+        head.appendChild(close);
+
+        pop.appendChild(head);
+
+        const table = document.createElement('table');
+        table.className = 'f1il-alloc-pop-table';
+
+        codes.forEach((code, i) => {
+            const isLast = (i === codes.length - 1);
+            const tr = document.createElement('tr');
+
+            const th = document.createElement('th');
+            th.textContent = App.ITEM_LABELS[code] || code;
+            tr.appendChild(th);
+
+            const cell = document.createElement('td');
+            // 마지막 품목이 나머지를 받습니다 — 그래서 입력칸이 없습니다
+            cell.appendChild(isLast ? readonlyCell('alloc-rest', code, '0kg') : inputCell('alloc', code));
+            tr.appendChild(cell);
+            table.appendChild(tr);
+        });
+
+        // 총계는 좌측 호기 표에서 계산된 값입니다. 배분이 넘지 못하는 한계선입니다.
+        const totalTr = document.createElement('tr');
+        totalTr.className = 'f1il-alloc-pop-total';
+        const totalTh = document.createElement('th');
+        totalTh.textContent = '재고 총계';
+        totalTr.appendChild(totalTh);
+        const totalTd = document.createElement('td');
+        totalTd.appendChild(readonlyCell('alloc-total', key, '0kg'));
+        totalTr.appendChild(totalTd);
+        table.appendChild(totalTr);
+
+        pop.appendChild(table);
+        return pop;
+    }
+
+    App.buildPanels = function () {
+        const stockBody = document.getElementById('f1ilStockBody');
+        const usageBody = document.getElementById('f1ilUsageBody');
+        if (!stockBody || !usageBody) return;
+
+        stockBody.innerHTML = '';
+        usageBody.innerHTML = '';
+
+        App.TYPE_KEYS.forEach(key => {
+            // ── 급지 재고 / 출고 ──
+            const tr = document.createElement('tr');
+            const title = rowTitle(App.TYPE_LABELS[key]);
+
+            /* 품목이 둘 이상인 그룹에만 배분 버튼이 붙습니다.
+               지금은 전주 1404 · 702 뿐입니다(본지 = 자사, 전자 = 사급). */
+            const codes = subItems(key);
+            if (codes.length) {
+                title.classList.add('f1il-has-alloc-btn');
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'f1il-alloc-btn';
+                btn.dataset.type = key;
+                btn.title = `${App.TYPE_LABELS[key]} 재고 배분`;
+                btn.textContent = '+';
+                title.appendChild(btn);
+
+                title.appendChild(buildAllocPop(key, codes));
+            }
+
+            tr.appendChild(title);
+            tr.appendChild(td(readonlyCell('inventory', key, '0kg')));
+            tr.appendChild(td(inputCell('issue', key)));
+            tr.appendChild(td(readonlyCell('sysissue', key, '–'), 'f1il-erp-empty'));
+            stockBody.appendChild(tr);
+
+            // ── 사용량 상세 내역 ──
+            const ur = document.createElement('tr');
+            ur.appendChild(rowTitle(App.TYPE_LABELS[key]));
+            ur.appendChild(td(readonlyCell('actual', key, '0kg')));
+            ur.appendChild(td(readonlyCell('erp', key, '–'), null));
+            ur.appendChild(td(readonlyCell('diff', key, '–')));
+            usageBody.appendChild(ur);
+        });
+
+        // ERP · 전산 출고는 값이 오기 전까지 옅게
+        App.elements.wrapper.querySelectorAll('.f1il-panel-cell[data-field="erp"], .f1il-panel-cell[data-field="sysissue"]')
+            .forEach(el => el.classList.add('f1il-erp-empty'));
+    };
+
     App.buildPaperOptions = function () {
         if (!App.elements.wrapper) return;
 
@@ -126,6 +292,64 @@
     /* ── DB 행을 화면에 반영 ──────────────────────────────────────────────────
        행이 없는 급지대는 resetToDefaults 가 이미 비워 둔 상태 그대로 둡니다.
        ──────────────────────────────────────────────────────────────────────── */
+    /* ── 회계용 재고 배분 반영 ────────────────────────────────────────────────
+       입력칸을 채우기만 하고, 잔여 품목(마지막)은 calculateFields 가 계산합니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    App.applyAlloc = function (byItem) {
+        App.state.loadedAlloc = new Set();
+
+        App.elements.wrapper.querySelectorAll('.f1il-panel-cell[data-field="alloc"]').forEach(inp => {
+            const code = inp.dataset.type;
+            const has = byItem && Object.prototype.hasOwnProperty.call(byItem, code);
+            inp.value = has ? App.utils.formatNum(byItem[code]) : '';
+            if (has) App.state.loadedAlloc.add(code);
+        });
+    };
+
+    /* 배분 저장분 수집 — 입력한 품목만 저장하고, 비운 칸은 행을 지웁니다.
+       0 은 "배분 없음"이라 저장하지 않습니다. 행이 없는 것과 같은 뜻입니다. */
+    App.collectAlloc = function (logDate) {
+        const upserts = [];
+        const keep = new Set();
+        const now = new Date().toISOString();
+
+        App.elements.wrapper.querySelectorAll('.f1il-panel-cell[data-field="alloc"]').forEach(inp => {
+            const code = inp.dataset.type;
+            const val = numOrNull(inp.value);
+            if (val === null || val === 0) return;
+
+            keep.add(code);
+            upserts.push({ log_date: logDate, item_code: code, alloc_kg: val, updated_at: now });
+        });
+
+        const deletes = [];
+        (App.state.loadedAlloc || new Set()).forEach(code => {
+            if (!keep.has(code)) deletes.push(code);
+        });
+
+        return { upserts, deletes, keep };
+    };
+
+    /* 배분이 총계를 넘는지 검사합니다. 넘으면 오타입니다 — 급지대에 실제로 걸려
+       있는 양이 총계인데 그보다 많이 나눌 수는 없습니다. 저장을 막습니다. */
+    App.allocErrors = function () {
+        const bad = [];
+        App.TYPE_KEYS.forEach(key => {
+            const codes = subItems(key);
+            if (!codes.length) return;
+
+            const total = App.state.stockTotal[key] || 0;
+            let sum = 0;
+            codes.slice(0, -1).forEach(code => {
+                const inp = App.elements.wrapper.querySelector(`.f1il-panel-cell[data-field="alloc"][data-type="${code}"]`);
+                sum += App.utils.parseNum(inp && inp.value);
+            });
+
+            if (sum > total) bad.push(`${App.TYPE_LABELS[key]} (배분 ${App.utils.formatNum(sum)}kg > 재고 ${App.utils.formatNum(total)}kg)`);
+        });
+        return bad;
+    };
+
     App.applyGeupjiRows = function (rows) {
         App.state.loaded = new Set();
         if (!rows) return;
@@ -170,6 +394,7 @@
         });
 
         App.applyErpUsage(null);   // ERP 열은 조회 결과가 오기 전까지 '–'
+        App.applyAlloc(null);      // 배분 입력칸도 비웁니다 (미입력 = 전액 잔여 품목)
 
         App.state.nextDayInventory = {};
         App.state.isChanged = false;
@@ -209,7 +434,8 @@
         /* ERP 열은 여기 없습니다. 사람이 적는 값이 아니라 사용량 뷰에서 읽어오는
            값이라, 수정 모드에서도 잠긴 채로 둡니다. (실사용 · 오차와 같은 성격) */
         App.elements.wrapper
-            .querySelectorAll('.f1il-cell[data-field="pre"], .f1il-cell[data-field="count"], .f1il-panel-cell[data-field="issue"]')
+            .querySelectorAll('.f1il-cell[data-field="pre"], .f1il-cell[data-field="count"],'
+                + ' .f1il-panel-cell[data-field="issue"], .f1il-panel-cell[data-field="alloc"]')
             .forEach(input => { input.readOnly = isReadOnly; });
         App.elements.wrapper
             .querySelectorAll('.f1il-cell[data-field="type1"], .f1il-cell[data-field="type2"]')
@@ -253,6 +479,51 @@
             if (invEl) invEl.textContent = `${App.utils.formatNum(globalInventory[k]) || '0'}kg`;
         });
 
+        /* 총계를 남겨 둡니다. 배분이 총계를 넘는지 검사할 때(App.allocErrors) 씁니다.
+           좌측을 고쳐 총계가 줄면 그 검사도 곧바로 새 총계 기준이 됩니다. */
+        App.state.stockTotal = globalInventory;
+
+        /* 2-1) 회계용 재고 배분 — 재고 열에만 걸립니다.
+           마지막 품목이 나머지를 받습니다. 앞 품목에 아무것도 안 적으면 전액이
+           마지막(전자)으로 갑니다. 평상시 루틴이 그렇습니다.
+
+           배분 합이 총계를 넘으면 잔여가 음수가 됩니다. 그건 오타이므로 빨갛게
+           표시하고, 저장은 App.saveData 가 막습니다. 화면에서는 계산을 멈추지
+           않고 음수를 그대로 보여줍니다 — 얼마나 넘쳤는지 보여야 고칠 수 있습니다. */
+        App.TYPE_KEYS.forEach(key => {
+            const codes = subItems(key);
+            if (!codes.length) return;
+
+            const total = globalInventory[key] || 0;
+            let sum = 0;
+
+            codes.slice(0, -1).forEach(code => {
+                const inp = App.elements.wrapper.querySelector(`.f1il-panel-cell[data-field="alloc"][data-type="${code}"]`);
+                const v = App.utils.parseNum(inp && inp.value);
+                sum += v;
+                if (inp) inp.classList.toggle('f1il-alloc-over', sum > total);
+            });
+
+            const restEl = App.elements.wrapper
+                .querySelector(`.f1il-panel-cell[data-field="alloc-rest"][data-type="${codes[codes.length - 1]}"]`);
+            if (restEl) {
+                const rest = total - sum;
+                restEl.textContent = `${App.utils.formatNum(rest) || '0'}kg`;
+                restEl.classList.toggle('f1il-alloc-over', rest < 0);
+            }
+
+            const totalEl = getPanelEl('alloc-total', key);
+            if (totalEl) totalEl.textContent = `${App.utils.formatNum(total) || '0'}kg`;
+
+            /* 팝오버를 닫아 두면 배분을 넣었는지 알 수 없습니다. 값이 들어 있으면
+               버튼 모양을 바꿔 접힌 상태에서도 보이게 합니다. 넘친 경우도 마찬가지입니다. */
+            const btn = App.elements.wrapper.querySelector(`.f1il-alloc-btn[data-type="${key}"]`);
+            if (btn) {
+                btn.classList.toggle('has-value', sum > 0);
+                btn.classList.toggle('is-over', sum > total);
+            }
+        });
+
         // 3) 실사용량 = (오늘 재고 + 출고롤*중량) - 다음날 재고(DB 연결 전에는 0)
         // 4) 실사용량 - ERP
         const nextInv = App.state.nextDayInventory || {};
@@ -284,6 +555,47 @@
                     diffEl.classList.toggle('delta-negative', diff < 0);
                 }
             }
+        });
+    };
+
+    /* ── 배분 팝오버 열고 닫기 ────────────────────────────────────────────────
+       표를 다시 그려도 살아 있도록 wrapper 에 위임해서 한 번만 겁니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    function closeAllocPops(except) {
+        App.elements.wrapper.querySelectorAll('.f1il-alloc-pop.open').forEach(p => {
+            if (p !== except) p.classList.remove('open');
+        });
+        App.elements.wrapper.querySelectorAll('.f1il-alloc-btn.open').forEach(b => {
+            if (!except || b.dataset.type !== except.dataset.type) b.classList.remove('open');
+        });
+    }
+
+    App.bindAllocPopovers = function () {
+        if (!App.elements.wrapper) return;
+
+        App.elements.wrapper.addEventListener('click', (e) => {
+            const btn = e.target.closest('.f1il-alloc-btn');
+            if (btn) {
+                const pop = btn.parentElement.querySelector('.f1il-alloc-pop');
+                const willOpen = !pop.classList.contains('open');
+                closeAllocPops();
+                pop.classList.toggle('open', willOpen);
+                btn.classList.toggle('open', willOpen);
+                if (willOpen) {
+                    const first = pop.querySelector('.f1il-panel-cell[data-field="alloc"]');
+                    if (first && !first.readOnly) { first.focus(); first.select(); }
+                }
+                return;
+            }
+
+            if (e.target.closest('.f1il-alloc-close')) { closeAllocPops(); return; }
+
+            // 팝오버 바깥을 누르면 닫습니다
+            if (!e.target.closest('.f1il-alloc-pop')) closeAllocPops();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeAllocPops();
         });
     };
 

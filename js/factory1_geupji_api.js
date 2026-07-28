@@ -30,7 +30,7 @@
     App.loadPaperMaster = async function () {
         const { data, error } = await supabase
             .from(App.PAPER_VIEW)
-            .select('geupji_key, label, roll_kg, erp_codes')
+            .select('geupji_key, label, roll_kg, erp_codes, item_codes, item_labels')
             .order('sort_order');
 
         if (error) {
@@ -47,16 +47,45 @@
         App.TYPE_LABELS = {};
         App.ROLL_KG = {};
         App.ERP_ITEM_CODES = {};
+        App.ITEM_CODES = {};
+        App.ITEM_LABELS = {};
 
         data.forEach(r => {
             App.TYPE_LABELS[r.geupji_key] = r.label;
             App.ROLL_KG[r.geupji_key] = Number(r.roll_kg) || 0;
             App.ERP_ITEM_CODES[r.geupji_key] = r.erp_codes || [];
+            App.ITEM_CODES[r.geupji_key] = r.item_codes || [];
+
+            // 품목코드 → 이름 ('전주본지' / '전주전자'). 배열 순서가 서로 맞물립니다.
+            (r.item_codes || []).forEach((code, i) => {
+                App.ITEM_LABELS[code] = (r.item_labels || [])[i] || code;
+            });
         });
 
         App.buildPaperOptions();
+        App.buildPanels();
         return true;
     };
+
+    /* ── 회계용 재고 배분 ─────────────────────────────────────────────────────
+       { 품목코드: kg }. 입력한 품목만 행이 있고, 잔여 품목은 저장하지 않습니다.
+       행이 없는 날은 배분 0 — 즉 전액이 잔여 품목(전자) 몫입니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    async function fetchAlloc(dateStr) {
+        const { data, error } = await supabase
+            .from(App.ALLOC_TABLE)
+            .select('item_code, alloc_kg')
+            .eq('log_date', dateStr);
+
+        if (error) {
+            console.error('[factory1_geupji] 재고 배분 조회 실패:', error.message);
+            return null;
+        }
+
+        const byItem = {};
+        (data || []).forEach(r => { byItem[r.item_code] = Number(r.alloc_kg) || 0; });
+        return byItem;
+    }
 
     /* ── 좌측 호기 표 ─────────────────────────────────────────────────────────
        그 날짜의 급지대 행만 읽습니다. 숫자가 없는 급지대는 애초에 행이 없으므로
@@ -148,11 +177,12 @@
         // 화면을 우선 기본값으로 초기화
         App.resetToDefaults();
 
-        // 서로 무관한 조회 넷이라 한꺼번에 보냅니다
-        const [rows, erp, nextStock] = await Promise.all([
+        // 서로 무관한 조회라 한꺼번에 보냅니다
+        const [rows, erp, nextStock, alloc] = await Promise.all([
             fetchGeupjiRows(dateStr),
             fetchErpUsage(dateStr),
-            fetchStock(App.utils.addDays(dateStr, 1))
+            fetchStock(App.utils.addDays(dateStr, 1)),
+            fetchAlloc(dateStr)
         ]);
 
         /* 날짜를 빠르게 넘기면 응답이 순서를 바꿔 도착할 수 있습니다.
@@ -161,6 +191,7 @@
 
         App.applyGeupjiRows(rows);
         App.applyErpUsage(erp);
+        App.applyAlloc(alloc);
         App.state.nextDayInventory = nextStock || {};
 
         App.calculateFields();
@@ -183,10 +214,21 @@
         const logDate = (App.headerApi && App.headerApi.getCurrentDate()) || App.state.currentDate;
         if (!logDate) return;
 
+        /* 배분이 재고 총계를 넘으면 오타입니다. 급지대에 실제로 걸려 있는 양이
+           총계인데 그보다 많이 나눌 수는 없습니다. 저장 자체를 막습니다 —
+           음수 재고가 회계로 넘어가면 안 되기 때문입니다. */
+        const allocBad = App.allocErrors();
+        if (allocBad.length) {
+            alert('재고 배분이 재고 총계를 넘습니다.\n\n' + allocBad.join('\n')
+                + '\n\n값을 확인한 뒤 다시 저장해 주세요.');
+            return false;
+        }
+
         const { upserts, deletes, keep } = App.collectRows(logDate);
+        const alloc = App.collectAlloc(logDate);
 
         // 저장할 것도 지울 것도 없는 경우 — 조용히 빠져나가면 눌린 건지 아닌지 알 수 없습니다
-        if (!upserts.length && !deletes.length) {
+        if (!upserts.length && !deletes.length && !alloc.upserts.length && !alloc.deletes.length) {
             alert('저장할 내용이 없습니다.');
             if (App.headerApi && App.headerApi.toggleEditMode) App.headerApi.toggleEditMode();
             return true;
@@ -225,8 +267,26 @@
             if (error) return fail('빈 급지대 처리에 실패했습니다', error);
         }
 
+        // ── 회계용 재고 배분 ──
+        if (alloc.upserts.length) {
+            const { error } = await supabase
+                .from(App.ALLOC_TABLE)
+                .upsert(alloc.upserts, { onConflict: 'log_date,item_code' });
+            if (error) return fail('재고 배분 저장에 실패했습니다', error);
+        }
+
+        if (alloc.deletes.length) {
+            const { error } = await supabase
+                .from(App.ALLOC_TABLE)
+                .delete()
+                .eq('log_date', logDate)
+                .in('item_code', alloc.deletes);
+            if (error) return fail('재고 배분 삭제에 실패했습니다', error);
+        }
+
         // 저장된 상태가 곧 다음 저장의 기준이 됩니다
         App.state.loaded = keep;
+        App.state.loadedAlloc = alloc.keep;
         App.state.isChanged = false;
 
         if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '저장'; }
@@ -245,6 +305,7 @@
            21행이라 변경분만 가리지 않고 값이 있는 급지대를 통째로 다시 씁니다. */
         const parts = [`급지대 ${upserts.length}칸`];
         if (deletes.length) parts.push(`${deletes.length}칸 비움`);
+        if (alloc.upserts.length) parts.push(`배분 ${alloc.upserts.length}건`);
         alert(`저장되었습니다. (${parts.join(', ')})`);
 
         return true;

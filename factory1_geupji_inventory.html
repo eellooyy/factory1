@@ -178,53 +178,40 @@
 
             <aside class="f1il-side-panels">
                 <!-- 2적층 유지. 두 카드가 flex:1 로 좌측 3적층 높이를 균등하게 나눠 갖고,
-                     표의 행도 같은 비율로 신축해 상하폭이 좌측과 정확히 맞는다. -->
-                <!-- 1층: 급지 재고 및 급지 출고 롤 병합 표 -->
+                     표의 행도 같은 비율로 신축해 상하폭이 좌측과 정확히 맞는다.
+
+                     ※ 두 표의 본문(tbody)은 비어 있습니다. 용지 마스터
+                       (v_factory1_geupji_paper)를 읽어 factory1_geupji_render.js 의
+                       App.buildPanels() 가 만들어 넣습니다. 용지를 하나 늘릴 때
+                       마스터에 행만 넣으면 두 표에 함께 나타나므로, 여기 HTML 은
+                       손대지 않습니다. -->
+
+                <!-- 1층: 급지 재고 / 출고 -->
                 <div class="f1il-panel-box f1il-tier1">
-                    <div class="f1il-box-header">급지 재고 / 출고 롤</div>
+                    <div class="f1il-box-header">급지 재고 / 출고</div>
                     <table class="f1il-table f1il-panel-table border-outer">
                         <colgroup>
                             <col class="f1il-col-title">
-                            <col><col>
+                            <col><col><col>
                         </colgroup>
                         <thead>
                             <tr>
                                 <th class="f1il-th f1il-row-title">용지</th>
                                 <th class="f1il-th">재고</th>
-                                <th class="f1il-th">출고 롤</th>
+                                <!-- 실제 출고: 지고 재고(전일 − 금일 + 입고)에서 나올 값입니다.
+                                     지고 재고가 DB 에 붙기 전까지는 손으로 넣습니다.
+                                     전산 출고: 공정 PC 의 출고 내역을 걸러 온 값입니다.
+                                     둘을 나란히 두는 이유는 서로 대조하기 위해서입니다.
+                                     한쪽이 틀렸을 때 갈라지는 것이 곧 신호가 됩니다. -->
+                                <th class="f1il-th">실제 출고</th>
+                                <th class="f1il-th">전산 출고</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">대한 1404</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="dh_1404">0kg</span></td>
-                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="dh_1404" inputmode="decimal" readonly></td>
-                            </tr>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">대한 702</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="dh_702">0kg</span></td>
-                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="dh_702" inputmode="decimal" readonly></td>
-                            </tr>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">전주 1404</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="jj_1404">0kg</span></td>
-                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="jj_1404" inputmode="decimal" readonly></td>
-                            </tr>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">전주 702</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="jj_702">0kg</span></td>
-                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="jj_702" inputmode="decimal" readonly></td>
-                            </tr>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">페이퍼 1404</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="inventory" data-type="pp_1404">0kg</span></td>
-                                <td class="f1il-td"><input type="text" class="f1il-cell f1il-panel-cell numeric-input" data-field="issue" data-type="pp_1404" inputmode="decimal" readonly></td>
-                            </tr>
-                        </tbody>
+                        <tbody id="f1ilStockBody"></tbody>
                     </table>
                 </div>
 
-                <!-- 2층: 기존 사용량 상세 내역 (번호 제거) -->
+                <!-- 2층: 사용량 상세 내역 -->
                 <div class="f1il-panel-box f1il-tier2">
                     <div class="f1il-box-header">사용량 상세 내역</div>
                     <table class="f1il-table f1il-panel-table border-outer">
@@ -240,38 +227,7 @@
                                 <th class="f1il-th">오차</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">대한 1404</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="actual" data-type="dh_1404">0kg</span></td>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="erp" data-type="dh_1404">–</span></td>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="diff" data-type="dh_1404">0kg</span></td>
-                            </tr>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">대한 702</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="actual" data-type="dh_702">0kg</span></td>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="erp" data-type="dh_702">–</span></td>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="diff" data-type="dh_702">0kg</span></td>
-                            </tr>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">전주 1404</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="actual" data-type="jj_1404">0kg</span></td>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="erp" data-type="jj_1404">–</span></td>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="diff" data-type="jj_1404">0kg</span></td>
-                            </tr>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">전주 702</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="actual" data-type="jj_702">0kg</span></td>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="erp" data-type="jj_702">–</span></td>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="diff" data-type="jj_702">0kg</span></td>
-                            </tr>
-                            <tr>
-                                <th class="f1il-th f1il-row-title">페이퍼 1404</th>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="actual" data-type="pp_1404">0kg</span></td>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="erp" data-type="pp_1404">–</span></td>
-                                <td class="f1il-td"><span class="f1il-panel-cell readonly" data-field="diff" data-type="pp_1404">0kg</span></td>
-                            </tr>
-                        </tbody>
+                        <tbody id="f1ilUsageBody"></tbody>
                     </table>
                 </div>
             </aside>

@@ -213,6 +213,201 @@ input.f1il-panel-cell {
 .delta-positive { color: #218739; }
 .delta-negative { color: #c62828; }
 
+/* ================================================
+   회계용 재고 배분 — [+] 버튼과 팝오버
+
+   전주 1404 · 702 는 급지 현장에서 본지와 전자를 구분하지 않지만 회계상으로는
+   다른 물건입니다(본지 = 자사, 전자 = 사급). 그래서 재고 총계를 나눠 둘 필요가
+   있는데, 표에 하위 줄로 붙이면 우측 카드가 좌측 3적층 높이에 맞춰 늘어나는
+   구조라 행이 늘어난 만큼 전체가 눌립니다. 게다가 배분은 회계 처리할 때만 쓰는
+   값이라 평상시 화면을 차지할 이유가 없습니다.
+   → 접어 두고, 필요할 때만 [+] 로 펴 봅니다.
+   ================================================ */
+/* 버튼과 팝오버의 기준점.
+   버튼은 position: absolute 라 흐름에서 빠져 있으므로 자리를 비워 줄 필요가
+   없습니다. padding 으로 자리를 만들면 용지 이름이 왼쪽으로 밀려서, 버튼이
+   붙은 전주 두 줄만 다른 줄과 어긋나 보입니다. */
+.f1il-th.f1il-has-alloc-btn {
+    position: relative;
+}
+
+/* 동그란 + 버튼. 채움색이 곧 상태입니다 — 접어 둔 채로도 읽힙니다.
+     흰색 = 배분 없음(평상시)   파랑 = 배분 있음   빨강 = 총계 초과
+   열려 있는 동안은 채움색을 바꾸지 않고 옅은 링만 둘러, 상태 정보를 덮지 않습니다. */
+.f1il-alloc-btn {
+    position: absolute;
+    top: 50%;
+    right: 5px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px;
+    height: 17px;
+    padding: 0;
+    border: 1px solid #d2d2d7;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #8e8e93;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.f1il-alloc-btn:hover { border-color: #8e8e93; color: #1d1d1f; }
+
+.f1il-alloc-btn.has-value {
+    background: #007aff;
+    border-color: #007aff;
+    color: #ffffff;
+}
+
+.f1il-alloc-btn.is-over {
+    background: #ff3b30;
+    border-color: #ff3b30;
+    color: #ffffff;
+}
+
+.f1il-alloc-btn.open { box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.07); }
+
+/* ── 팝오버 ──
+   행 오른쪽으로 펼칩니다. 카드 안쪽 공간을 쓰므로 화면 밖으로 나가지 않고,
+   좌표 계산이 없어 페이지 확대(zoom)에도 어긋나지 않습니다. */
+.f1il-alloc-pop {
+    display: none;
+    position: absolute;
+    top: -7px;
+    left: calc(100% + 10px);
+    z-index: 30;
+    width: 214px;
+    padding: 12px 14px 13px;
+    background: #ffffff;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+    text-align: left;
+    cursor: default;
+}
+
+.f1il-alloc-pop.open { display: block; }
+
+/* 제목과 닫기. 구분선을 두지 않고 여백으로만 떼어 놓습니다 —
+   214px 폭에 가로선이 하나 더 들어가면 그것만 눈에 띕니다. */
+.f1il-alloc-pop-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 9px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #1d1d1f;
+    letter-spacing: -0.2px;
+}
+
+.f1il-alloc-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #b0b0b8;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.f1il-alloc-close:hover { background: #f0f0f3; color: #1d1d1f; }
+.f1il-alloc-close .material-symbols-outlined { font-size: 15px; }
+
+/* ── 팝오버 안쪽 표 ──
+   이 표는 우측 패널 표(.f1il-panel-table) 안에 들어 있어서 그쪽 규칙을
+   그대로 물려받습니다. 특히 tr > *:first-child 의 굵은 세로 구분선(2px)이
+   팝오버 안까지 그어지므로 여기서 끊습니다. */
+.f1il-alloc-pop-table { width: 100%; border-collapse: collapse; }
+
+.f1il-alloc-pop-table tr > *:first-child { border-right: 0 !important; }
+
+.f1il-alloc-pop-table th {
+    text-align: left;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6e6e73;
+    padding: 4px 0;
+    background: transparent;
+    border: 0;
+    height: auto;
+    white-space: nowrap;
+    letter-spacing: -0.2px;
+}
+
+.f1il-alloc-pop-table td {
+    padding: 4px 0;
+    border: 0;
+    height: auto;
+    background: transparent;
+}
+
+/* 표 안이 아니라 독립된 입력칸이라 테두리를 줍니다 */
+.f1il-alloc-pop input.f1il-panel-cell {
+    width: 100%;
+    height: 26px;
+    border: 1px solid #d2d2d7;
+    border-radius: 7px;
+    background: #ffffff;
+    padding: 0 8px 0 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1d1d1f;
+}
+
+.f1il-alloc-pop input.f1il-panel-cell:focus { border-color: #007aff; }
+.f1il-wrapper.edit-mode .f1il-alloc-pop input.f1il-panel-cell:not([readonly]) { background: #fff9e6; }
+
+/* 보기 모드에서는 테두리까지 지워 '지금은 못 고친다'가 한눈에 보이게 합니다 */
+.f1il-alloc-pop input.f1il-panel-cell[readonly] {
+    border-color: transparent;
+    background: transparent;
+    color: #1d1d1f;
+    padding-right: 9px;
+}
+
+/* 계산으로 나오는 값(잔여 · 총계)은 배경 없이 숫자만 */
+.f1il-alloc-pop span.f1il-panel-cell {
+    padding-right: 9px;
+    background: transparent !important;
+    font-weight: 600;
+    color: #1d1d1f;
+}
+
+/* 총계는 입력 대상이 아니라 넘지 못하는 한계선이라 한 단계 흐리게 둡니다 */
+.f1il-alloc-pop-total th { color: #a1a1a8; }
+.f1il-alloc-pop-total span.f1il-panel-cell { color: #a1a1a8; font-weight: 500; }
+.f1il-alloc-pop-total th,
+.f1il-alloc-pop-total td { padding-top: 7px; }
+
+/* 배분이 재고 총계를 넘은 상태 — 잔여가 음수가 됩니다.
+   실재고보다 많이 나눌 수는 없으니 오타이고, 저장은 막힙니다.
+   (위의 '배경 없이 숫자만' 규칙보다 선택자를 한 단계 좁게 잡아 이깁니다) */
+.f1il-alloc-pop .f1il-panel-cell.f1il-alloc-over,
+.f1il-panel-cell.f1il-alloc-over {
+    color: #ff3b30 !important;
+    font-weight: 700 !important;
+    background: transparent !important;
+}
+
+/* 입력칸만 테두리로 표시합니다 — 배경을 칠하면 좁은 팝오버에서 너무 튑니다 */
+.f1il-alloc-pop input.f1il-panel-cell.f1il-alloc-over {
+    border-color: #ff3b30 !important;
+    background: #fff5f5 !important;
+}
+
 /* ERP 실적이 아직 안 넘어온 날 — 0kg 이 아니라 '–' 로 비워 둡니다.
    0 으로 적으면 "그날 안 썼다"로 읽히는데, 실제로는 야간 배치가 아직
    그 날짜를 안 가져온 경우가 대부분이라 오차 열이 실사용량 전체를

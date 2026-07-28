@@ -67,6 +67,19 @@
     App.ROLL_KG = {};
     App.ERP_ITEM_CODES = {};
 
+    /* 급지 그룹에 속한 ERP 품목 — 회계용 재고 배분에 씁니다.
+         ITEM_CODES  급지키 → 품목코드 배열   (sort_order 순, 마지막이 잔여를 받습니다)
+         ITEM_LABELS 품목코드 → 이름          ('전주본지' / '전주전자')
+
+       품목이 둘 이상인 그룹에만 하위 줄이 생깁니다. 지금은 전주 1404 · 702 뿐입니다.
+       급지 현장에서는 같은 롤이라 구분하지 않지만 회계상 본지는 자사, 전자는
+       사급이라 다른 물건입니다. */
+    App.ITEM_CODES = {};
+    App.ITEM_LABELS = {};
+
+    // 회계용 재고 배분 — 입력한 품목만 행이 생깁니다 (잔여 품목은 계산값이라 저장하지 않습니다)
+    App.ALLOC_TABLE = 'factory1_geupji_alloc';
+
     // 용지 종류별 완롤 1개당 중량(kg) — 마스터에 없는 키는 0 입니다
     App.rollWeight = function (typeKey) {
         return App.ROLL_KG[typeKey] || 0;
@@ -143,7 +156,15 @@
         /* DB 에서 읽어온 급지대 키 집합 — 'machine|stand'
            저장할 때 "원래 행이 있었는데 지금은 숫자가 비었다" 를 가려내는 데 씁니다.
            그 급지대는 UPDATE 가 아니라 행 자체를 지워야 미입력 상태로 돌아갑니다. */
-        loaded: new Set()
+        loaded: new Set(),
+
+        // DB 에서 읽어온 배분 품목코드 — 비워서 저장하면 행을 지우는 데 씁니다
+        loadedAlloc: new Set(),
+
+        /* 급지 용지별 재고 총계 (calculateFields 가 채웁니다)
+           배분이 총계를 넘는지 검사할 때 씁니다. 좌측을 고쳐 총계가 줄면
+           검사 기준도 곧바로 따라갑니다. */
+        stockTotal: {}
     };
 
     // headerApi 플레이스홀더 (공통 헤더 연결 시 factory1_geupji_main.js 에서 주입 예정)
