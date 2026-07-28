@@ -5,7 +5,7 @@
 
    데이터 출처
      1~5열   v_factory1_usage_by_media  (adjustments 보정이 반영된 뷰)
-     6~10열  3공장 — 아직 소스가 없습니다. 아래 FACTORY3_VIEW 주석 참조.
+     6~10열  v_factory3_usage_by_media  (같은 형식, factory = 3 보정 반영)
 
    ※ 열을 media_code 로 잡습니다. 제호(media_name)는 ERP 에서 바뀔 수
      있지만 코드는 유지되므로, 이름이 바뀌어도 통계가 끊기지 않습니다.
@@ -20,14 +20,10 @@
         // 1공장 — 보정(adjustments)이 반영된 뷰. base 테이블을 직접 보지 않습니다.
         VIEW: 'v_factory1_usage_by_media',
 
-        /* 3공장 — 아직 소스가 없어 6~10열은 빈칸('–')으로 나옵니다.
-           factory3_usage 에 media_code 가 백업되지 않아(백업 스크립트가
-           MDA_NM 만 담고 MDA_CD 를 버립니다) 매체를 코드로 가를 수 없습니다.
-
-           정리가 끝나면 이 값을 'v_factory3_usage_by_media' 로 바꾸고,
-           아래 COLUMNS 의 3공장 열에 mediaCode 를 채우면 그대로 붙습니다.
-           (factory1_mediause_api.js 는 이미 그 경로를 타도록 돼 있습니다) */
-        FACTORY3_VIEW: null,
+        // 3공장 — 1공장과 같은 형식의 뷰입니다. (2026-07-28 연결)
+        // factory3_usage 에 media_code 를 백업하도록 고치고 1월치부터 다시
+        // 적재한 뒤 만든 뷰라, 1공장과 같은 매체코드 체계를 씁니다.
+        FACTORY3_VIEW: 'v_factory3_usage_by_media',
 
         WD_KR: ['일', '월', '화', '수', '목', '금', '토'],
 
@@ -53,15 +49,14 @@
             { col: 4,  group: 'f1', label: 'F.T',       mediaCode: '13BN-00004', erpName: 'Financial Times' },
             { col: 5,  group: 'f1', label: '나라사랑',  mediaCode: '13BN-00009', erpName: '나라사랑신문' },
 
-            /* 3공장 열 — mediaCode 는 media_code 백업이 끝난 뒤 채웁니다.
-               erpName 은 현재 factory3_usage.media_name 에 실제로 들어 있는
-               문자열이며, 코드를 찾을 때의 단서입니다. */
-            { col: 6,  group: 'f3', label: '본지',        mediaCode: null, erpName: '매일경제신문',   source: 'factory3', sep: true },
-            { col: 7,  group: 'f3', label: '경인일보',    mediaCode: null, erpName: '경인일보',       source: 'factory3' },
-            { col: 8,  group: 'f3', label: '평화신문',    mediaCode: null, erpName: '가톨릭평화신문', source: 'factory3' },
-            { col: 9,  group: 'f3', label: '기독교타임즈', mediaCode: null, erpName: '기독교타임즈',   source: 'factory3' },
-            // 대학신문은 2026-07-28 현재 factory3_usage 에 한 건도 없습니다.
-            { col: 10, group: 'f3', label: '대학신문',    mediaCode: null, erpName: '한국대학신문',   source: 'factory3' }
+            /* 3공장 열 — 매체코드는 1공장과 같은 체계입니다.
+               본지/별쇄는 1공장과 아예 같은 코드(13AM/13AS)를 씁니다.
+               매체코드는 공장이 아니라 신문 자체에 붙는 값이기 때문입니다. */
+            { col: 6,  group: 'f3', label: '본지',        mediaCode: '13AM',       erpName: '매일경제신문',   source: 'factory3', sep: true },
+            { col: 7,  group: 'f3', label: '경인일보',    mediaCode: '13BN-00003', erpName: '경인일보',       source: 'factory3' },
+            { col: 8,  group: 'f3', label: '평화신문',    mediaCode: '13BN-00008', erpName: '가톨릭평화신문', source: 'factory3' },
+            { col: 9,  group: 'f3', label: '기독교타임즈', mediaCode: '13BN-00013', erpName: '기독교타임즈',   source: 'factory3' },
+            { col: 10, group: 'f3', label: '대학신문',    mediaCode: '13BN-00005', erpName: '한국대학신문',   source: 'factory3' }
         ],
 
         // 패널 정의 — 1층과 같은 구조입니다.

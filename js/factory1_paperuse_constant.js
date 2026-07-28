@@ -6,7 +6,7 @@
 
    데이터 출처
      1~12열  v_factory1_usage_by_item  (adjustments 보정이 반영된 뷰)
-     13~14열 factory3_usage            (별관 = 3공장, 참조용)
+     13~14열 v_factory3_usage_by_item  (별관 = 3공장, 같은 형식)
 
    ※ 입고 페이지는 자체 품목코드(daehan_a 등)를 쓰지만 사용량은 ERP
      품목코드로 들어옵니다. 둘의 대응은 factory1_paper_item.erp_code 에
@@ -22,9 +22,10 @@
         // 1공장 — 보정(adjustments)이 반영된 뷰. base 테이블을 직접 보지 않습니다.
         VIEW: 'v_factory1_usage_by_item',
 
-        // 별관(3공장) — 아직 전용 뷰가 없어 테이블을 직접 읽습니다.
-        // 3공장 정리가 끝나면 이 값만 v_factory3_usage_by_item 으로 바꾸면 됩니다.
-        FACTORY3_TABLE: 'factory3_usage',
+        // 별관(3공장) — 1공장과 같은 형식의 뷰입니다. (2026-07-28 전환)
+        // 뷰가 이미 (날짜 × 품목)으로 합산해 주므로 API 쪽 수동 합산이 사라졌고,
+        // adjustments(factory = 3) 보정도 여기서 함께 반영됩니다.
+        FACTORY3_VIEW: 'v_factory3_usage_by_item',
 
         WD_KR: ['일', '월', '화', '수', '목', '금', '토'],
 
