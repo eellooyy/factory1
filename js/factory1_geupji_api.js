@@ -72,8 +72,10 @@
             .order('sort_order');
 
         if (carry.error) {
+            /* null 로 둡니다 — 빈 배열로 두면 "관리할 용지가 없다"는 뜻이 되어
+               표가 그려졌다가 사라집니다. 못 읽은 것과 없는 것은 다릅니다. */
             console.error('[factory1_geupji] 잔여 주행지 용지 조회 실패:', carry.error.message);
-            App.CARRY_KEYS = [];
+            App.CARRY_KEYS = null;
         } else {
             App.CARRY_KEYS = (carry.data || []).map(r => r.geupji_key);
         }
@@ -89,7 +91,7 @@
        돌려주므로, 몇 달 전에 적은 값이 오늘 화면에 그대로 뜹니다.
        ──────────────────────────────────────────────────────────────────────── */
     async function fetchCarry(dateStr) {
-        if (!App.CARRY_KEYS.length) return {};
+        if (!App.CARRY_KEYS || !App.CARRY_KEYS.length) return {};
 
         const { data, error } = await supabase
             .from(App.CARRY_VIEW)

@@ -184,16 +184,20 @@
 
         body.innerHTML = '';
 
-        /* 켜진 용지가 하나도 없으면 표를 통째로 감춥니다. 빈 표가 남아 있으면
-           좌측이 그만큼 길어져 우측 카드 높이까지 밀립니다. */
-        const box = body.closest('.f1il-machine-box');
-        if (!App.CARRY_KEYS.length) {
-            if (box) box.style.display = 'none';
-            return;
-        }
-        if (box) box.style.display = '';
+        /* 표를 감추는 건 "관리할 용지가 하나도 없다"가 확실할 때뿐입니다.
+           빈 표가 남아 있으면 좌측이 그만큼 길어져 우측 카드 높이까지 밀리기
+           때문입니다.
 
-        App.CARRY_KEYS.forEach(key => {
+           조회 자체가 실패했을 때(CARRY_KEYS === null)는 감추지 않습니다.
+           그리면서 지웠다가는 화면이 한 번 튀고, 무엇보다 "여기 표가 있어야
+           하는데 값을 못 읽었다"는 상태가 눈에 보이지 않게 됩니다. */
+        const box = body.closest('.f1il-machine-box');
+        const keys = App.CARRY_KEYS;
+
+        if (box) box.style.display = (keys && !keys.length) ? 'none' : '';
+        if (!keys || !keys.length) return;
+
+        keys.forEach(key => {
             const tr = document.createElement('tr');
             tr.appendChild(rowTitle(App.TYPE_LABELS[key] || key));
 
@@ -214,7 +218,7 @@
 
     // 화면의 칸을 더해 합계 칸에 씁니다 (입력할 때마다 바로 따라 움직입니다)
     App.calcCarryTotals = function () {
-        App.CARRY_KEYS.forEach(key => {
+        (App.CARRY_KEYS || []).forEach(key => {
             let sum = 0;
             App.elements.wrapper
                 .querySelectorAll(`.f1il-cell[data-field="carry"][data-type="${key}"]`)
