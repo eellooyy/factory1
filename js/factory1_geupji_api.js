@@ -1,11 +1,18 @@
 /* factory1_geupji_api.js — 1공장 급지 재고 DB 연동 (load / save)
    ────────────────────────────────────────────────────────────────
-   지금 붙어 있는 것은 '사용량 상세 내역'의 ERP 열 하나뿐입니다.
-   조회 중인 날짜의 용지별 사용량을 v_factory1_usage_by_item 에서 읽어
-   다섯 종류에 나눠 담습니다. 사람이 입력하는 값이 아니므로 수정 모드에서도
-   잠긴 채로 있습니다. (factory1_geupji_render.js 의 setReadOnlyMode 참고)
+   읽는 곳이 넷입니다.
 
-   일지 본체(호기별 잔량 · 출고롤)는 아직 테이블이 없어 그대로 비어 있습니다.
+     v_factory1_geupji_paper    용지 마스터 — 드롭다운 · 라벨 · 롤중량 · ERP 매핑
+                                (페이지가 뜰 때 한 번)
+     factory1_geupji_real       좌측 호기 표 — 이 페이지가 입력하는 유일한 대상
+     v_factory1_geupji_stock    다음날 재고 — 실사용량 계산용
+     v_factory1_usage_by_item   ERP 사용량 — 오차 대조용
+
+   쓰는 곳은 factory1_geupji_real 하나뿐입니다. 우측 재고 · 실사용량 · 오차는
+   전부 파생값이라 저장하지 않습니다. 저장하면 좌측을 고쳤을 때 갈라집니다.
+
+   출고 롤은 아직 출처가 미정입니다. 다른 페이지에서 불러올 가능성이 있어
+   테이블에 컬럼을 만들지 않았고, 지금은 화면에서만 쓰입니다.
    ──────────────────────────────────────────────────────────────── */
 (function () {
     'use strict';
@@ -14,6 +21,80 @@
     if (!App) return;
 
     const supabase = window.supabase.createClient(App.SUPABASE_URL, App.SUPABASE_KEY);
+
+    /* ── 용지 마스터 ──────────────────────────────────────────────────────────
+       페이지가 뜰 때 한 번 읽어 App.TYPE_KEYS / TYPE_LABELS / ROLL_KG /
+       ERP_ITEM_CODES 를 채우고 드롭다운을 만듭니다. 용지가 늘거나 롤당 중량이
+       바뀌어도 이 페이지는 고칠 것이 없습니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    App.loadPaperMaster = async function () {
+        const { data, error } = await supabase
+            .from(App.PAPER_VIEW)
+            .select('geupji_key, label, roll_kg, erp_codes')
+            .order('sort_order');
+
+        if (error) {
+            console.error('[factory1_geupji] 용지 마스터 조회 실패:', error.message);
+            return false;
+        }
+        if (!data || !data.length) {
+            console.error(`[factory1_geupji] 용지 마스터(${App.PAPER_VIEW})가 비어 있습니다.`
+                + ' 행이 없거나 RLS 정책이 없어 익명 키로 읽히지 않는 상태입니다.');
+            return false;
+        }
+
+        App.TYPE_KEYS = data.map(r => r.geupji_key);
+        App.TYPE_LABELS = {};
+        App.ROLL_KG = {};
+        App.ERP_ITEM_CODES = {};
+
+        data.forEach(r => {
+            App.TYPE_LABELS[r.geupji_key] = r.label;
+            App.ROLL_KG[r.geupji_key] = Number(r.roll_kg) || 0;
+            App.ERP_ITEM_CODES[r.geupji_key] = r.erp_codes || [];
+        });
+
+        App.buildPaperOptions();
+        return true;
+    };
+
+    /* ── 좌측 호기 표 ─────────────────────────────────────────────────────────
+       그 날짜의 급지대 행만 읽습니다. 숫자가 없는 급지대는 애초에 행이 없으므로
+       하루 최대 21행, 보통 15행 안팎입니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    async function fetchGeupjiRows(dateStr) {
+        const { data, error } = await supabase
+            .from(App.TABLE)
+            .select('machine, stand, paper_pre, pre_kg, paper_roll, roll_qty')
+            .eq('log_date', dateStr);
+
+        if (error) {
+            console.error('[factory1_geupji] 급지 일지 조회 실패:', error.message);
+            return null;
+        }
+        return data || [];
+    }
+
+    /* ── 재고 뷰 ──────────────────────────────────────────────────────────────
+       { 용지키: kg }. 실사용량에 쓰는 '다음날 재고'를 읽는 데만 씁니다.
+       오늘 재고는 화면에서 직접 계산합니다 — 편집 중에는 아직 저장 전이라
+       뷰가 모르는 값이고, 숫자를 고칠 때마다 바로 따라 움직여야 하기 때문입니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    async function fetchStock(dateStr) {
+        const { data, error } = await supabase
+            .from(App.STOCK_VIEW)
+            .select('geupji_key, stock_kg')
+            .eq('log_date', dateStr);
+
+        if (error) {
+            console.error('[factory1_geupji] 재고 조회 실패:', error.message);
+            return null;
+        }
+
+        const byType = {};
+        (data || []).forEach(r => { byType[r.geupji_key] = Number(r.stock_kg) || 0; });
+        return byType;
+    }
 
     /* ── ERP 사용량 조회 ──────────────────────────────────────────────────────
        뷰가 이미 (날짜 × 품목)으로 합산해 주므로 그날 행만 받아 품목코드로 묶습니다.
@@ -67,44 +148,90 @@
         // 화면을 우선 기본값으로 초기화
         App.resetToDefaults();
 
-        // TODO: 일지 본체 테이블이 확정되면 여기서 호기별 잔량 · 출고롤을 읽어옵니다.
-        // const { data: todayData } = await supabase.from(App.TABLE).select('*').eq('log_date', dateStr).single();
-        // const { data: nextData } = await supabase.from(App.TABLE).select('*').eq('log_date', App.utils.addDays(dateStr, 1)).single();
-        // 위에서 읽은 today/next 데이터를 각 셀에 채우고, nextDayInventory 를 계산해 App.state.nextDayInventory 에 저장
+        // 서로 무관한 조회 넷이라 한꺼번에 보냅니다
+        const [rows, erp, nextStock] = await Promise.all([
+            fetchGeupjiRows(dateStr),
+            fetchErpUsage(dateStr),
+            fetchStock(App.utils.addDays(dateStr, 1))
+        ]);
 
         /* 날짜를 빠르게 넘기면 응답이 순서를 바꿔 도착할 수 있습니다.
            돌아온 뒤 화면의 날짜가 그대로일 때만 반영합니다. */
-        const erp = await fetchErpUsage(dateStr);
-        if (App.state.currentDate === dateStr) {
-            App.applyErpUsage(erp);
-        }
+        if (App.state.currentDate !== dateStr) return;
+
+        App.applyGeupjiRows(rows);
+        App.applyErpUsage(erp);
+        App.state.nextDayInventory = nextStock || {};
 
         App.calculateFields();
         if (editBtn) editBtn.disabled = false;
         App.state.isChanged = false;
     };
 
-    // ── 데이터 저장하기 ───────────────────────────────────────────────────────
+    /* ── 저장 ─────────────────────────────────────────────────────────────────
+       upserts : 숫자가 하나라도 있는 급지대 → (log_date, machine, stand) 충돌 시 UPDATE
+       deletes : 원래 행이 있었는데 숫자를 다 지운 급지대 → 행 자체를 삭제
+
+       마지막 삭제가 중요합니다. UPDATE 로 null 만 채우면 CHECK 제약(숫자가 하나도
+       없는 행은 만들지 않는다)에 걸리고, 걸리지 않더라도 "안 쓴 급지대"가 빈 행으로
+       남아 뷰의 집계 대상에 계속 들어옵니다.
+
+       삭제는 호기별로 묶어 최대 3번입니다. 보통 0~1번입니다.
+       ──────────────────────────────────────────────────────────────────────── */
     App.saveData = async function () {
         const saveBtn = App.elements.saveBtn;
+        const logDate = (App.headerApi && App.headerApi.getCurrentDate()) || App.state.currentDate;
+        if (!logDate) return;
+
+        const { upserts, deletes, keep } = App.collectRows(logDate);
+
         if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '저장 중...'; }
 
-        // 화면 데이터를 DB 스키마 형태로 수집 (추후 Supabase upsert 시 그대로 사용 가능)
-        const payload = App.collectPayload();
+        const fail = (msg, err) => {
+            console.error(`[factory1_geupji] ${msg}:`, err.message);
+            alert(`${msg}: ${err.message}`);
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '저장'; }
+            return false;
+        };
 
-        // TODO: Supabase 연결 후 아래 부분에서 실제 저장 처리
-        // const { error } = await supabase.from(App.TABLE).upsert(payload, { onConflict: 'log_date' });
-        // if (error) { alert('저장에 실패했습니다: ' + error.message); ... return; }
+        if (upserts.length) {
+            const { error } = await supabase
+                .from(App.TABLE)
+                .upsert(upserts, { onConflict: 'log_date,machine,stand' });
+            if (error) return fail('저장에 실패했습니다', error);
+        }
 
-        console.log('[factory1_geupji] 저장 페이로드 (DB 미연결 상태 — 콘솔 출력만 수행)', payload);
+        // 호기별로 묶어 지웁니다 (급지대 하나씩 지우면 요청이 최대 21번이 됩니다)
+        const byMachine = {};
+        deletes.forEach(d => {
+            if (!byMachine[d.machine]) byMachine[d.machine] = [];
+            byMachine[d.machine].push(d.stand);
+        });
+
+        for (const machine of Object.keys(byMachine)) {
+            const { error } = await supabase
+                .from(App.TABLE)
+                .delete()
+                .eq('log_date', logDate)
+                .eq('machine', machine)
+                .in('stand', byMachine[machine]);
+            if (error) return fail('빈 급지대 처리에 실패했습니다', error);
+        }
+
+        // 저장된 상태가 곧 다음 저장의 기준이 됩니다
+        App.state.loaded = keep;
+        App.state.isChanged = false;
 
         if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '저장'; }
 
-        alert('DB 연결 전 테스트 상태입니다.\n입력한 데이터는 저장되지 않으며, 콘솔에만 출력됩니다.');
-        App.state.isChanged = false;
+        /* 다음날 재고는 그대로지만 오늘 재고가 바뀌었으므로 다시 그립니다.
+           (오늘 재고는 화면 계산이라 이미 최신입니다 — 여기서는 확인 차원) */
+        App.calculateFields();
 
         // 편집 모드 종료
         if (App.headerApi && App.headerApi.toggleEditMode) App.headerApi.toggleEditMode();
+
+        return true;
     };
 
 })();

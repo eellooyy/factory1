@@ -11,8 +11,27 @@
     App.SUPABASE_URL = 'https://npiflqoscsvnnauvqhrr.supabase.co';
     App.SUPABASE_KEY = 'sb_publishable_ir-mHSsX6SSIQwHerkLbfA_2qCOP3KW';
 
-    // 일지 본체(호기별 잔량 · 출고롤)를 저장할 테이블 — 아직 미확정입니다.
-    // App.TABLE = 'factory1_geupji_real';
+    /* 일지 본체 — 한 행 = 급지대 하나 = 화면의 한 열
+       (log_date, machine, stand) 유니크. 숫자가 하나도 없는 급지대는 행을 만들지
+       않습니다. 드롭다운은 자주 쓰는 값이 미리 찍혀 있을 뿐이라, 그것만으로는
+       "오늘 이 급지대를 썼다"는 뜻이 되지 않기 때문입니다. */
+    App.TABLE = 'factory1_geupji_real';
+
+    /* 급지 용지 마스터 뷰 — 드롭다운 목록 · 라벨 · 롤당 중량 · ERP 품목코드가
+       전부 여기 있습니다. factory1_paper_item 의 geupji_key 로 묶은 결과입니다.
+
+       예전에는 이 넷이 JS 에 흩어져 있었습니다(TYPE_KEYS / TYPE_LABELS /
+       rollWeight() / ERP_ITEM_CODES). 용지가 하나 늘 때마다 네 곳을 고쳐야 했고
+       뷰에서는 롤당 중량을 알 수 없어 재고를 SQL 로 낼 수도 없었습니다.
+       이제 마스터에 행을 넣으면 드롭다운도 계산도 따라옵니다. */
+    App.PAPER_VIEW = 'v_factory1_geupji_paper';
+
+    /* 급지 재고 뷰 — 저장하지 않고 좌측 값에서 매번 계산됩니다.
+       이 페이지는 '다음날 재고'(실사용량 계산용)를 읽을 때만 씁니다. 오늘 재고는
+       화면에서 직접 계산합니다. 편집 중에는 아직 저장 전이라 뷰가 모르는 값이고,
+       숫자를 고칠 때마다 재고가 바로 따라 움직여야 하기 때문입니다. 두 계산식은
+       같으므로 저장 후에는 뷰와 화면이 언제나 일치합니다. */
+    App.STOCK_VIEW = 'v_factory1_geupji_stock';
 
     /* ERP 사용량 조회용 뷰 — 사용량 페이지(factory1_paperuse)가 보는 것과 같습니다.
        base 테이블(factory1_usage)을 직접 읽지 않습니다. 회계 보정(adjustments)이
@@ -30,44 +49,32 @@
         R3B: 'R3(B)', R3A: 'R3(A)', R4: 'R4', R5: 'R5'
     };
 
-    // ── 용지 종류 정의 ───────────────────────────────────────────────────────
-    App.TYPE_KEYS = ['dh_1404', 'dh_702', 'jj_1404', 'jj_702', 'pp_1404'];
-    App.TYPE_LABELS = {
-        dh_1404: '대한 1404',
-        dh_702: '대한 702',
-        jj_1404: '전주 1404',
-        jj_702: '전주 702',
-        pp_1404: '페이퍼 1404'
-    };
-    App.PAPER_OPTIONS = App.TYPE_KEYS.map(key => ({ value: key, label: App.TYPE_LABELS[key] }));
+    /* ── 용지 종류 ────────────────────────────────────────────────────────────
+       전부 v_factory1_geupji_paper 에서 채웁니다. 여기 하드코딩된 값은 없습니다.
+       채우는 곳은 factory1_geupji_api.js 의 App.loadPaperMaster() 이고,
+       페이지가 뜰 때 한 번만 읽습니다.
 
-    /* ── 급지 용지 ↔ ERP 품목코드 ────────────────────────────────────────────
-       '사용량 상세 내역'의 ERP 열이 v_factory1_usage_by_item 에서 값을 끌어올 때
-       쓰는 대응표입니다. 지폭 표기가 서로 달라 한 번 거쳐야 합니다.
-
-         이 페이지    1404 = A(1576폭)   702 = D(788폭)
-         ERP 품목코드  factory1_paper_item.erp_code 와 동일
-
-       전주는 배열이 둘입니다. ERP 는 본지와 전자신문을 다른 품목으로 관리하지만
-       급지 현장에서는 같은 '전주 1404 / 전주 702' 롤이라 구분 없이 쓰입니다.
-       그래서 두 품목의 사용량을 합쳐야 이 표의 실사용과 견줄 수 있습니다.
-
-       ※ 대한 C(1182폭) · 48.8g · F.T 는 이 표의 다섯 종류에 없어 빠집니다.
+         TYPE_KEYS       드롭다운에 뜨는 순서 그대로의 급지 용지 키
+         TYPE_LABELS     키 → 화면 라벨            ('전주 1404' 등)
+         ROLL_KG         키 → 완롤 1개당 중량(kg)  (factory1_paper_item.roll_kg)
+         ERP_ITEM_CODES  키 → ERP 품목코드 배열
+                         전주는 둘입니다. ERP 는 본지와 전자신문을 다른 품목으로
+                         관리하지만 급지 현장에서는 같은 롤이라 구분하지 않아,
+                         두 품목의 사용량을 합쳐야 이 표의 실사용과 견줄 수 있습니다.
        ──────────────────────────────────────────────────────────────────────── */
-    App.ERP_ITEM_CODES = {
-        dh_1404: ['11ANP-0000001'],                   // 대한제지 A
-        dh_702:  ['11ANP-0000003'],                   // 대한제지 D
-        jj_1404: ['11ANP-0000008', '11BNP-0000003'],  // 전주본지 A + 전주전자 A
-        jj_702:  ['11ANP-0000009', '11BNP-0000004'],  // 전주본지 D + 전주전자 D
-        pp_1404: ['11ANP-0000004']                    // 페이퍼 코리아
-    };
+    App.TYPE_KEYS = [];
+    App.TYPE_LABELS = {};
+    App.ROLL_KG = {};
+    App.ERP_ITEM_CODES = {};
 
-    // 용지 종류별 완롤 1개당 중량(kg)
+    // 용지 종류별 완롤 1개당 중량(kg) — 마스터에 없는 키는 0 입니다
     App.rollWeight = function (typeKey) {
-        return typeKey && typeKey.endsWith('1404') ? 1404 : 702;
+        return App.ROLL_KG[typeKey] || 0;
     };
 
-    // 용지 종류별 드롭다운 색상 클래스 (품목 색상 유지용)
+    /* 용지 종류별 드롭다운 색상 클래스 (품목 색상 유지용)
+       거래처를 키 접두사로 가릅니다. 마스터에 새 거래처가 생기면 색이 없는 상태로
+       뜨므로, 그때 여기에 한 줄 추가하거나 마스터에 색 구분을 넣으면 됩니다. */
     App.typeColorClass = function (typeKey) {
         if (!typeKey) return '';
         if (typeKey.startsWith('dh_')) return 'type-dh';
@@ -126,8 +133,17 @@
         currentDate: null,
         isEditMode: false,
         isChanged: false,
-        // 다음날 재고(실사용량 계산용) — DB 연결 전에는 항상 0으로 처리
-        nextDayInventory: {}
+
+        /* 다음날 재고 (실사용량 계산용)
+           실사용량 = 오늘 재고 + 출고롤 × 중량 − 다음날 재고 이므로, 오늘 자를
+           적는 시점에는 아직 확정될 수 없는 값입니다. 내일 급지대를 세고 나서야
+           오늘 실사용량이 정해집니다. 저장하지 않고 매번 뷰에서 읽는 이유입니다. */
+        nextDayInventory: {},
+
+        /* DB 에서 읽어온 급지대 키 집합 — 'machine|stand'
+           저장할 때 "원래 행이 있었는데 지금은 숫자가 비었다" 를 가려내는 데 씁니다.
+           그 급지대는 UPDATE 가 아니라 행 자체를 지워야 미입력 상태로 돌아갑니다. */
+        loaded: new Set()
     };
 
     // headerApi 플레이스홀더 (공통 헤더 연결 시 factory1_geupji_main.js 에서 주입 예정)

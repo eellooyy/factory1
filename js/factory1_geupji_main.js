@@ -9,7 +9,7 @@
     if (!App) return;
 
     const Factory1GeupjiInventoryModule = {
-        init: function () {
+        init: async function () {
             App.elements.wrapper = document.querySelector('.f1il-wrapper');
             if (!App.elements.wrapper) return;
 
@@ -47,6 +47,13 @@
                 }
             });
             if (!App.headerApi) return;
+
+            /* 용지 마스터를 먼저 읽습니다. 드롭다운 옵션이 여기서 만들어지므로
+               이게 끝나기 전에는 화면에 채울 값도, 계산할 롤당 중량도 없습니다. */
+            const ok = await App.loadPaperMaster();
+            if (!ok) {
+                alert('용지 마스터를 불러오지 못했습니다.\n급지대 드롭다운과 재고 계산이 동작하지 않습니다.\n(콘솔에 원인이 찍혀 있습니다)');
+            }
 
             App.bindInputFormatters();
             App.bindKeyboardNavigation();

@@ -40,41 +40,109 @@
         if (cls) selectEl.classList.add(cls);
     };
 
-    // ── 입력값 수집 (저장용 페이로드 구성) ───────────────────────────────────
-    App.collectPayload = function () {
-        const machines = {};
+    /* ── 드롭다운 만들기 ──────────────────────────────────────────────────────
+       옵션은 HTML 에 적혀 있지 않습니다. 용지 마스터(v_factory1_geupji_paper)를
+       읽은 뒤 여기서 만들어 넣습니다. 마스터에 행을 하나 추가하면 42개 급지대
+       드롭다운에 한꺼번에 나타납니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    App.buildPaperOptions = function () {
+        if (!App.elements.wrapper) return;
+
+        App.elements.wrapper.querySelectorAll('select.f1il-select').forEach(sel => {
+            const prev = sel.value;
+            sel.innerHTML = '';
+            App.TYPE_KEYS.forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = App.TYPE_LABELS[key];
+                sel.appendChild(opt);
+            });
+            if (prev && App.TYPE_KEYS.includes(prev)) sel.value = prev;
+        });
+    };
+
+    /* ── 저장용 수집 ──────────────────────────────────────────────────────────
+       한 급지대 = 한 행입니다. 숫자가 하나도 없으면 행을 만들지 않습니다.
+       드롭다운은 자주 쓰는 값이 미리 찍혀 있을 뿐이라, 선택되어 있다는 것만으로는
+       "오늘 이 급지대를 썼다"는 뜻이 되지 않기 때문입니다.
+
+       반환값
+         upserts : 저장할 행
+         deletes : 원래 있었는데 이번에 비워진 급지대 (행 자체를 지웁니다)
+         keep    : 이번에 저장되는 급지대 키 집합 — 저장 성공 시 state.loaded 가 됩니다
+
+       ※ 우측 패널(재고 · 실사용 · 오차 · 출고롤)은 수집 대상이 아닙니다.
+         재고는 좌측에서 유도되고, 실사용 · 오차는 화면에서만 쓰는 값이며,
+         출고롤은 아직 출처가 정해지지 않아 저장할 곳이 없습니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    function numOrNull(raw) {
+        if (raw === undefined || raw === null || String(raw).trim() === '') return null;
+        const n = App.utils.parseNum(raw);
+        return isNaN(n) ? null : n;
+    }
+
+    App.collectRows = function (logDate) {
+        const upserts = [];
+        const keep = new Set();
+
+        /* updated_at 은 컬럼 기본값이 now() 라 INSERT 때만 채워집니다.
+           upsert 가 UPDATE 로 돌면 옛날 시각이 그대로 남으므로 직접 넣습니다. */
+        const now = new Date().toISOString();
+
         App.MACHINES.forEach(machine => {
-            machines[machine] = {};
-            App.COLUMNS.forEach(col => {
-                const type1 = getMachineEl('type1', machine, col);
-                const pre = getMachineEl('pre', machine, col);
-                const type2 = getMachineEl('type2', machine, col);
-                const count = getMachineEl('count', machine, col);
-                machines[machine][col] = {
-                    type1: type1 ? type1.value : '',
-                    pre: pre ? pre.value.trim() : '',
-                    type2: type2 ? type2.value : '',
-                    count: count ? count.value.trim() : ''
-                };
+            App.COLUMNS.forEach(stand => {
+                const preVal = numOrNull(getMachineEl('pre', machine, stand)?.value);
+                const rollVal = numOrNull(getMachineEl('count', machine, stand)?.value);
+                if (preVal === null && rollVal === null) return;
+
+                const type1 = getMachineEl('type1', machine, stand);
+                const type2 = getMachineEl('type2', machine, stand);
+
+                keep.add(`${machine}|${stand}`);
+                upserts.push({
+                    log_date: logDate,
+                    machine,
+                    stand,
+                    // 숫자가 없는 쪽은 용지도 함께 비웁니다 (테이블 CHECK 제약과 같은 규칙)
+                    paper_pre: preVal === null ? null : (type1 ? type1.value : null),
+                    pre_kg: preVal,
+                    paper_roll: rollVal === null ? null : (type2 ? type2.value : null),
+                    roll_qty: rollVal,
+                    updated_at: now
+                });
             });
         });
 
-        const issue = {};
-        App.TYPE_KEYS.forEach(key => {
-            const issueInput = getPanelEl('issue', key);
-            issue[key] = issueInput ? issueInput.value.trim() : '';
+        const deletes = [];
+        App.state.loaded.forEach(key => {
+            if (keep.has(key)) return;
+            const [machine, stand] = key.split('|');
+            deletes.push({ machine, stand });
         });
 
-        /* ERP 열은 payload 에 넣지 않습니다. 사람이 입력하는 값이 아니라
-           v_factory1_usage_by_item 에서 읽어온 값이라, 여기 복사해 저장하면
-           나중에 회계 보정(adjustments)이 들어왔을 때 저장해 둔 숫자만 옛날
-           값으로 남습니다. 필요할 때 뷰에서 다시 읽는 게 언제나 맞습니다. */
-        return {
-            // 날짜 state의 원본은 CommonHeader이므로 우선 거기서 읽는다 (null 저장 방지)
-            log_date: (App.headerApi && App.headerApi.getCurrentDate()) || App.state.currentDate,
-            machines,
-            issue
-        };
+        return { upserts, deletes, keep };
+    };
+
+    /* ── DB 행을 화면에 반영 ──────────────────────────────────────────────────
+       행이 없는 급지대는 resetToDefaults 가 이미 비워 둔 상태 그대로 둡니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    App.applyGeupjiRows = function (rows) {
+        App.state.loaded = new Set();
+        if (!rows) return;
+
+        rows.forEach(r => {
+            App.state.loaded.add(`${r.machine}|${r.stand}`);
+
+            const type1 = getMachineEl('type1', r.machine, r.stand);
+            const pre = getMachineEl('pre', r.machine, r.stand);
+            const type2 = getMachineEl('type2', r.machine, r.stand);
+            const count = getMachineEl('count', r.machine, r.stand);
+
+            if (type1 && r.paper_pre) { type1.value = r.paper_pre; App.updateSelectColor(type1); }
+            if (type2 && r.paper_roll) { type2.value = r.paper_roll; App.updateSelectColor(type2); }
+            if (pre) pre.value = (r.pre_kg === null || r.pre_kg === undefined) ? '' : App.utils.formatNum(r.pre_kg);
+            if (count) count.value = (r.roll_qty === null || r.roll_qty === undefined) ? '' : App.utils.formatNum(r.roll_qty);
+        });
     };
 
     // ── 전체 입력값을 기본값으로 초기화 ───────────────────────────────────────
