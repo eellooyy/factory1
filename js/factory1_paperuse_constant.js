@@ -42,6 +42,7 @@
 
         /* ── 데이터 열 정의 ────────────────────────────────────────
            col     : 열 번호 (헤더 th / 데이터 td 의 data-col 과 일치)
+           panel   : 소속 패널 번호 (1 = 1공장, 2 = 별관)
            group   : 소속 1레벨 헤더 키
            label   : 2레벨 헤더 라벨 (빈 값이면 1레벨이 두 행을 병합)
            sep     : 그룹 시작 열 → 좌측 구분선
@@ -49,27 +50,33 @@
            source  : 생략하면 1공장(VIEW), 'factory3' 이면 별관 참조 열
            ──────────────────────────────────────────────────────── */
         COLUMNS: [
-            { col: 1,  group: 'daehan-ad',     label: 'A',     erpCode: '11ANP-0000001' },
-            { col: 2,  group: 'daehan-ad',     label: 'D',     erpCode: '11ANP-0000003' },
-            { col: 3,  group: 'paperkorea',    label: '',      erpCode: '11ANP-0000004', sep: true },
-            { col: 4,  group: 'jeonju-bonji',  label: 'A',     erpCode: '11ANP-0000008', sep: true },
-            { col: 5,  group: 'jeonju-bonji',  label: 'D',     erpCode: '11ANP-0000009' },
-            { col: 6,  group: 'jeonju-jeonja', label: 'A',     erpCode: '11BNP-0000003', sep: true },
-            { col: 7,  group: 'jeonju-jeonja', label: 'D',     erpCode: '11BNP-0000004' },
-            { col: 8,  group: 'daehan-c',      label: 'C',     erpCode: '11ANP-0000002', sep: true },
-            { col: 9,  group: 'daehan-c',      label: '48.8g', erpCode: '11ANP-0000006' },
-            { col: 10, group: 'ft',            label: 'A',     erpCode: '11BNP-0000005', sep: true },
-            { col: 11, group: 'ft',            label: 'C',     erpCode: '11BNP-0000006' },
-            { col: 12, group: 'ft',            label: 'D',     erpCode: '11BNP-0000007' },
+            { col: 1,  panel: 1, group: 'daehan-ad',     label: 'A',     erpCode: '11ANP-0000001' },
+            { col: 2,  panel: 1, group: 'daehan-ad',     label: 'D',     erpCode: '11ANP-0000003' },
+            { col: 3,  panel: 1, group: 'paperkorea',    label: '',      erpCode: '11ANP-0000004', sep: true },
+            { col: 4,  panel: 1, group: 'jeonju-bonji',  label: 'A',     erpCode: '11ANP-0000008', sep: true },
+            { col: 5,  panel: 1, group: 'jeonju-bonji',  label: 'D',     erpCode: '11ANP-0000009' },
+            { col: 6,  panel: 1, group: 'jeonju-jeonja', label: 'A',     erpCode: '11BNP-0000003', sep: true },
+            { col: 7,  panel: 1, group: 'jeonju-jeonja', label: 'D',     erpCode: '11BNP-0000004' },
+            { col: 8,  panel: 1, group: 'daehan-c',      label: 'C',     erpCode: '11ANP-0000002', sep: true },
+            { col: 9,  panel: 1, group: 'daehan-c',      label: '48.8g', erpCode: '11ANP-0000006' },
+            { col: 10, panel: 1, group: 'ft',            label: 'A',     erpCode: '11BNP-0000005', sep: true },
+            { col: 11, panel: 1, group: 'ft',            label: 'C',     erpCode: '11BNP-0000006' },
+            { col: 12, panel: 1, group: 'ft',            label: 'D',     erpCode: '11BNP-0000007' },
 
-            // 별관(3공장) 참조 열 — 3공장은 대한제지 A/D 만 사용합니다.
-            { col: 13, group: 'daehan-annex',  label: 'A',     erpCode: '11ANP-0000001', source: 'factory3', sep: true },
-            { col: 14, group: 'daehan-annex',  label: 'D',     erpCode: '11ANP-0000003', source: 'factory3' }
+            /* 별관(3공장)은 별도 패널입니다. 같은 표에 붙여 두면 "1공장 합계"를
+               읽을 때 남의 공장 숫자가 섞여 보입니다. 입고 페이지가 입고 대장과
+               별쇄 계획표를 나눈 것과 같은 이유입니다. */
+            { col: 13, panel: 2, group: 'daehan-annex',  label: 'A',     erpCode: '11ANP-0000001', source: 'factory3' },
+            { col: 14, panel: 2, group: 'daehan-annex',  label: 'D',     erpCode: '11ANP-0000003', source: 'factory3' }
         ],
 
-        // 패널 정의 — 1층은 패널 하나입니다. (2층 매체별을 붙일 때 같은 구조를 씁니다)
+        /* 패널 정의 — 두 패널은 스크롤이 서로 동기화되어 같이 움직입니다.
+           cols   : 각 패널이 그릴 열 개수 (CSS 의 열 너비 계산과 맞춥니다)
+           noDate : true 면 날짜 열을 그리지 않습니다. 스크롤이 붙어 다녀
+                    같은 줄이 항상 나란히 오므로 날짜가 두 번 필요 없습니다. */
         PANELS: [
-            { idx: 1, scrollId: 'f1usPaperScroll', bodyId: 'f1usPaperBody', cursorId: 'f1usPaperCursor' }
+            { idx: 1, cols: 12, scrollId: 'f1usPaperScroll', bodyId: 'f1usPaperBody', cursorId: 'f1usPaperCursor' },
+            { idx: 2, cols: 2,  scrollId: 'f1usAnnexScroll', bodyId: 'f1usAnnexBody', cursorId: 'f1usAnnexCursor', noDate: true }
         ],
 
         // 한 번에 불러오는 일수 / 과거로 조회 가능한 최대치
@@ -85,6 +92,8 @@
 
             selectedDate: null,
             selectedCol: null,
+            selectedPanel: 1,
+            syncLock: false,
 
             // 조회 결과 캐시
             //   usage[날짜][erpCode]    = 1공장 사용량

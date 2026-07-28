@@ -48,27 +48,31 @@
            source    : 생략하면 1공장(VIEW), 'factory3' 이면 3공장 열
            ──────────────────────────────────────────────────────── */
         COLUMNS: [
-            { col: 1,  group: 'f1', label: '본지',      mediaCode: '13AM',       erpName: '매일경제신문' },
-            { col: 2,  group: 'f1', label: '별쇄',      mediaCode: '13AS',       erpName: '매일경제신문(특집)' },
-            { col: 3,  group: 'f1', label: '국방일보',  mediaCode: '13BN-00002', erpName: '국방일보', sep: true },
-            { col: 4,  group: 'f1', label: '전자신문',  mediaCode: '13BN-00010', erpName: '전자신문' },
-            { col: 5,  group: 'f1', label: 'F.T',       mediaCode: '13BN-00004', erpName: 'Financial Times' },
-            { col: 6,  group: 'f1', label: '나라사랑',  mediaCode: '13BN-00009', erpName: '나라사랑신문' },
+            { col: 1,  panel: 1, group: 'f1', label: '본지',      mediaCode: '13AM',       erpName: '매일경제신문' },
+            { col: 2,  panel: 1, group: 'f1', label: '별쇄',      mediaCode: '13AS',       erpName: '매일경제신문(특집)' },
+            { col: 3,  panel: 1, group: 'f1', label: '국방일보',  mediaCode: '13BN-00002', erpName: '국방일보', sep: true },
+            { col: 4,  panel: 1, group: 'f1', label: '전자신문',  mediaCode: '13BN-00010', erpName: '전자신문' },
+            { col: 5,  panel: 1, group: 'f1', label: 'F.T',       mediaCode: '13BN-00004', erpName: 'Financial Times' },
+            { col: 6,  panel: 1, group: 'f1', label: '나라사랑',  mediaCode: '13BN-00009', erpName: '나라사랑신문' },
 
-            /* 3공장 열 — 매체코드는 1공장과 같은 체계입니다.
-               본지/별쇄는 1공장과 아예 같은 코드(13AM/13AS)를 씁니다.
-               매체코드는 공장이 아니라 신문 자체에 붙는 값이기 때문입니다. */
-            { col: 7,  group: 'f3', label: '본지',        mediaCode: '13AM',       erpName: '매일경제신문',       source: 'factory3', sep: true },
-            { col: 8,  group: 'f3', label: '별쇄',        mediaCode: '13AS',       erpName: '매일경제신문(특집)', source: 'factory3' },
-            { col: 9,  group: 'f3', label: '경인일보',    mediaCode: '13BN-00003', erpName: '경인일보',           source: 'factory3', sep: true },
-            { col: 10, group: 'f3', label: '평화신문',    mediaCode: '13BN-00008', erpName: '가톨릭평화신문',     source: 'factory3' },
-            { col: 11, group: 'f3', label: '기독교타임즈', mediaCode: '13BN-00013', erpName: '기독교타임즈',       source: 'factory3' },
-            { col: 12, group: 'f3', label: '대학신문',    mediaCode: '13BN-00005', erpName: '한국대학신문',       source: 'factory3' }
+            /* 3공장은 별도 패널입니다. 매체코드는 1공장과 같은 체계이고,
+               본지/별쇄는 아예 같은 코드(13AM/13AS)를 씁니다. 매체코드는
+               공장이 아니라 신문 자체에 붙는 값이기 때문입니다. */
+            { col: 7,  panel: 2, group: 'f3', label: '본지',        mediaCode: '13AM',       erpName: '매일경제신문',       source: 'factory3' },
+            { col: 8,  panel: 2, group: 'f3', label: '별쇄',        mediaCode: '13AS',       erpName: '매일경제신문(특집)', source: 'factory3' },
+            { col: 9,  panel: 2, group: 'f3', label: '경인일보',    mediaCode: '13BN-00003', erpName: '경인일보',           source: 'factory3', sep: true },
+            { col: 10, panel: 2, group: 'f3', label: '평화신문',    mediaCode: '13BN-00008', erpName: '가톨릭평화신문',     source: 'factory3' },
+            { col: 11, panel: 2, group: 'f3', label: '기독교타임즈', mediaCode: '13BN-00013', erpName: '기독교타임즈',       source: 'factory3' },
+            { col: 12, panel: 2, group: 'f3', label: '대학신문',    mediaCode: '13BN-00005', erpName: '한국대학신문',       source: 'factory3' }
         ],
 
-        // 패널 정의 — 1층과 같은 구조입니다.
+        /* 패널 정의 — 두 패널은 스크롤이 서로 동기화되어 같이 움직입니다.
+           cols   : 각 패널이 그릴 열 개수 (CSS 의 열 너비 계산과 맞춥니다)
+           noDate : true 면 날짜 열을 그리지 않습니다. 스크롤이 붙어 다녀
+                    같은 줄이 항상 나란히 오므로 날짜가 두 번 필요 없습니다. */
         PANELS: [
-            { idx: 1, scrollId: 'f1usMediaScroll', bodyId: 'f1usMediaBody', cursorId: 'f1usMediaCursor' }
+            { idx: 1, cols: 6, scrollId: 'f1usMediaF1Scroll', bodyId: 'f1usMediaF1Body', cursorId: 'f1usMediaF1Cursor' },
+            { idx: 2, cols: 6, scrollId: 'f1usMediaF3Scroll', bodyId: 'f1usMediaF3Body', cursorId: 'f1usMediaF3Cursor', noDate: true }
         ],
 
         // 한 번에 불러오는 일수 / 과거로 조회 가능한 최대치 (1층과 동일)
@@ -85,6 +89,8 @@
             baseDate: null,
             selectedDate: null,
             selectedCol: null,
+            selectedPanel: 1,
+            syncLock: false,
 
             // 조회 결과 캐시
             //   usage[날짜][mediaCode]    = 1공장 사용량

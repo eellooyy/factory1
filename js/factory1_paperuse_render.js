@@ -3,6 +3,11 @@
    입고 페이지(factory1_ipgo_render.js)의 스크롤 페이징 구조를 따르되,
    조회 전용이라 편집/메모/변경분 추적이 전부 빠졌습니다.
 
+   패널이 둘입니다. 좌측이 1공장, 우측이 별관(3공장)이며 스크롤이 서로
+   동기화되어 같은 날짜 줄이 나란히 붙어 다닙니다. 같은 표에 붙여 두면
+   "1공장 합계"를 읽을 때 남의 공장 숫자가 섞여 보이기 때문입니다.
+   (입고 페이지가 입고 대장과 별쇄 계획표를 나눈 것과 같은 이유입니다)
+
    입고와 다른 점이 하나 있습니다. 입고는 미래 날짜에 계획을 미리 적지만
    사용량은 이미 지난 실적이라 미래 행이 의미가 없습니다. 그래서 오늘을
    마지막 행으로 두고, 위로 스크롤해 과거를 불러오는 방향만 씁니다.
@@ -14,7 +19,16 @@
     if (!App) return;
 
     const state = App.state;
-    const PANEL = App.PANELS[0];
+    const PANELS = App.PANELS;
+    const MAIN = PANELS[0];   // 좌측 1공장 — 스크롤 페이징의 기준 패널
+
+    function panelByIdx(idx) {
+        return PANELS.find(p => String(p.idx) === String(idx)) || MAIN;
+    }
+
+    function columnsOf(idx) {
+        return App.COLUMNS.filter(c => String(c.panel) === String(idx));
+    }
 
     /* ── 날짜 · 숫자 유틸 ──────────────────────────────────────── */
     function pad(n) { return String(n).padStart(2, '0'); }
@@ -65,12 +79,14 @@
         return (v === undefined) ? null : v;
     }
 
-    /* ── 스크롤 잠금 ───────────────────────────────────────────── */
+    /* ── 스크롤 잠금 / 패널 간 동기화 ──────────────────────────── */
     function updateScrollLockUI() {
-        const el = document.getElementById(PANEL.scrollId);
-        if (!el) return;
-        if (state.isScrollUnlocked) el.classList.remove('locked');
-        else el.classList.add('locked');
+        PANELS.forEach(p => {
+            const el = document.getElementById(p.scrollId);
+            if (!el) return;
+            if (state.isScrollUnlocked) el.classList.remove('locked');
+            else el.classList.add('locked');
+        });
     }
 
     function bindScrollToggle() {
@@ -88,36 +104,53 @@
 
     /* 잠금 상태의 내부 스크롤 차단은 CSS(.f1us-scroll-area.locked)가 맡습니다.
        여기서 wheel 을 preventDefault 하면 페이지 전체 스크롤까지 막힙니다. */
-    function bindScroll() {
-        const el = document.getElementById(PANEL.scrollId);
-        if (!el) return;
+    function bindScrollSync() {
+        PANELS.forEach(p => {
+            const el = document.getElementById(p.scrollId);
+            if (!el) return;
 
-        el.addEventListener('scroll', () => {
-            if (!state.isScrollUnlocked) return;
-            hideCursor();
-            const threshold = 100;
-            if (el.scrollTop <= threshold) App.loadRows('prev');
-            if (el.scrollTop + el.clientHeight >= el.scrollHeight - threshold) App.loadRows('next');
+            el.addEventListener('scroll', () => {
+                if (!state.isScrollUnlocked) return;
+                if (state.syncLock) return;
+                state.syncLock = true;
+
+                const srcTop = el.scrollTop;
+                PANELS.filter(x => x.scrollId !== p.scrollId).forEach(t => {
+                    const tEl = document.getElementById(t.scrollId);
+                    if (tEl) tEl.scrollTop = srcTop;
+                });
+
+                hideCursors();
+                state.syncLock = false;
+
+                const threshold = 100;
+                if (el.scrollTop <= threshold) App.loadRows('prev');
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - threshold) App.loadRows('next');
+            });
         });
     }
 
-    function scrollPanel(top) {
-        const el = document.getElementById(PANEL.scrollId);
-        if (el) el.scrollTop = Math.max(0, top);
+    function scrollAllPanels(top) {
+        PANELS.forEach(p => {
+            const el = document.getElementById(p.scrollId);
+            if (el) el.scrollTop = Math.max(0, top);
+        });
     }
 
     /* 레이아웃이 확정된 뒤 위치를 다시 잡아야 하지만, 백그라운드 탭에서는
        requestAnimationFrame 이 실행되지 않아 위치 지정이 누락됩니다.
        → 즉시 한 번 적용하고 rAF 에서 한 번 더 보정합니다. */
     function applyScrollTwice(computeTop) {
-        scrollPanel(computeTop());
-        requestAnimationFrame(() => scrollPanel(computeTop()));
+        scrollAllPanels(computeTop());
+        requestAnimationFrame(() => scrollAllPanels(computeTop()));
     }
 
     /* ── 셀 선택 커서 / 강조 ───────────────────────────────────── */
-    function hideCursor() {
-        const c = document.getElementById(PANEL.cursorId);
-        if (c) c.classList.remove('active');
+    function hideCursors() {
+        PANELS.forEach(p => {
+            const c = document.getElementById(p.cursorId);
+            if (c) c.classList.remove('active');
+        });
     }
 
     function getOffsetRelativeToPanel(el, panelEl) {
@@ -131,9 +164,10 @@
         return { top, left };
     }
 
-    function showCursor(td) {
-        const cursorEl = document.getElementById(PANEL.cursorId);
-        const panelEl = document.getElementById(PANEL.scrollId);
+    function showCursor(panelIdx, td) {
+        const panel = panelByIdx(panelIdx);
+        const cursorEl = document.getElementById(panel.cursorId);
+        const panelEl = document.getElementById(panel.scrollId);
         if (!cursorEl || !panelEl || !td) return;
 
         const pos = getOffsetRelativeToPanel(td, panelEl);
@@ -145,26 +179,28 @@
     }
 
     function clearHighlights() {
-        const scrollPanelEl = document.getElementById(PANEL.scrollId);
-        if (!scrollPanelEl) return;
-
-        scrollPanelEl.querySelectorAll('.f1us-header-active')
-            .forEach(el => el.classList.remove('f1us-header-active'));
-
-        const body = document.getElementById(PANEL.bodyId);
-        if (body) {
-            body.querySelectorAll('.f1us-selected-row')
-                .forEach(el => el.classList.remove('f1us-selected-row'));
-            body.querySelectorAll('.f1us-selected-cell')
-                .forEach(el => el.classList.remove('f1us-selected-cell'));
-        }
-        hideCursor();
+        PANELS.forEach(p => {
+            const scrollEl = document.getElementById(p.scrollId);
+            if (scrollEl) {
+                scrollEl.querySelectorAll('.f1us-header-active')
+                    .forEach(el => el.classList.remove('f1us-header-active'));
+            }
+            const body = document.getElementById(p.bodyId);
+            if (body) {
+                body.querySelectorAll('.f1us-selected-row')
+                    .forEach(el => el.classList.remove('f1us-selected-row'));
+                body.querySelectorAll('.f1us-selected-cell')
+                    .forEach(el => el.classList.remove('f1us-selected-cell'));
+            }
+        });
+        hideCursors();
     }
 
-    function applyHighlight(dateStr, colNum) {
+    function applyHighlight(panelIdx, dateStr, colNum) {
         clearHighlights();
         state.selectedDate = dateStr;
         state.selectedCol = colNum;
+        state.selectedPanel = panelIdx;
 
         /* 선택한 행의 날짜를 상단 공통 헤더에 반영합니다.
            두 번째 인자 false = 표를 다시 불러오지 않고 표시만 갱신.
@@ -174,50 +210,60 @@
             App.headerApi.setCurrentDate(dateStr, false);
         }
 
-        const body = document.getElementById(PANEL.bodyId);
-        const scrollPanelEl = document.getElementById(PANEL.scrollId);
-        if (!body || !scrollPanelEl) return;
-
-        const row = body.querySelector(`tr[data-date="${dateStr}"]`);
-        if (!row) return;
-        row.classList.add('f1us-selected-row');
+        // 행 강조는 두 패널 모두에 겁니다. 같은 날짜 줄이 나란히 보입니다.
+        PANELS.forEach(p => {
+            const body = document.getElementById(p.bodyId);
+            if (!body) return;
+            const row = body.querySelector(`tr[data-date="${dateStr}"]`);
+            if (row) row.classList.add('f1us-selected-row');
+        });
 
         // 날짜 칸을 클릭했을 때는 행만 강조하고 셀 커서는 띄우지 않습니다.
         if (colNum === null || colNum === undefined) return;
 
+        const panel = panelByIdx(panelIdx);
+        const body = document.getElementById(panel.bodyId);
+        const scrollEl = document.getElementById(panel.scrollId);
+        if (!body || !scrollEl) return;
+
+        const row = body.querySelector(`tr[data-date="${dateStr}"]`);
+        if (!row) return;
+
         const targetTd = row.querySelector(`td[data-col="${colNum}"]`);
         if (targetTd) {
             targetTd.classList.add('f1us-selected-cell');
-            showCursor(targetTd);
+            showCursor(panelIdx, targetTd);
         }
 
-        const colDef = App.COLUMNS.find(c => String(c.col) === String(colNum));
+        const colDef = columnsOf(panelIdx).find(c => String(c.col) === String(colNum));
         if (colDef) {
-            const groupTh = scrollPanelEl.querySelector(`.f1us-group-th[data-group="${colDef.group}"]`);
+            const groupTh = scrollEl.querySelector(`.f1us-group-th[data-group="${colDef.group}"]`);
             if (groupTh) groupTh.classList.add('f1us-header-active');
         }
-        const leafTh = scrollPanelEl.querySelector(`.f1us-leaf-th[data-col="${colNum}"]`);
+        const leafTh = scrollEl.querySelector(`.f1us-leaf-th[data-col="${colNum}"]`);
         if (leafTh) leafTh.classList.add('f1us-header-active');
     }
 
     function bindBodyClicks() {
-        const body = document.getElementById(PANEL.bodyId);
-        if (!body) return;
+        PANELS.forEach(p => {
+            const body = document.getElementById(p.bodyId);
+            if (!body) return;
 
-        body.addEventListener('click', (e) => {
-            const td = e.target.closest('td');
-            if (!td) return;
-            const tr = td.closest('tr[data-date]');
-            if (!tr) return;
+            body.addEventListener('click', (e) => {
+                const td = e.target.closest('td');
+                if (!td) return;
+                const tr = td.closest('tr[data-date]');
+                if (!tr) return;
 
-            const dateStr = tr.getAttribute('data-date');
+                const dateStr = tr.getAttribute('data-date');
 
-            // 날짜 셀 클릭 시에는 행만 강조 (입고 페이지와 동일한 동작)
-            if (td.classList.contains('f1us-date-td')) {
-                applyHighlight(dateStr, null);
-                return;
-            }
-            applyHighlight(dateStr, td.getAttribute('data-col'));
+                // 날짜 셀 클릭 시에는 행만 강조 (입고 페이지와 동일한 동작)
+                if (td.classList.contains('f1us-date-td')) {
+                    applyHighlight(p.idx, dateStr, null);
+                    return;
+                }
+                applyHighlight(p.idx, dateStr, td.getAttribute('data-col'));
+            });
         });
     }
 
@@ -226,20 +272,26 @@
         return (r.date === yesterdayStr()) ? 'f1us-row-yesterday f1us-data-row' : 'f1us-data-row';
     }
 
-    function rowHtml(r) {
+    function rowHtml(panelIdx, r) {
         let cells = '';
-        App.COLUMNS.forEach(c => {
+        columnsOf(panelIdx).forEach(c => {
             const sepCls = c.sep ? ' f1us-sep' : '';
             const mirrorCls = (c.source === 'factory3') ? ' f1us-mirror-cell' : '';
             cells += `<td class="f1us-data-cell${sepCls}${mirrorCls}" data-col="${c.col}">${fmtVal(r.values[c.col])}</td>`;
         });
 
-        let dateCls = '';
-        if (r.weekday === '토') dateCls = 'f1us-sat';
-        else if (r.weekday === '일') dateCls = 'f1us-sun';
+        // 날짜 열이 없는 패널(우측)은 데이터 칸만 그립니다.
+        // 행 자체에는 data-date 를 남겨 두어야 강조와 선택이 동작합니다.
+        let dateTd = '';
+        if (!panelByIdx(panelIdx).noDate) {
+            let dateCls = '';
+            if (r.weekday === '토') dateCls = 'f1us-sat';
+            else if (r.weekday === '일') dateCls = 'f1us-sun';
+            dateTd = `<td class="f1us-date-td ${dateCls}">${fmtDateShort(r.date)}</td>`;
+        }
 
         return `<tr class="${rowClasses(r)}" data-date="${r.date}">
-            <td class="f1us-date-td ${dateCls}">${fmtDateShort(r.date)}</td>
+            ${dateTd}
             ${cells}
         </tr>`;
     }
@@ -254,9 +306,9 @@
         return rows;
     }
 
-    // 스크롤 영역에 한 번에 보이는 행 수
+    // 스크롤 영역에 한 번에 보이는 행 수 (기준 패널로 잽니다)
     function visibleRowCount() {
-        const panel = document.getElementById(PANEL.scrollId);
+        const panel = document.getElementById(MAIN.scrollId);
         if (!panel) return 10;
         const thead = panel.querySelector('thead');
         const theadH = thead ? thead.getBoundingClientRect().height : 0;
@@ -272,23 +324,23 @@
 
         state.loading = true;
 
-        const panel = document.getElementById(PANEL.scrollId);
-        const body = document.getElementById(PANEL.bodyId);
-        if (!panel || !body) { state.loading = false; return; }
+        const panel = document.getElementById(MAIN.scrollId);
+        const mainBody = document.getElementById(MAIN.bodyId);
+        if (!panel || !mainBody) { state.loading = false; return; }
 
         const latest = yesterdayStr();
         const minDate = addDays(todayStr(), -App.MAX_PAST_DAYS);
 
         let from, to;
         if (direction === 'prev') {
-            const first = body.firstElementChild
-                ? body.firstElementChild.getAttribute('data-date')
+            const first = mainBody.firstElementChild
+                ? mainBody.firstElementChild.getAttribute('data-date')
                 : latest;
             from = addDays(first, -App.RANGE);
             to = addDays(first, -1);
         } else if (direction === 'next') {
-            const last = body.lastElementChild
-                ? body.lastElementChild.getAttribute('data-date')
+            const last = mainBody.lastElementChild
+                ? mainBody.lastElementChild.getAttribute('data-date')
                 : latest;
             from = addDays(last, 1);
             to = addDays(last, App.RANGE);
@@ -321,20 +373,29 @@
         const prevScrollTop = panel.scrollTop;
 
         if (direction === 'prev') {
-            body.insertAdjacentHTML('afterbegin', rows.map(rowHtml).join(''));
+            PANELS.forEach(p => {
+                const body = document.getElementById(p.bodyId);
+                if (body) body.insertAdjacentHTML('afterbegin', rows.map(r => rowHtml(p.idx, r)).join(''));
+            });
             // 새로 붙은 높이만큼 밀어 화면이 튀지 않게 합니다.
             applyScrollTwice(() => prevScrollTop + (panel.scrollHeight - prevScrollHeight));
 
         } else if (direction === 'next') {
-            body.insertAdjacentHTML('beforeend', rows.map(rowHtml).join(''));
+            PANELS.forEach(p => {
+                const body = document.getElementById(p.bodyId);
+                if (body) body.insertAdjacentHTML('beforeend', rows.map(r => rowHtml(p.idx, r)).join(''));
+            });
 
         } else {
-            body.innerHTML = rows.map(rowHtml).join('');
+            PANELS.forEach(p => {
+                const body = document.getElementById(p.bodyId);
+                if (body) body.innerHTML = rows.map(r => rowHtml(p.idx, r)).join('');
+            });
 
             /* 기준일을 맨 아랫줄에 두어 그 앞 4일이 함께 보이게 합니다.
                표가 5줄뿐이라 기준일을 위쪽에 두면 정작 비교할 과거가
                화면 밖으로 밀립니다. (아래로 스크롤하면 이후 날짜가 나옵니다) */
-            const baseRow = body.querySelector(`tr[data-date="${state.baseDate}"]`) || body.lastElementChild;
+            const baseRow = mainBody.querySelector(`tr[data-date="${state.baseDate}"]`) || mainBody.lastElementChild;
             if (baseRow) {
                 applyScrollTwice(() => {
                     const thead = panel.querySelector('thead');
@@ -348,8 +409,8 @@
             if (state.isInitialLoad) {
                 state.isInitialLoad = false;
                 setTimeout(() => {
-                    const row = body.querySelector(`tr[data-date="${state.baseDate}"]`) || body.lastElementChild;
-                    if (row) applyHighlight(row.getAttribute('data-date'), '1');
+                    const row = mainBody.querySelector(`tr[data-date="${state.baseDate}"]`) || mainBody.lastElementChild;
+                    if (row) applyHighlight(1, row.getAttribute('data-date'), '1');
                 }, 150);
             }
         }
@@ -360,7 +421,7 @@
     /* ── 진입점에서 호출 ───────────────────────────────────────── */
     App.initUI = function () {
         bindScrollToggle();
-        bindScroll();
+        bindScrollSync();
         bindBodyClicks();
     };
 

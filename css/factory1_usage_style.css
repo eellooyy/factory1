@@ -36,21 +36,15 @@
     --f1us-scroll-height: 308px;
 
     /*
-      [데이터 열 개수]
-      열을 추가/삭제하면 HTML 의 colgroup span 과 이 값,
+      [데이터 열 개수 — 기본값]
+      실제 값은 아래 패널별 클래스에서 각자 덮어씁니다.
+      열을 추가/삭제하면 HTML 의 colgroup span 과 패널 클래스의 값,
       그리고 constant.js 의 COLUMNS 를 함께 맞춰 주세요.
 
-      1층(용지별) 14개 = 1공장 12 + 별관 2
-      2층(매체별) 12개 = 1공장 6 + 3공장 6
+      1층  좌 1공장 12열  /  우 별관 2열
+      2층  좌 1공장  6열  /  우 3공장 6열
     */
-    --f1us-data-col-count: 14;
-    --f1us-media-col-count: 12;
-}
-
-/* 2층은 열 개수가 달라 층 컨테이너에서 변수만 덮어씁니다.
-   (커스텀 속성은 상속되므로 안쪽 col 요소까지 그대로 내려갑니다) */
-.f1us-floor-media {
-    --f1us-data-col-count: var(--f1us-media-col-count);
+    --f1us-data-col-count: 12;
 }
 
 .f1us-wrapper {
@@ -196,6 +190,35 @@
     border: 1px solid #e5e5ea;
     border-radius: 12px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+}
+
+/* ── 패널별 폭과 열 개수 ───────────────────────────────────────
+   flex-grow 를 열 개수로, flex-basis 를 날짜 열 너비로 줍니다.
+   이렇게 하면 패널마다 날짜 열을 하나씩 갖고도 데이터 열의 폭이
+   좌우 패널에서 똑같이 떨어집니다.
+     좌 = 84px + 12칸분,  우 = 84px + 2칸분  →  한 칸의 폭이 동일
+   (--f1us-data-col-count 는 상속되어 안쪽 col 요소까지 내려갑니다)
+   ──────────────────────────────────────────────────────────── */
+.f1us-panel-paper-main {
+    flex: 12 1 var(--f1us-date-col-width);
+    --f1us-data-col-count: 12;
+}
+
+.f1us-panel-paper-annex {
+    flex: 2 1 var(--f1us-date-col-width);
+    --f1us-data-col-count: 2;
+}
+
+.f1us-panel-media {
+    flex: 6 1 var(--f1us-date-col-width);
+    --f1us-data-col-count: 6;
+}
+
+/* 날짜 열이 없는 패널(우측). 날짜 열 너비를 0 으로 두면 위의 flex-basis 와
+   col 너비 계산이 그대로 맞아떨어져, 좌우 패널의 데이터 칸 폭이 같아집니다.
+   ※ 이 클래스는 위 폭 지정보다 뒤에 와야 합니다. */
+.f1us-panel-nodate {
+    --f1us-date-col-width: 0px;
 }
 
 .f1us-scroll-area {
@@ -429,7 +452,17 @@
     .f1us-thead-lv2 th, .f1us-leaf-th { font-size: 10.5px; }
 }
 
+/* 두 패널을 나란히 두기엔 좁은 화면 — 위아래로 쌓습니다.
+   (옆으로 붙여 두면 각 패널이 날짜 열 하나씩을 갖는 만큼 더 좁아집니다) */
+@media (max-width: 1100px) {
+    .f1us-panels-outer { flex-direction: column; }
+    .f1us-panel-paper-main,
+    .f1us-panel-paper-annex,
+    .f1us-panel-media { flex: 1 1 auto; }
+}
+
 @media (max-width: 900px) {
     .f1us-scroll-area { overflow-x: auto; }
-    .f1us-table { min-width: 900px; }
+    .f1us-panel-paper-main .f1us-table { min-width: 760px; }
+    .f1us-panel-media .f1us-table { min-width: 520px; }
 }

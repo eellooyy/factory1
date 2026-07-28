@@ -103,14 +103,15 @@
         </div>
 
         <div class="f1us-panels-outer">
-            <div class="f1us-panel">
+            <!-- 좌측 패널: 1공장 12열 -->
+            <div class="f1us-panel f1us-panel-paper-main">
                 <div class="f1us-scroll-area locked" id="f1usPaperScroll">
                     <div id="f1usPaperCursor" class="f1us-cursor"></div>
                     <table class="f1us-table">
-                        <!-- 날짜 열은 고정폭, 나머지 14개 품목 열은 균등 분할 -->
+                        <!-- 날짜 열은 고정폭, 나머지 12개 품목 열은 균등 분할 -->
                         <colgroup>
                             <col class="f1us-col-date">
-                            <col class="f1us-col-data" span="14">
+                            <col class="f1us-col-data" span="12">
                         </colgroup>
                         <thead>
                             <tr class="f1us-thead-lv1">
@@ -121,8 +122,6 @@
                                 <th colspan="2" class="f1us-group-th f1us-sep" data-group="jeonju-jeonja">전주전자</th>
                                 <th colspan="2" class="f1us-group-th f1us-sep" data-group="daehan-c">대한제지</th>
                                 <th colspan="3" class="f1us-group-th f1us-sep" data-group="ft">F.T</th>
-                                <!-- 별관(3공장) 참조 열 — 3공장 사용 실적을 그대로 보여줍니다 -->
-                                <th colspan="2" class="f1us-group-th f1us-sep" data-group="daehan-annex">대한제지 별관</th>
                             </tr>
                             <tr class="f1us-thead-lv2">
                                 <th class="f1us-leaf-th" data-col="1" data-parent-group="daehan-ad">A</th>
@@ -137,11 +136,33 @@
                                 <th class="f1us-leaf-th f1us-sep" data-col="10" data-parent-group="ft">A</th>
                                 <th class="f1us-leaf-th" data-col="11" data-parent-group="ft">C</th>
                                 <th class="f1us-leaf-th" data-col="12" data-parent-group="ft">D</th>
-                                <th class="f1us-leaf-th f1us-sep" data-col="13" data-parent-group="daehan-annex">A</th>
-                                <th class="f1us-leaf-th" data-col="14" data-parent-group="daehan-annex">D</th>
                             </tr>
                         </thead>
                         <tbody id="f1usPaperBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 우측 패널: 별관(3공장) 2열
+                 날짜 열이 없습니다. 좌측과 스크롤이 동기화되어 같은 줄이
+                 항상 나란히 오므로 날짜를 두 번 적을 이유가 없습니다. -->
+            <div class="f1us-panel f1us-panel-paper-annex f1us-panel-nodate">
+                <div class="f1us-scroll-area locked" id="f1usAnnexScroll">
+                    <div id="f1usAnnexCursor" class="f1us-cursor"></div>
+                    <table class="f1us-table">
+                        <colgroup>
+                            <col class="f1us-col-data" span="2">
+                        </colgroup>
+                        <thead>
+                            <tr class="f1us-thead-lv1">
+                                <th colspan="2" class="f1us-group-th" data-group="daehan-annex">대한제지 별관</th>
+                            </tr>
+                            <tr class="f1us-thead-lv2">
+                                <th class="f1us-leaf-th" data-col="13" data-parent-group="daehan-annex">A</th>
+                                <th class="f1us-leaf-th" data-col="14" data-parent-group="daehan-annex">D</th>
+                            </tr>
+                        </thead>
+                        <tbody id="f1usAnnexBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -174,20 +195,19 @@
         </div>
 
         <div class="f1us-panels-outer">
-            <div class="f1us-panel">
-                <div class="f1us-scroll-area locked" id="f1usMediaScroll">
-                    <div id="f1usMediaCursor" class="f1us-cursor"></div>
+            <!-- 좌측 패널: 1공장 6열 -->
+            <div class="f1us-panel f1us-panel-media">
+                <div class="f1us-scroll-area locked" id="f1usMediaF1Scroll">
+                    <div id="f1usMediaF1Cursor" class="f1us-cursor"></div>
                     <table class="f1us-table">
-                        <!-- 날짜 열은 고정폭, 나머지 12개 매체 열은 균등 분할 -->
                         <colgroup>
                             <col class="f1us-col-date">
-                            <col class="f1us-col-data" span="12">
+                            <col class="f1us-col-data" span="6">
                         </colgroup>
                         <thead>
                             <tr class="f1us-thead-lv1">
                                 <th class="f1us-date-th" rowspan="2">날짜</th>
                                 <th colspan="6" class="f1us-group-th" data-group="f1">1공장</th>
-                                <th colspan="6" class="f1us-group-th f1us-sep" data-group="f3">3공장</th>
                             </tr>
                             <!-- 본지 · 별쇄는 같은 신문이라 나란히 두고, 그 오른쪽에
                                  구분선을 넣어 한 덩어리로 보이게 합니다. -->
@@ -198,7 +218,29 @@
                                 <th class="f1us-leaf-th" data-col="4" data-parent-group="f1">전자신문</th>
                                 <th class="f1us-leaf-th" data-col="5" data-parent-group="f1">F.T</th>
                                 <th class="f1us-leaf-th" data-col="6" data-parent-group="f1">나라사랑</th>
-                                <th class="f1us-leaf-th f1us-sep" data-col="7" data-parent-group="f3">본지</th>
+                            </tr>
+                        </thead>
+                        <tbody id="f1usMediaF1Body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 우측 패널: 3공장 6열
+                 날짜 열이 없습니다. 좌측과 스크롤이 동기화되어 같은 줄이
+                 항상 나란히 오므로 날짜를 두 번 적을 이유가 없습니다. -->
+            <div class="f1us-panel f1us-panel-media f1us-panel-nodate">
+                <div class="f1us-scroll-area locked" id="f1usMediaF3Scroll">
+                    <div id="f1usMediaF3Cursor" class="f1us-cursor"></div>
+                    <table class="f1us-table">
+                        <colgroup>
+                            <col class="f1us-col-data" span="6">
+                        </colgroup>
+                        <thead>
+                            <tr class="f1us-thead-lv1">
+                                <th colspan="6" class="f1us-group-th" data-group="f3">3공장</th>
+                            </tr>
+                            <tr class="f1us-thead-lv2">
+                                <th class="f1us-leaf-th" data-col="7" data-parent-group="f3">본지</th>
                                 <th class="f1us-leaf-th" data-col="8" data-parent-group="f3">별쇄</th>
                                 <th class="f1us-leaf-th f1us-sep" data-col="9" data-parent-group="f3">경인일보</th>
                                 <th class="f1us-leaf-th" data-col="10" data-parent-group="f3">평화신문</th>
@@ -206,7 +248,7 @@
                                 <th class="f1us-leaf-th" data-col="12" data-parent-group="f3">대학신문</th>
                             </tr>
                         </thead>
-                        <tbody id="f1usMediaBody"></tbody>
+                        <tbody id="f1usMediaF3Body"></tbody>
                     </table>
                 </div>
             </div>
