@@ -281,6 +281,176 @@
         return upserts;
     };
 
+    /* ── 실제 출고 ───────────────────────────────────────────────────────────
+       화면에는 '합친 값'(수기 있으면 수기, 없으면 자동)이 뜹니다. 저장할 때만
+       자동값과 비교해 달라진 것을 가려냅니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    function issueOf(key) {
+        return App.state.loadedIssue[key] || { auto: null, manual: null, memo: null };
+    }
+
+    App.applyIssue = function (byKey) {
+        App.state.loadedIssue = byKey || {};
+
+        App.TYPE_KEYS.forEach(key => {
+            const inp = getPanelEl('issue', key);
+            if (!inp) return;
+
+            const row = issueOf(key);
+            const shown = (row.manual !== null && row.manual !== undefined)
+                ? row.manual : row.auto;
+
+            inp.value = (shown === null || shown === undefined)
+                ? '' : App.utils.formatNum(shown);
+
+            /* 지고 재고를 안 적어 자동 계산이 안 되는 날입니다. 0 을 채우면
+               진짜 0 인지 안 센 건지 구분이 사라지므로 자리표시만 둡니다. */
+            const noAuto = (row.auto === null || row.auto === undefined);
+            inp.placeholder = noAuto ? '–' : '';
+            inp.classList.toggle('f1il-issue-none', noAuto);
+        });
+
+        App.state.issueMemoKeys = '';   // 다음 refresh 가 무조건 다시 그리게
+        App.refreshIssueMemos();
+    };
+
+    // 화면 값이 자동값과 다른 용지 = 지금 수기로 고쳐진 용지
+    function manualKeys() {
+        return App.TYPE_KEYS.filter(key => {
+            const inp = getPanelEl('issue', key);
+            if (!inp) return false;
+
+            const auto = issueOf(key).auto;
+            const raw = numOrNull(inp.value);
+
+            if (raw === null) return false;                 // 비움 = 자동으로 되돌림
+            if (auto === null || auto === undefined) return true;
+            return raw !== Number(auto);
+        });
+    }
+
+    /* 수기로 고쳐진 칸에 색을 입힙니다. 이 표시가 오차 검증의 핵심입니다 —
+       자동값 그대로인 날과 손댄 날이 구분되지 않으면 오차를 해석할 수 없습니다. */
+    function paintIssueCells(keys) {
+        App.TYPE_KEYS.forEach(key => {
+            const inp = getPanelEl('issue', key);
+            if (inp) inp.classList.toggle('f1il-issue-manual', keys.indexOf(key) !== -1);
+        });
+    }
+
+    /* 메모줄은 '지금 수기로 고쳐진 용지' + '메모가 이미 적힌 용지'에만 나옵니다.
+       보기 모드에서는 글로, 수정 모드에서는 입력칸으로 그립니다.
+
+       입력 중에 매번 다시 그리면 글자를 한 자 칠 때마다 포커스가 날아갑니다.
+       대상 용지 목록이 바뀔 때만 다시 그리고, 그때도 이미 친 글자는 옮겨 담습니다. */
+    App.refreshIssueMemos = function (isEditing) {
+        const wrap = document.getElementById('f1ilIssueMemos');
+        if (!wrap) return;
+
+        const keys = manualKeys();
+        paintIssueCells(keys);
+
+        /* 모드 전환 중에는 헤더의 상태가 아직 안 바뀌어 있을 수 있어 인자로 받습니다.
+           (setReadOnlyMode 가 넘겨 줍니다) */
+        const editing = (isEditing === undefined)
+            ? !!(App.headerApi && App.headerApi.isEditMode && App.headerApi.isEditMode())
+            : !!isEditing;
+
+        const shown = App.TYPE_KEYS.filter(key => {
+            if (keys.indexOf(key) !== -1) return true;          // 지금 손댄 용지
+            return !editing && !!issueOf(key).memo;             // 보기 모드에서 적힌 메모
+        });
+
+        const sig = (editing ? 'E|' : 'V|') + shown.join(',');
+        if (sig === App.state.issueMemoKeys) return;
+
+        // 이미 친 글자를 잃지 않게 먼저 걷어 둡니다
+        const typed = {};
+        wrap.querySelectorAll('.f1il-issue-memo-input').forEach(i => {
+            typed[i.dataset.type] = i.value;
+        });
+
+        App.state.issueMemoKeys = sig;
+        wrap.innerHTML = '';
+
+        shown.forEach(key => {
+            const line = document.createElement('div');
+            line.className = 'f1il-issue-memo';
+
+            const label = document.createElement('span');
+            label.className = 'f1il-issue-memo-label';
+            label.textContent = App.TYPE_LABELS[key] || key;
+            line.appendChild(label);
+
+            const saved = issueOf(key).memo || '';
+
+            if (editing) {
+                const inp = document.createElement('input');
+                inp.type = 'text';
+                inp.className = 'f1il-issue-memo-input';
+                inp.dataset.type = key;
+                inp.maxLength = 200;
+                inp.placeholder = '수기로 고친 이유 (선택)';
+                inp.value = (typed[key] !== undefined) ? typed[key] : saved;
+                line.appendChild(inp);
+            } else {
+                const txt = document.createElement('span');
+                txt.className = 'f1il-issue-memo-text';
+                txt.textContent = saved;
+                line.appendChild(txt);
+            }
+
+            wrap.appendChild(line);
+        });
+    };
+
+    function memoOf(key) {
+        const el = document.querySelector(`.f1il-issue-memo-input[data-type="${key}"]`);
+        const v = el ? el.value.trim() : '';
+        return v === '' ? null : v;
+    }
+
+    /* 저장 대상을 가려냅니다.
+         upserts : 값이 자동값과 다르거나, 메모가 적힌 용지
+         deletes : 자동값으로 되돌아갔고 메모도 없는데 예전 행이 남아 있는 용지
+
+       비우면 행을 지웁니다(= 자동값 복귀). 잔여 주행지와 반대입니다 — 거기는
+       뒤에 받쳐 줄 자동값이 없어서 0 을 적어야 했습니다. */
+    App.collectIssue = function (logDate) {
+        const upserts = [];
+        const deletes = [];
+        const keys = manualKeys();
+
+        App.TYPE_KEYS.forEach(key => {
+            const row = issueOf(key);
+            const hadRow = (row.manual !== null && row.manual !== undefined);
+            const isManual = keys.indexOf(key) !== -1;
+            const memo = memoOf(key);
+
+            if (isManual || memo) {
+                const inp = getPanelEl('issue', key);
+                const raw = numOrNull(inp && inp.value);
+
+                /* 값은 그대로 두고 메모만 적은 경우입니다. 적어 둔 글이 조용히
+                   사라지지 않도록 그때 보이던 숫자를 함께 남깁니다. */
+                const val = (raw !== null) ? raw : row.auto;
+                if (val === null || val === undefined) return;
+
+                upserts.push({
+                    log_date: logDate,
+                    geupji_key: key,
+                    issue_roll: val,
+                    memo: memo
+                });
+                return;
+            }
+
+            if (hadRow) deletes.push(key);
+        });
+
+        return { upserts, deletes };
+    };
+
     App.buildPanels = function () {
         const stockBody = document.getElementById('f1ilStockBody');
         const usageBody = document.getElementById('f1ilUsageBody');
@@ -561,6 +731,9 @@
         App.elements.wrapper
             .querySelectorAll('.f1il-cell[data-field="type1"], .f1il-cell[data-field="type2"]')
             .forEach(select => { select.disabled = isReadOnly; });
+
+        // 메모줄을 글 ↔ 입력칸으로 바꿔 답니다
+        App.refreshIssueMemos(!isReadOnly);
     };
 
     // ── 자동 수식 계산 (pyw update_calculations 로직 이식) ───────────────────
@@ -687,6 +860,11 @@
              주행지 잔량만큼 어긋납니다. 두 값을 합치는 건 재고실사 페이지의
              몫입니다. */
         App.calcCarryTotals();
+
+        /* 출고 칸을 고치면 그 자리에서 수기 표시가 붙고 메모줄이 따라 나옵니다.
+           대상 용지가 바뀔 때만 다시 그리므로 메모를 치는 중에도 포커스가
+           살아 있습니다. */
+        App.refreshIssueMemos();
     };
 
     /* ── 배분 팝오버 열고 닫기 ────────────────────────────────────────────────

@@ -214,6 +214,78 @@ input.f1il-panel-cell {
 .delta-negative { color: #c62828; }
 
 /* ================================================
+   실제 출고 — 자동계산값과 수기 수정값
+
+   기본값은 지고 재고에서 계산된 값(v_factory1_geupji_issue.auto_roll)입니다.
+   사람이 고친 칸만 색을 달리해, 오차를 볼 때 "이 날은 손을 댔다"가 한눈에
+   보이게 합니다. 이 구분이 없으면 오차 검증 자체가 성립하지 않습니다.
+   ================================================ */
+input.f1il-panel-cell.f1il-issue-manual {
+    background: #fff8e1;
+    color: #8a6100;
+}
+
+/* 지고 재고를 안 적은 날 — 자동 계산이 불가능합니다.
+   0 으로 두면 진짜 0인지 안 센 건지 구분이 안 되므로 자리표시만 둡니다. */
+input.f1il-panel-cell.f1il-issue-none::placeholder {
+    color: #c7c7cc;
+    font-weight: 400;
+}
+
+/* ── 출고 메모 띠 ──
+   카드(.f1il-panel-box)가 flex 컬럼이고 표가 flex:1 이라, 이 띠에 flex 신축을
+   주지 않으면 카드 높이를 키우지 않고 표에서 높이를 가져갑니다.
+   → 메모가 생겨도 좌우 정렬이 틀어지지 않습니다. */
+.f1il-issue-memos {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.f1il-issue-memos:not(:empty) { margin-top: 8px; }
+
+.f1il-issue-memo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+.f1il-issue-memo-label {
+    flex: 0 0 auto;
+    font-weight: 700;
+    color: #8a6100;
+    background: #fff8e1;
+    border-radius: 4px;
+    padding: 2px 6px;
+    white-space: nowrap;
+}
+
+/* 보기 모드 — 적힌 메모를 그대로 읽습니다 */
+.f1il-issue-memo-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    color: #48484a;
+    overflow-wrap: anywhere;
+}
+
+/* 수정 모드 — 그 자리에 입력칸이 들어섭니다 */
+.f1il-issue-memo-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 1px solid #d2d2d7;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-family: inherit;
+    color: #1d1d1f;
+    background: #fff;
+    outline: none;
+}
+.f1il-issue-memo-input:focus { border-color: #0071e3; }
+
+/* ================================================
    회계용 재고 배분 — [+] 버튼과 팝오버
 
    전주 1404 · 702 는 급지 현장에서 본지와 전자를 구분하지 않지만 회계상으로는

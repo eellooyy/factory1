@@ -206,6 +206,34 @@
         return byType;
     }
 
+    /* ── 실제 출고 ────────────────────────────────────────────────────────────
+       뷰가 자동계산값과 수기값을 함께 내줍니다. 화면은 합친 값을 보여주고,
+       저장할 때만 자동값과 견줘 달라진 것을 가려냅니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    async function fetchIssue(dateStr) {
+        const { data, error } = await supabase
+            .from(App.ISSUE_VIEW)
+            .select('geupji_key, auto_roll, manual_roll, memo')
+            .eq('log_date', dateStr);
+
+        if (error) {
+            console.error('[factory1_geupji] 실제 출고 조회 실패:', error.message);
+            return null;
+        }
+
+        const num = v => (v === null || v === undefined) ? null : Number(v);
+
+        const byKey = {};
+        (data || []).forEach(r => {
+            byKey[r.geupji_key] = {
+                auto:   num(r.auto_roll),
+                manual: num(r.manual_roll),
+                memo:   r.memo || null
+            };
+        });
+        return byKey;
+    }
+
     // ── 데이터 불러오기 ───────────────────────────────────────────────────────
     App.loadData = async function (dateStr) {
         // 조회 중인 날짜를 모듈 state에도 동기화 (날짜는 CommonHeader가 소유)
@@ -223,12 +251,13 @@
         App.resetToDefaults();
 
         // 서로 무관한 조회라 한꺼번에 보냅니다
-        const [rows, erp, nextStock, alloc, carry] = await Promise.all([
+        const [rows, erp, nextStock, alloc, carry, issue] = await Promise.all([
             fetchGeupjiRows(dateStr),
             fetchErpUsage(dateStr),
             fetchStock(App.utils.addDays(dateStr, 1)),
             fetchAlloc(dateStr),
-            fetchCarry(dateStr)
+            fetchCarry(dateStr),
+            fetchIssue(dateStr)
         ]);
 
         /* 날짜를 빠르게 넘기면 응답이 순서를 바꿔 도착할 수 있습니다.
@@ -239,6 +268,7 @@
         App.applyErpUsage(erp);
         App.applyAlloc(alloc);
         App.applyCarry(carry);
+        App.applyIssue(issue);
         App.state.nextDayInventory = nextStock || {};
 
         App.calculateFields();
@@ -274,10 +304,12 @@
         const { upserts, deletes, keep } = App.collectRows(logDate);
         const alloc = App.collectAlloc(logDate);
         const carry = App.collectCarry(logDate);
+        const issue = App.collectIssue(logDate);
 
         // 저장할 것도 지울 것도 없는 경우 — 조용히 빠져나가면 눌린 건지 아닌지 알 수 없습니다
         if (!upserts.length && !deletes.length && !alloc.upserts.length
-            && !alloc.deletes.length && !carry.length) {
+            && !alloc.deletes.length && !carry.length
+            && !issue.upserts.length && !issue.deletes.length) {
             alert('저장할 내용이 없습니다.');
             if (App.headerApi && App.headerApi.toggleEditMode) App.headerApi.toggleEditMode();
             return true;
@@ -344,12 +376,45 @@
             if (error) return fail('잔여 주행지 저장에 실패했습니다', error);
         }
 
+        /* ── 실제 출고 ──
+           수기 수정값만 저장합니다. 자동계산값은 뷰가 매번 내주므로 저장하지
+           않습니다 — 저장해 두면 지고 재고를 고쳐도 출고가 옛날 값으로 남아
+           오차 검증이 거짓말을 하게 됩니다. */
+        if (issue.upserts.length) {
+            const { error } = await supabase
+                .from(App.ISSUE_TABLE)
+                .upsert(issue.upserts, { onConflict: 'log_date,geupji_key' });
+            if (error) return fail('실제 출고 저장에 실패했습니다', error);
+        }
+
+        // 자동값으로 되돌린 용지 — 행을 지우면 뷰가 다시 자동값을 내줍니다
+        if (issue.deletes.length) {
+            const { error } = await supabase
+                .from(App.ISSUE_TABLE)
+                .delete()
+                .eq('log_date', logDate)
+                .in('geupji_key', issue.deletes);
+            if (error) return fail('실제 출고 되돌리기에 실패했습니다', error);
+        }
+
         // 저장된 상태가 곧 다음 저장의 기준이 됩니다
         App.state.loaded = keep;
         App.state.loadedAlloc = alloc.keep;
         carry.forEach(r => {
             if (!App.state.loadedCarry[r.geupji_key]) App.state.loadedCarry[r.geupji_key] = {};
             App.state.loadedCarry[r.geupji_key][r.slot] = r.remain_kg;
+        });
+        issue.upserts.forEach(r => {
+            if (!App.state.loadedIssue[r.geupji_key]) {
+                App.state.loadedIssue[r.geupji_key] = { auto: null, manual: null, memo: null };
+            }
+            App.state.loadedIssue[r.geupji_key].manual = r.issue_roll;
+            App.state.loadedIssue[r.geupji_key].memo = r.memo;
+        });
+        issue.deletes.forEach(key => {
+            if (!App.state.loadedIssue[key]) return;
+            App.state.loadedIssue[key].manual = null;
+            App.state.loadedIssue[key].memo = null;
         });
         App.state.isChanged = false;
 
@@ -371,6 +436,8 @@
         if (deletes.length) parts.push(`${deletes.length}칸 비움`);
         if (alloc.upserts.length) parts.push(`배분 ${alloc.upserts.length}건`);
         if (carry.length) parts.push(`주행지 ${carry.length}칸`);
+        if (issue.upserts.length) parts.push(`출고 수기 ${issue.upserts.length}건`);
+        if (issue.deletes.length) parts.push(`출고 ${issue.deletes.length}건 자동복귀`);
         alert(`저장되었습니다. (${parts.join(', ')})`);
 
         return true;
