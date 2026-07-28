@@ -178,28 +178,32 @@
                 <div class="f1us-scroll-area locked" id="f1usMediaScroll">
                     <div id="f1usMediaCursor" class="f1us-cursor"></div>
                     <table class="f1us-table">
-                        <!-- 날짜 열은 고정폭, 나머지 10개 매체 열은 균등 분할 -->
+                        <!-- 날짜 열은 고정폭, 나머지 12개 매체 열은 균등 분할 -->
                         <colgroup>
                             <col class="f1us-col-date">
-                            <col class="f1us-col-data" span="10">
+                            <col class="f1us-col-data" span="12">
                         </colgroup>
                         <thead>
                             <tr class="f1us-thead-lv1">
                                 <th class="f1us-date-th" rowspan="2">날짜</th>
-                                <th colspan="5" class="f1us-group-th" data-group="f1">1공장</th>
-                                <th colspan="5" class="f1us-group-th f1us-sep" data-group="f3">3공장</th>
+                                <th colspan="6" class="f1us-group-th" data-group="f1">1공장</th>
+                                <th colspan="6" class="f1us-group-th f1us-sep" data-group="f3">3공장</th>
                             </tr>
+                            <!-- 본지 · 별쇄는 같은 신문이라 나란히 두고, 그 오른쪽에
+                                 구분선을 넣어 한 덩어리로 보이게 합니다. -->
                             <tr class="f1us-thead-lv2">
                                 <th class="f1us-leaf-th" data-col="1" data-parent-group="f1">본지</th>
-                                <th class="f1us-leaf-th" data-col="2" data-parent-group="f1">국방일보</th>
-                                <th class="f1us-leaf-th" data-col="3" data-parent-group="f1">전자신문</th>
-                                <th class="f1us-leaf-th" data-col="4" data-parent-group="f1">F.T</th>
-                                <th class="f1us-leaf-th" data-col="5" data-parent-group="f1">나라사랑</th>
-                                <th class="f1us-leaf-th f1us-sep" data-col="6" data-parent-group="f3">본지</th>
-                                <th class="f1us-leaf-th" data-col="7" data-parent-group="f3">경인일보</th>
-                                <th class="f1us-leaf-th" data-col="8" data-parent-group="f3">평화신문</th>
-                                <th class="f1us-leaf-th f1us-multiline-th" data-col="9" data-parent-group="f3">기독교<br>타임즈</th>
-                                <th class="f1us-leaf-th" data-col="10" data-parent-group="f3">대학신문</th>
+                                <th class="f1us-leaf-th" data-col="2" data-parent-group="f1">별쇄</th>
+                                <th class="f1us-leaf-th f1us-sep" data-col="3" data-parent-group="f1">국방일보</th>
+                                <th class="f1us-leaf-th" data-col="4" data-parent-group="f1">전자신문</th>
+                                <th class="f1us-leaf-th" data-col="5" data-parent-group="f1">F.T</th>
+                                <th class="f1us-leaf-th" data-col="6" data-parent-group="f1">나라사랑</th>
+                                <th class="f1us-leaf-th f1us-sep" data-col="7" data-parent-group="f3">본지</th>
+                                <th class="f1us-leaf-th" data-col="8" data-parent-group="f3">별쇄</th>
+                                <th class="f1us-leaf-th f1us-sep" data-col="9" data-parent-group="f3">경인일보</th>
+                                <th class="f1us-leaf-th" data-col="10" data-parent-group="f3">평화신문</th>
+                                <th class="f1us-leaf-th f1us-multiline-th" data-col="11" data-parent-group="f3">기독교<br>타임즈</th>
+                                <th class="f1us-leaf-th" data-col="12" data-parent-group="f3">대학신문</th>
                             </tr>
                         </thead>
                         <tbody id="f1usMediaBody"></tbody>

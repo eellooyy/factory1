@@ -4,8 +4,13 @@
    "어느 신문에 썼나"로 갈라 봅니다. 두 층의 합계는 같아야 정상입니다.
 
    데이터 출처
-     1~5열   v_factory1_usage_by_media  (adjustments 보정이 반영된 뷰)
-     6~10열  v_factory3_usage_by_media  (같은 형식, factory = 3 보정 반영)
+     1~6열   v_factory1_usage_by_media  (adjustments 보정이 반영된 뷰)
+     7~12열  v_factory3_usage_by_media  (같은 형식, factory = 3 보정 반영)
+
+   ※ 본지(13AM)와 별쇄(13AS)는 나란히 두되 열을 나눕니다. 별쇄는 인쇄가
+     있는 날만 찍히고 편차가 큽니다(3공장은 누적으로 본지보다 많습니다).
+     합쳐 두면 본지 열이 이유 없이 출렁이는 것처럼 보여, 어느 쪽이 움직인
+     것인지 화면에서 알 수 없습니다. 열 오른쪽 구분선으로 묶어 보입니다.
 
    ※ 열을 media_code 로 잡습니다. 제호(media_name)는 ERP 에서 바뀔 수
      있지만 코드는 유지되므로, 이름이 바뀌어도 통계가 끊기지 않습니다.
@@ -44,19 +49,21 @@
            ──────────────────────────────────────────────────────── */
         COLUMNS: [
             { col: 1,  group: 'f1', label: '본지',      mediaCode: '13AM',       erpName: '매일경제신문' },
-            { col: 2,  group: 'f1', label: '국방일보',  mediaCode: '13BN-00002', erpName: '국방일보' },
-            { col: 3,  group: 'f1', label: '전자신문',  mediaCode: '13BN-00010', erpName: '전자신문' },
-            { col: 4,  group: 'f1', label: 'F.T',       mediaCode: '13BN-00004', erpName: 'Financial Times' },
-            { col: 5,  group: 'f1', label: '나라사랑',  mediaCode: '13BN-00009', erpName: '나라사랑신문' },
+            { col: 2,  group: 'f1', label: '별쇄',      mediaCode: '13AS',       erpName: '매일경제신문(특집)' },
+            { col: 3,  group: 'f1', label: '국방일보',  mediaCode: '13BN-00002', erpName: '국방일보', sep: true },
+            { col: 4,  group: 'f1', label: '전자신문',  mediaCode: '13BN-00010', erpName: '전자신문' },
+            { col: 5,  group: 'f1', label: 'F.T',       mediaCode: '13BN-00004', erpName: 'Financial Times' },
+            { col: 6,  group: 'f1', label: '나라사랑',  mediaCode: '13BN-00009', erpName: '나라사랑신문' },
 
             /* 3공장 열 — 매체코드는 1공장과 같은 체계입니다.
                본지/별쇄는 1공장과 아예 같은 코드(13AM/13AS)를 씁니다.
                매체코드는 공장이 아니라 신문 자체에 붙는 값이기 때문입니다. */
-            { col: 6,  group: 'f3', label: '본지',        mediaCode: '13AM',       erpName: '매일경제신문',   source: 'factory3', sep: true },
-            { col: 7,  group: 'f3', label: '경인일보',    mediaCode: '13BN-00003', erpName: '경인일보',       source: 'factory3' },
-            { col: 8,  group: 'f3', label: '평화신문',    mediaCode: '13BN-00008', erpName: '가톨릭평화신문', source: 'factory3' },
-            { col: 9,  group: 'f3', label: '기독교타임즈', mediaCode: '13BN-00013', erpName: '기독교타임즈',   source: 'factory3' },
-            { col: 10, group: 'f3', label: '대학신문',    mediaCode: '13BN-00005', erpName: '한국대학신문',   source: 'factory3' }
+            { col: 7,  group: 'f3', label: '본지',        mediaCode: '13AM',       erpName: '매일경제신문',       source: 'factory3', sep: true },
+            { col: 8,  group: 'f3', label: '별쇄',        mediaCode: '13AS',       erpName: '매일경제신문(특집)', source: 'factory3' },
+            { col: 9,  group: 'f3', label: '경인일보',    mediaCode: '13BN-00003', erpName: '경인일보',           source: 'factory3', sep: true },
+            { col: 10, group: 'f3', label: '평화신문',    mediaCode: '13BN-00008', erpName: '가톨릭평화신문',     source: 'factory3' },
+            { col: 11, group: 'f3', label: '기독교타임즈', mediaCode: '13BN-00013', erpName: '기독교타임즈',       source: 'factory3' },
+            { col: 12, group: 'f3', label: '대학신문',    mediaCode: '13BN-00005', erpName: '한국대학신문',       source: 'factory3' }
         ],
 
         // 패널 정의 — 1층과 같은 구조입니다.
