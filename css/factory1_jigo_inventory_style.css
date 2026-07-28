@@ -414,22 +414,25 @@
 }
 
 /* ================================================
-   오늘 / 내일 / 선택 행 강조
+   기준일 / 미실사 / 선택 행 강조
 
-   사용량 페이지는 '어제'를 강조합니다(야간 배치가 어제까지만 가져오므로).
-   여기는 오늘 센 값을 오늘 적는 화면이라 '오늘'을 강조합니다.
-   내일 줄은 미리 적어 두는 칸이라 옅게 깔아 오늘과 구분합니다.
+   기준일은 '어제'입니다. 재고는 아침에 세지만 그 숫자는 어제 작업이 끝난 뒤
+   남은 롤이라 어제 자로 잡아야 합니다. 오늘 자로 적으면 오늘 입고와 섞여
+   출고 계산이 하루씩 밀립니다.
+   오늘 줄은 아직 세지 않은 줄이라 맨 아래에 옅게 깔아 구분합니다.
    ================================================ */
-.f1jg-row-today td { background: #e8f4fd !important; }
-.f1jg-row-today .f1jg-date-td { background: #bbdefb !important; }
+/* 기준일(어제) — 오늘 아침에 세어 적을 줄입니다. 화면을 열면 여기가 잡힙니다. */
+.f1jg-row-base td { background: #e8f4fd !important; }
+.f1jg-row-base .f1jg-date-td { background: #bbdefb !important; }
 
+/* 아직 세지 않은 줄(오늘) — 맨 아래에 옅게 깔립니다 */
 .f1jg-row-future td { background: #fbfbfd !important; }
 .f1jg-row-future .f1jg-date-td { color: #8e8e93; }
 
 .f1jg-selected-row td { background: #f4f4f8 !important; }
 .f1jg-selected-row .f1jg-date-td { background: #ebebf0 !important; }
-.f1jg-row-today.f1jg-selected-row td { background: #daedf9 !important; }
-.f1jg-row-today.f1jg-selected-row .f1jg-date-td { background: #bbd8f0 !important; }
+.f1jg-row-base.f1jg-selected-row td { background: #daedf9 !important; }
+.f1jg-row-base.f1jg-selected-row .f1jg-date-td { background: #bbd8f0 !important; }
 
 /* 활성화된 헤더 — 선택한 그룹(1레벨) + 선택한 열(2레벨) */
 .f1jg-thead-lv1 th.f1jg-header-active,

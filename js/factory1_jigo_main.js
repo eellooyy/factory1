@@ -56,11 +56,12 @@
 
             App.initUI();   // 스크롤 잠금 / 클릭 / 단위 스위처 / 입력 바인딩
 
-            /* 공통 헤더는 기본값이 '어제'이지만 이 페이지는 '오늘'로 시작합니다.
-               오늘 센 값을 적는 게 이 화면의 일상적인 용도입니다.
+            /* 기준일은 '어제'입니다. 아침에 세는 재고가 곧 어제 작업이 끝난 뒤
+               남은 롤이기 때문입니다. (자세한 이유는 constant 의 BASE_OFFSET_DAYS)
                (false = 데이터 재조회 없이 표시만 갱신 → 바로 아래에서 한 번만 로드) */
-            const today = (window.Factory3Utils || window.CommonUtils).getTodayStr();
-            App.headerApi.setCurrentDate(today, false);
+            const utils = window.Factory3Utils || window.CommonUtils;
+            App.headerApi.setCurrentDate(
+                utils.addDays(utils.getTodayStr(), App.BASE_OFFSET_DAYS), false);
 
             /* 롤당 중량을 먼저 받아 둡니다. Kg 스위처가 첫 클릭부터 제대로 나와야
                하고, 실패해도 롤 표시는 멀쩡하므로 결과와 무관하게 표를 그립니다. */

@@ -57,10 +57,19 @@
         return App.WD_KR[d.getDay()];
     }
 
-    // 표의 마지막 줄 — 오늘 + 미래 편집 허용 일수(기본 1 = 내일)
+    // 표의 마지막 줄 — 오늘 + 미래 편집 허용 일수(기본 0 = 오늘이 마지막 줄)
     function latestStr() {
         return addDays(todayStr(), App.EDIT_FUTURE_DAYS);
     }
+
+    /* 기준일 — 오늘 아침에 적을 재고가 속한 날, 즉 어제입니다.
+       (왜 어제인지는 factory1_jigo_constant.js 의 BASE_OFFSET_DAYS 설명 참고)
+       화면을 열면 이 줄이 잡히고 푸른색으로 강조됩니다. 달력으로 다른 날짜를
+       봐도 이 강조는 어제 줄에 그대로 남습니다 — "지금 채워야 할 줄"이니까요. */
+    function baseDayStr() {
+        return addDays(todayStr(), App.BASE_OFFSET_DAYS);
+    }
+    App.baseDayStr = baseDayStr;
 
     /* ── 값 유틸 ───────────────────────────────────────────────── */
     function normVal(v) {
@@ -453,10 +462,12 @@
     }
 
     /* ── 행 렌더링 ─────────────────────────────────────────────── */
+    /* 기준일(어제) = 지금 채워야 할 줄 → 푸른 강조
+       그 뒤 날짜(오늘) = 아직 세지 않은 줄 → 옅게 */
     function rowClasses(dateStr) {
         const cls = ['f1jg-data-row'];
-        if (dateStr === todayStr()) cls.push('f1jg-row-today');
-        else if (dateStr > todayStr()) cls.push('f1jg-row-future');
+        if (dateStr === baseDayStr()) cls.push('f1jg-row-base');
+        else if (dateStr > baseDayStr()) cls.push('f1jg-row-future');
         return cls.join(' ');
     }
 
@@ -596,9 +607,9 @@
                 }
             });
 
-            /* 기준일(오늘)을 아래에서 두 번째 줄에 둡니다. 그래야 과거 며칠과
-               내일 줄이 한 화면에 함께 보입니다. 오늘 자를 적으면서 어제 값과
-               비교하는 게 이 표의 일상적인 사용법입니다. */
+            /* 기준일(어제)을 아래에서 두 번째 줄에 둡니다. 그 아래 마지막 줄이
+               아직 세지 않은 오늘이고, 위로는 지난 며칠이 함께 보입니다.
+               어제 자를 적으면서 그제 값과 견주는 게 이 표의 일상적인 사용법입니다. */
             const baseRow = mainBody.querySelector(`tr[data-date="${state.baseDate}"]`) || mainBody.lastElementChild;
             if (baseRow) {
                 applyScrollTwice(() => {
@@ -606,7 +617,7 @@
                     const theadH = thead ? thead.offsetHeight : 0;
                     const rowH = baseRow.offsetHeight || 44;
                     const rowTop = getOffsetRelativeToPanel(baseRow, panel).top;
-                    const rowsBelow = Math.min(App.EDIT_FUTURE_DAYS, visibleRowCount() - 1);
+                    const rowsBelow = Math.min(App.BASE_ROWS_BELOW, visibleRowCount() - 1);
                     return Math.round(rowTop - theadH - (visibleRowCount() - 1 - rowsBelow) * rowH);
                 });
             }
@@ -661,9 +672,9 @@
         if (state.unit !== 'RL') App.setUnit('RL');
         updateUnitUI();
 
-        const today = todayStr();
-        let firstInput = null;   // 수정 구간의 첫 칸 (오늘 행이 없을 때의 대비책)
-        let todayInput = null;   // 오늘 행의 첫 칸 — 기본 포커스 위치
+        const baseDay = baseDayStr();
+        let firstInput = null;   // 수정 구간의 첫 칸 (기준일 행이 없을 때의 대비책)
+        let baseInput = null;    // 기준일(어제) 행의 첫 칸 — 기본 포커스 위치
 
         FLOORS.forEach(f => {
             const body = document.getElementById(f.bodyId);
@@ -722,14 +733,14 @@
                     td.appendChild(inp);
 
                     if (!firstInput) firstInput = inp;
-                    if (dateStr === today && !todayInput) todayInput = inp;
+                    if (dateStr === baseDay && !baseInput) baseInput = inp;
                 });
             });
         });
 
-        /* 입력은 대부분 오늘 자로 하므로 오늘 행 첫 칸에서 시작합니다.
+        /* 입력은 대부분 기준일(어제) 자로 하므로 그 행 첫 칸에서 시작합니다.
            preventScroll 이 없으면 B5 표만 스크롤되어 B6 와 행이 어긋납니다. */
-        const focusTarget = todayInput || firstInput;
+        const focusTarget = baseInput || firstInput;
         if (focusTarget) {
             focusTarget.focus({ preventScroll: true });
             focusTarget.select();
