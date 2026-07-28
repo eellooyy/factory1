@@ -1,0 +1,71 @@
+/* common_subnav.css — 서브메뉴 형제 페이지 이동 버튼 (숨은 기능)
+   ────────────────────────────────────────────────────────────────
+   드롭다운 하위 메뉴에 묶인 페이지끼리 한 번에 넘어가기 위한 버튼입니다.
+   예) 재고 종합 ▸ 재고실사 ↔ 용지별,매체별 사용량
+
+   본문(.gf3-wrapper)은 max-width 1200px 로 가운데 정렬돼 있어 넓은 화면에서
+   좌우가 비어 있습니다. 그 빈 자리에 세로로 긴 띠를 세웁니다. 본문 폭을
+   한 픽셀도 뺏지 않으므로 기존 표 레이아웃에 영향이 없습니다.
+
+   찾은 사람만 쓰는 기능이라 평소에는 거의 보이지 않습니다.
+   기본 opacity 0.12 → 마우스를 올리면 1. 티가 나게 하려면 이 값만 올리세요.
+   ──────────────────────────────────────────────────────────────── */
+
+/* 버튼의 기준이 되는 본문 래퍼 — JS 가 이 클래스를 붙입니다 */
+.gf3-subnav-host {
+    position: relative;
+}
+
+.gf3-subnav {
+    position: absolute;
+    /* top / height 는 JS 가 층 컨테이너의 실제 상하폭에 맞춰 넣습니다 */
+    /* 폭 — 마우스로 편하게 겨냥할 수 있는 정도. 좁히면 클릭이 까다로워집니다. */
+    width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    text-decoration: none;
+    color: #8e8e93;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid transparent;
+    opacity: 0.12;
+    cursor: pointer;
+    z-index: 50;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+        opacity 0.28s ease,
+        background 0.28s ease,
+        color 0.28s ease,
+        box-shadow 0.28s ease,
+        border-color 0.28s ease;
+}
+
+/* 본문 바깥 여백에 붙입니다. 12px 은 본문과의 간격입니다. */
+.gf3-subnav-right { left: calc(100% + 12px); }
+.gf3-subnav-left  { right: calc(100% + 12px); }
+
+.gf3-subnav:hover,
+.gf3-subnav:focus-visible {
+    opacity: 1;
+    background: #ffffff;
+    border-color: #e5e5ea;
+    color: #007aff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    outline: none;
+}
+
+.gf3-subnav .material-symbols-outlined {
+    font-size: 20px;
+    line-height: 1;
+}
+
+/* 화살표는 마우스를 올렸을 때만 살짝 밀려 나갑니다 */
+.gf3-subnav:hover .material-symbols-outlined { transform: translateX(1px); }
+.gf3-subnav-left:hover .material-symbols-outlined { transform: translateX(-1px); }
+.gf3-subnav .material-symbols-outlined { transition: transform 0.28s ease; }
+
+/* 자리가 안 나오는 좁은 화면에서는 숨깁니다 — 판단은 JS 가 합니다.
+   body 에 zoom:115% 가 걸려 있어 미디어쿼리(px)와 실제 여백이 어긋나기
+   때문에, common_subnav.js 가 버튼의 실제 위치를 재서 넣고 뺍니다.
+   숨은 기능이라 좁은 화면에서 없어도 문제되지 않습니다. */
