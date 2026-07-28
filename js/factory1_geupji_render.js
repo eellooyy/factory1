@@ -686,7 +686,7 @@
         App.applyErpUsage(null);   // ERP 열은 조회 결과가 오기 전까지 '–'
         App.applyAlloc(null);      // 배분 입력칸도 비웁니다 (미입력 = 전액 잔여 품목)
 
-        App.state.nextDayInventory = {};
+        App.state.prevDayInventory = {};
         App.state.isChanged = false;
     };
 
@@ -818,15 +818,15 @@
             }
         });
 
-        // 3) 실사용량 = (오늘 재고 + 출고롤*중량) - 다음날 재고(DB 연결 전에는 0)
+        // 3) 실사용량 = (전일 재고 + 출고롤*중량) - 오늘 재고
         // 4) 실사용량 - ERP
-        const nextInv = App.state.nextDayInventory || {};
+        const prevInv = App.state.prevDayInventory || {};
         App.TYPE_KEYS.forEach(k => {
             const issueInput = getPanelEl('issue', k);
             const issueVal = App.utils.parseNum(issueInput?.value);
             const sw = App.rollWeight(k);
-            const nextVal = App.utils.parseNum(nextInv[k]);
-            const actualUsage = (globalInventory[k] + issueVal * sw) - nextVal;
+            const prevVal = App.utils.parseNum(prevInv[k]);
+            const actualUsage = (prevVal + issueVal * sw) - globalInventory[k];
 
             const actualEl = getPanelEl('actual', k);
             if (actualEl) actualEl.textContent = `${App.utils.formatNum(actualUsage) || '0'}kg`;
@@ -855,7 +855,7 @@
            하나로 모여 있어 여기서 같이 갱신합니다.
 
            ※ 잔여 주행지는 위의 재고 · 실사용 계산에 넣지 않았습니다. 그 값들은
-             급지대에 걸린 양을 다루고, 다음날 재고를 v_factory1_geupji_stock
+             급지대에 걸린 양을 다루고, 전일 재고를 v_factory1_geupji_stock
              (호기 표만 보는 뷰)에서 읽어 옵니다. 한쪽에만 더하면 실사용량이
              주행지 잔량만큼 어긋납니다. 두 값을 합치는 건 재고실사 페이지의
              몫입니다. */

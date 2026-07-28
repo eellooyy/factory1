@@ -5,7 +5,7 @@
      v_factory1_geupji_paper    용지 마스터 — 드롭다운 · 라벨 · 롤중량 · ERP 매핑
                                 (페이지가 뜰 때 한 번)
      factory1_geupji_real       좌측 호기 표 — 이 페이지가 입력하는 유일한 대상
-     v_factory1_geupji_stock    다음날 재고 — 실사용량 계산용
+     v_factory1_geupji_stock    전일 재고 — 실사용량 계산용
      v_factory1_usage_by_item   ERP 사용량 — 오차 대조용
 
    쓰는 곳은 factory1_geupji_real 하나뿐입니다. 우측 재고 · 실사용량 · 오차는
@@ -150,7 +150,7 @@
     }
 
     /* ── 재고 뷰 ──────────────────────────────────────────────────────────────
-       { 용지키: kg }. 실사용량에 쓰는 '다음날 재고'를 읽는 데만 씁니다.
+       { 용지키: kg }. 실사용량에 쓰는 '전일 재고'를 읽는 데만 씁니다.
        오늘 재고는 화면에서 직접 계산합니다 — 편집 중에는 아직 저장 전이라
        뷰가 모르는 값이고, 숫자를 고칠 때마다 바로 따라 움직여야 하기 때문입니다.
        ──────────────────────────────────────────────────────────────────────── */
@@ -251,10 +251,10 @@
         App.resetToDefaults();
 
         // 서로 무관한 조회라 한꺼번에 보냅니다
-        const [rows, erp, nextStock, alloc, carry, issue] = await Promise.all([
+        const [rows, erp, prevStock, alloc, carry, issue] = await Promise.all([
             fetchGeupjiRows(dateStr),
             fetchErpUsage(dateStr),
-            fetchStock(App.utils.addDays(dateStr, 1)),
+            fetchStock(App.utils.addDays(dateStr, -1)),
             fetchAlloc(dateStr),
             fetchCarry(dateStr),
             fetchIssue(dateStr)
@@ -269,7 +269,7 @@
         App.applyAlloc(alloc);
         App.applyCarry(carry);
         App.applyIssue(issue);
-        App.state.nextDayInventory = nextStock || {};
+        App.state.prevDayInventory = prevStock || {};
 
         App.calculateFields();
         if (editBtn) editBtn.disabled = false;
@@ -420,7 +420,7 @@
 
         if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '저장'; }
 
-        /* 다음날 재고는 그대로지만 오늘 재고가 바뀌었으므로 다시 그립니다.
+        /* 전일 재고는 그대로지만 오늘 재고가 바뀌었으므로 다시 그립니다.
            (오늘 재고는 화면 계산이라 이미 최신입니다 — 여기서는 확인 차원) */
         App.calculateFields();
 
