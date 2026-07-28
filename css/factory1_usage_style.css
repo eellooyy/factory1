@@ -5,7 +5,8 @@
    그만큼 열이 넓어져 3~5자리 숫자가 잘리지 않습니다.
 
    [1층] 용지별 사용량  .f1us-*
-   [2층] 매체별 사용량  — 추후 추가
+   [2층] 매체별 사용량  .f1us-* (같은 규격을 그대로 씁니다)
+                        열 개수만 층 컨테이너에서 덮어씁니다.
    ──────────────────────────────────────────────────────────────── */
 
 /* ================================================
@@ -37,9 +38,19 @@
     /*
       [데이터 열 개수]
       열을 추가/삭제하면 HTML 의 colgroup span 과 이 값,
-      그리고 factory1_paperuse_constant.js 의 COLUMNS 를 함께 맞춰 주세요.
+      그리고 constant.js 의 COLUMNS 를 함께 맞춰 주세요.
+
+      1층(용지별) 14개 = 1공장 12 + 별관 2
+      2층(매체별) 10개 = 1공장 5 + 3공장 5
     */
     --f1us-data-col-count: 14;
+    --f1us-media-col-count: 10;
+}
+
+/* 2층은 열 개수가 달라 층 컨테이너에서 변수만 덮어씁니다.
+   (커스텀 속성은 상속되므로 안쪽 col 요소까지 그대로 내려갑니다) */
+.f1us-floor-media {
+    --f1us-data-col-count: var(--f1us-media-col-count);
 }
 
 .f1us-wrapper {
@@ -299,6 +310,15 @@
     color: #636366 !important;
     text-align: center;
     letter-spacing: -0.3px;
+}
+
+/* 이름이 긴 매체(기독교타임즈)만 두 줄로 접습니다.
+   3공장 io 페이지(.f3io-multiline-th)와 같은 처리입니다. */
+.f1us-multiline-th {
+    white-space: normal !important;
+    line-height: 1.15;
+    font-size: 10.5px;
+    letter-spacing: -0.4px;
 }
 
 /* ─ 그룹 구분선 ─ */

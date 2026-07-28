@@ -140,12 +140,65 @@
     </div>
 
     <!-- ============================================================
-         2층: 매체별 사용량 — 추후 추가
+         2층: 매체별 사용량
+         1층과 같은 사용량을 "어느 신문에 썼나"로 갈라 봅니다.
          1레벨 헤더 1공장 / 3공장, 2레벨은 매체명입니다.
-         3공장 매체 데이터(factory3_usage 의 media_code) 정리가 끝난 뒤
-         이 자리에 f1us-floor-container 를 하나 더 넣고,
-         factory1_mediause_*.js 4개를 아래 script 목록에 추가하면 됩니다.
+
+         ※ 3공장(6~10열)은 아직 빈칸입니다. factory3_usage 에 media_code 가
+           백업되지 않아 매체를 코드로 가를 수 없습니다. 정리가 끝나면
+           factory1_mediause_constant.js 의 FACTORY3_VIEW 와 해당 열의
+           mediaCode 만 채우면 그대로 붙습니다.
          ============================================================ -->
+    <div class="f1us-floor-container f1us-floor-media">
+        <div class="panel-header-grid mb-3">
+            <div class="header-left">
+                <span class="panel-title">매체별 사용량</span>
+            </div>
+            <div class="header-center text-center"></div>
+            <div class="header-right d-flex align-items-center justify-content-end gap-2">
+                <span class="panel-toggle-label">스크롤 ON/OFF</span>
+                <label class="f1-toggle-switch" title="과거 DB 스크롤 ON/OFF">
+                    <input type="checkbox" id="f1usMediaScrollToggle">
+                    <span class="f1-toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="f1us-panels-outer">
+            <div class="f1us-panel">
+                <div class="f1us-scroll-area locked" id="f1usMediaScroll">
+                    <div id="f1usMediaCursor" class="f1us-cursor"></div>
+                    <table class="f1us-table">
+                        <!-- 날짜 열은 고정폭, 나머지 10개 매체 열은 균등 분할 -->
+                        <colgroup>
+                            <col class="f1us-col-date">
+                            <col class="f1us-col-data" span="10">
+                        </colgroup>
+                        <thead>
+                            <tr class="f1us-thead-lv1">
+                                <th class="f1us-date-th" rowspan="2">날짜</th>
+                                <th colspan="5" class="f1us-group-th" data-group="f1">1공장</th>
+                                <th colspan="5" class="f1us-group-th f1us-sep" data-group="f3">3공장</th>
+                            </tr>
+                            <tr class="f1us-thead-lv2">
+                                <th class="f1us-leaf-th" data-col="1" data-parent-group="f1">본지</th>
+                                <th class="f1us-leaf-th" data-col="2" data-parent-group="f1">국방일보</th>
+                                <th class="f1us-leaf-th" data-col="3" data-parent-group="f1">전자신문</th>
+                                <th class="f1us-leaf-th" data-col="4" data-parent-group="f1">F.T</th>
+                                <th class="f1us-leaf-th" data-col="5" data-parent-group="f1">나라사랑</th>
+                                <th class="f1us-leaf-th f1us-sep" data-col="6" data-parent-group="f3">본지</th>
+                                <th class="f1us-leaf-th" data-col="7" data-parent-group="f3">경인일보</th>
+                                <th class="f1us-leaf-th" data-col="8" data-parent-group="f3">평화신문</th>
+                                <th class="f1us-leaf-th f1us-multiline-th" data-col="9" data-parent-group="f3">기독교<br>타임즈</th>
+                                <th class="f1us-leaf-th" data-col="10" data-parent-group="f3">대학신문</th>
+                            </tr>
+                        </thead>
+                        <tbody id="f1usMediaBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>
 
@@ -174,5 +227,11 @@
 <script src="js/factory1_paperuse_api.js"></script>
 <script src="js/factory1_paperuse_render.js"></script>
 <script src="js/factory1_paperuse_main.js"></script>
+
+<!-- [2층] 매체별 사용량 — 상단 헤더는 1층이 소유하므로 반드시 뒤에 옵니다 -->
+<script src="js/factory1_mediause_constant.js"></script>
+<script src="js/factory1_mediause_api.js"></script>
+<script src="js/factory1_mediause_render.js"></script>
+<script src="js/factory1_mediause_main.js"></script>
 </body>
 </html>
