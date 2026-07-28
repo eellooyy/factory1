@@ -19,9 +19,11 @@
     /* [표 스크롤바 폭 옵션] */
     --iob-scrollbar-width: 8px;
 
-    /* [행 높이 옵션] 데이터 행 / 헤더 높이 */
-    --iob-row-height: 36px;
-    --iob-head-height: 36px;
+    /* [행 높이 옵션] 데이터 행 / 헤더 높이
+       표 높이(--iob-table-max-height)는 그대로 두고 행만 키웠으므로,
+       한 화면에 보이는 줄 수가 한 줄쯤 줄어듭니다. */
+    --iob-row-height: 40px;
+    --iob-head-height: 38px;
 
     /* [표 높이 옵션] 표 하나가 화면에서 차지할 최대 높이.
        하루 스캔이 표당 50건 안팎이라 통째로 펼치면 페이지가 너무 길어집니다.
@@ -29,8 +31,8 @@
        싫어지면 이 값을 none 으로 바꾸면 됩니다. */
     --iob-table-max-height: 420px;
 
-    /* [우측 요약 폭 옵션] 품목별 롤 수 칸의 너비 */
-    --iob-side-width: 210px;
+    /* [우측 요약 폭 옵션] 롤 수와 Kg 두 칸이 들어갑니다 */
+    --iob-side-width: 300px;
 }
 
 .f1iob-wrapper {
@@ -95,6 +97,51 @@
     white-space: nowrap;
 }
 
+/* ========================================
+   방향 스위처 (입고 ↔ 출고)
+   지고 재고 · FT 재고 종합의 R/L · Kg 스위처와 같은 부품입니다. 같은 자리에
+   같은 모양으로 두어, 처음 보는 사람도 "여기를 누르면 바뀐다"를 압니다.
+   ======================================== */
+.unit-switcher {
+    position: relative;
+    display: flex;
+    background: #eef0f4;
+    border-radius: 14px;
+    padding: 2px;
+    width: 92px;
+    height: 24px;
+    align-items: center;
+    border: 1px solid #d1d1d6;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.selection-bg {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: calc(50% - 2px); height: calc(100% - 4px);
+    background-color: #000000;
+    border-radius: 12px;
+    transition: transform 0.25s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    will-change: transform;
+    z-index: 1;
+}
+
+.selection-bg.mode-in  { transform: translateX(0); }
+.selection-bg.mode-out { transform: translateX(100%); }
+
+.unit-btn {
+    position: relative; z-index: 2; flex: 1; border: none;
+    background: transparent !important; font-size: 11px;
+    font-weight: 700; color: #55555d; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.2s ease; outline: none;
+    height: 100%;
+    font-family: inherit;
+}
+
+.unit-btn.active { color: #ffffff !important; }
+
 /* 패널 헤더 우측 건수 */
 .f1iob-count {
     font-size: 12.5px;
@@ -117,21 +164,70 @@
     align-items: stretch;
     gap: 12px;
 }
-/* 행이 적어 표가 짧은 날에도 두 칸의 아래 끝을 맞춥니다. 카드를 세로로 늘리고
-   그 안의 스크롤 영역이 남은 높이를 채우게 두면, 표는 위에 붙은 채 카드만
-   커집니다. (stretch 만으로는 카드 안쪽이 내용 높이에 머물러 어긋납니다) */
+/* 좌측은 [전날 버튼][표 카드][다음날 버튼] 세 칸입니다.
+
+   행이 적어 표가 짧은 날에도 우측 요약과 아래 끝을 맞춥니다. 카드를 세로로
+   늘리고 그 안의 스크롤 영역이 남은 높이를 채우게 두면, 표는 위에 붙은 채
+   카드만 커집니다. (stretch 만으로는 카드 안쪽이 내용 높이에 머물러 어긋납니다) */
 .f1iob-split-main {
     flex: 1 1 auto;
     min-width: 0;          /* 표가 넘칠 때 우측 칸을 밀어내지 않도록 */
     display: flex;
-    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
 }
 .f1iob-split-main .inner-layout-card {
     flex: 1 1 auto;
+    min-width: 0;
     display: flex;
     flex-direction: column;
 }
 .f1iob-split-main .f1iob-table-scroll { flex: 1 1 auto; }
+
+/* ── 표 좌우 날짜 이동 버튼 ───────────────────────────────────────
+   서브메뉴 이동 버튼(.gf3-subnav)과 같은 성격입니다 — 평소에는 흐릿하게
+   있다가 마우스를 올리면 드러납니다. 다만 이쪽은 날짜라 매일 쓰는 기능이라
+   기본 opacity 를 조금 더 올려 두었습니다.
+   ──────────────────────────────────────────────────────────────── */
+.f1iob-daynav {
+    flex: 0 0 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.02);
+    color: #8e8e93;
+    opacity: 0.3;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.24s ease, background 0.24s ease,
+                color 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+}
+.f1iob-daynav:hover,
+.f1iob-daynav:focus-visible {
+    opacity: 1;
+    background: #ffffff;
+    border-color: #e5e5ea;
+    color: #007aff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    outline: none;
+}
+.f1iob-daynav .material-symbols-outlined {
+    font-size: 20px;
+    line-height: 1;
+    transition: transform 0.24s ease;
+}
+.f1iob-daynav:hover .material-symbols-outlined { transform: translateX(1px); }
+#f1iobDayPrev:hover .material-symbols-outlined { transform: translateX(-1px); }
+
+/* 오늘 이후로는 갈 수 없습니다 — 상단 헤더의 [다음]과 같은 규칙입니다.
+   한쪽만 열려 있으면 데이터가 있을 수 없는 날짜로 넘어갑니다. */
+.f1iob-daynav.disabled {
+    opacity: 0.1;
+    pointer-events: none;
+}
 .f1iob-split-side {
     flex: 0 0 var(--iob-side-width);
     display: flex;
@@ -168,17 +264,22 @@
     border-radius: 6px;
 }
 
+/* 한 줄 = 이름 | 롤 수 | Kg. 세 칸의 세로줄이 맞아야 위아래로 훑을 수
+   있으므로 폭을 고정합니다. */
 .f1iob-side-row,
-.f1iob-side-total {
-    display: flex;
+.f1iob-side-total,
+.f1iob-side-tagrow {
+    display: grid;
+    grid-template-columns: 1fr 58px 84px;
     align-items: baseline;
-    gap: 3px;
+    column-gap: 6px;
     padding: 7px 0;
 }
-.f1iob-side-row + .f1iob-side-row { border-top: 1px solid #f7f7fa; }
+/* 줄 사이 구분선. 덧말(.f1iob-side-note)이 끼어도 다음 줄에 선이 붙도록
+   인접 선택자 대신 '첫 줄이 아니면'으로 겁니다. */
+.f1iob-side-list > .f1iob-side-row:not(:first-child) { border-top: 1px solid #f7f7fa; }
 
 .f1iob-side-name {
-    flex: 1 1 auto;
     font-size: 11.5px;
     font-weight: 700;
     color: #636366;
@@ -187,31 +288,88 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.f1iob-side-num {
+
+/* 숫자 칸 — 단위(롤 · kg)는 숫자에 붙여 작게 답니다 */
+.f1iob-side-roll,
+.f1iob-side-kg {
+    text-align: right;
+    white-space: nowrap;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #8e8e93;
+}
+.f1iob-side-roll b,
+.f1iob-side-kg b {
     font-size: 15px;
     font-weight: 800;
     color: #1d1d1f;
     letter-spacing: -0.4px;
     font-variant-numeric: tabular-nums;
+    margin-right: 1px;
 }
-.f1iob-side-unit {
-    font-size: 10.5px;
-    font-weight: 700;
-    color: #8e8e93;
-}
+
+/* Kg 은 롤 수에서 곧바로 나오는 파생값이라 한 단계 여리게 둡니다 —
+   눈이 먼저 가야 하는 건 롤 수입니다. */
+.f1iob-side-kg b { font-size: 13px; font-weight: 700; color: #48484a; }
 
 /* 그날 오가지 않은 품목 — 줄은 지키되 눈에 걸리지 않게.
    줄이 사라지면 "오늘 대한 D 가 안 들어왔다"가 보이지 않습니다. */
 .f1iob-side-row.zero .f1iob-side-name,
-.f1iob-side-row.zero .f1iob-side-num,
-.f1iob-side-row.zero .f1iob-side-unit { color: #c7c7cc; }
-.f1iob-side-row.zero .f1iob-side-num { font-weight: 700; }
+.f1iob-side-row.zero .f1iob-side-roll,
+.f1iob-side-row.zero .f1iob-side-kg { color: #c7c7cc; }
+.f1iob-side-row.zero .f1iob-side-roll b,
+.f1iob-side-row.zero .f1iob-side-kg b { color: #c7c7cc; font-weight: 700; }
 
 /* 해석하지 못해 품목을 모르는 롤 — 합계에서 조용히 빠지면 안 됩니다 */
 .f1iob-side-row.unknown { cursor: help; }
 .f1iob-side-row.unknown .f1iob-side-name,
-.f1iob-side-row.unknown .f1iob-side-num { color: #c9302c; }
-.f1iob-side-row.unknown .f1iob-side-unit { color: #d97a74; }
+.f1iob-side-row.unknown .f1iob-side-roll { color: #c9302c; }
+.f1iob-side-row.unknown .f1iob-side-roll b { color: #c9302c; }
+
+/* 급지 재고에서 손댄 전산 출고 — 품목 줄 아래에 붙는 덧말.
+   **위 숫자는 스캔 그대로입니다.** 이 줄은 "저기서 이렇게 고쳤다"는 사실과
+   그 이유만 알려 줍니다. 관측 기록과 사람의 판단을 섞지 않기 위해서입니다. */
+.f1iob-side-note {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 0 0 7px 8px;
+    border-left: 2px solid #cfe2f8;
+    margin: 0 0 0 2px;
+}
+.f1iob-side-note-head {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #1c6ec4;
+    letter-spacing: -0.2px;
+}
+.f1iob-side-note-memo {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: #6b6b70;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+/* 5층 입고 태그 줄 — 표에서 색이 칠해진 행이 몇 롤인지입니다.
+   품목 목록과 성격이 다른 숫자(층별 집계)라 목록 밖에 따로 세웁니다.
+   출고에는 5층이 없으므로 입고를 볼 때만 나옵니다. */
+.f1iob-side-tagrow {
+    flex-shrink: 0;
+    border-top: 1px solid #f2f2f7;
+}
+.f1iob-side-tag {
+    justify-self: start;
+    align-self: center;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #1c6ec4;
+    background: #e8f1fb;
+    white-space: nowrap;
+}
 
 /* 합계 — 품목 줄의 합이 아니라 그날 스캔된 전체 롤 수입니다
    (품목을 모르는 '미상' 롤까지 포함) */
@@ -221,7 +379,8 @@
     margin-top: 2px;
 }
 .f1iob-side-total .f1iob-side-name { color: #1d1d1f; font-weight: 800; }
-.f1iob-side-total .f1iob-side-num { font-size: 17px; }
+.f1iob-side-total .f1iob-side-roll b { font-size: 17px; }
+.f1iob-side-total .f1iob-side-kg b { font-size: 14px; color: #1d1d1f; font-weight: 800; }
 
 /* ========================================
    상세 표
@@ -259,21 +418,24 @@
 .f1iob-table {
     width: 100%;
     /* RollNo 와 물류코드가 뭉개지지 않는 최소 폭 — 이보다 좁아지면 가로 스크롤 */
-    min-width: 660px;
+    min-width: 640px;
     table-layout: fixed;
     border-collapse: separate !important;
     border-spacing: 0 !important;
     color: #1d1d1f;
 }
 
-/* 열 너비 — RollNo 만 남은 공간을 차지합니다 */
-.f1iob-col-origin { width: 104px; }
+/* 열 너비 — 모든 열에 폭을 줍니다.
+   전에는 RollNo 만 auto 라 남는 공간을 혼자 다 먹어 9자리 숫자 옆이 텅
+   비었습니다. 이제는 남는 폭이 열들에 비례로 나뉘어, RollNo 도 제 몫만
+   가져갑니다. */
+.f1iob-col-origin { width: 106px; }
 .f1iob-col-time   { width: 100px; }
 .f1iob-col-vendor { width: 128px; }
-.f1iob-col-grade  { width: 78px; }
-.f1iob-col-roll   { }              /* 남은 공간 전부 */
-.f1iob-col-weight { width: 90px; }
-.f1iob-col-pcode  { width: 130px; }
+.f1iob-col-grade  { width: 76px; }
+.f1iob-col-roll   { width: 118px; }
+.f1iob-col-weight { width: 88px; }
+.f1iob-col-pcode  { width: 118px; }
 
 /* ── 헤더 (단 헤더) ── */
 .f1iob-table thead {
@@ -287,7 +449,7 @@
 .f1iob-table thead th {
     height: var(--iob-head-height);
     padding: 0 8px;
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 800;
     color: #1d1d1f;
     text-align: center;
@@ -301,7 +463,7 @@
 .f1iob-table td {
     height: var(--iob-row-height);
     padding: 0 8px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: #1d1d1f;
     vertical-align: middle;
@@ -326,7 +488,7 @@
    자리수가 어긋난 오독을 눈으로 잡아내려면 세로줄이 맞아야 합니다. */
 .f1iob-code {
     font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 11.5px;
+    font-size: 12.5px;
     font-weight: 600;
     color: #48484a;
     text-align: center;
@@ -361,11 +523,32 @@
 /* 값이 없는 셀 */
 .f1iob-empty { color: #c7c7cc; font-weight: 400; }
 
-.f1iob-table tbody tr:hover td { background-color: #fafafa; }
+/* 5층(B5)에서 들어온 행 — 표를 층별로 나누지 않기로 했으므로 어느 층
+   것인지는 이 배경색과 우측 '5층 입고' 태그로만 드러납니다.
+   태그와 같은 파란 계열이라 둘이 같은 것을 가리킨다는 게 보입니다. */
+.f1iob-row-tagged td { background-color: #f3f8fe; }
 
-/* 3층 — 사람이 봐야 하는 행이라 표 전체를 옅게 깔아 둡니다 */
+.f1iob-table tbody tr:hover td { background-color: #fafafa; }
+.f1iob-table tbody tr.f1iob-row-tagged:hover td { background-color: #e9f2fd; }
+
+/* '확인 필요' — 사람이 봐야 하는 행이라 표 전체를 옅게 깔아 둡니다 */
 .f1iob-review .f1iob-table td { background-color: #fffbfb; }
 .f1iob-review .f1iob-table tbody tr:hover td { background-color: #fff4f3; }
+
+/* 접힌 상태 — 제목 줄만 남깁니다.
+   대부분의 날은 0건이라(전 기간 6건) 빈 표가 화면을 차지할 이유가 없습니다.
+   건수는 접힌 채로도 제목 옆에 보이므로, 숫자가 붙은 날만 펼치면 됩니다. */
+.f1iob-review.collapsed .inner-layout-card { display: none; }
+.f1iob-review.collapsed .panel-header-grid { margin-bottom: 0; padding-bottom: 0; }
+
+/* 펼치기 버튼 — 표 좌우 날짜 버튼과 같은 부품이고, 제목과 건수 사이
+   한가운데에 넓게 눕혀 둡니다. 접혀 있을 때 이 줄 자체가 손잡이로 읽힙니다. */
+.f1iob-expand {
+    flex: none;
+    width: 280px;      /* 가운데 칸은 내용 폭이라 여기서 정합니다 */
+    height: 26px;
+    border-radius: 8px;
+}
 
 /* 데이터 로딩/비어있음 안내 행 */
 .f1iob-placeholder td {
@@ -391,7 +574,7 @@
 /* ── 반응형 ── */
 /* 좁아지면 우측 요약을 표 아래로 내립니다. 옆에 붙여 두면 표가 최소 폭
    아래로 눌려 가로 스크롤이 먼저 생깁니다. */
-@media (max-width: 940px) {
+@media (max-width: 1010px) {
     .f1iob-split { flex-direction: column; }
     .f1iob-split-side { flex: 0 0 auto; }
     .f1iob-side-list { overflow-y: visible; }
@@ -402,7 +585,8 @@
     .panel-title { font-size: 16px; }
     .panel-subtitle { display: none; }
 
-    .f1iob-side-num { font-size: 14px; }
+    .f1iob-side-roll b { font-size: 14px; }
+    .f1iob-side-kg b { font-size: 12px; }
 
     .f1iob-table td { font-size: 11.5px; height: 34px; }
     .f1iob-table thead th { font-size: 11.5px; }

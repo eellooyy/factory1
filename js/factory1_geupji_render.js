@@ -281,46 +281,88 @@
         return upserts;
     };
 
-    /* ── 실제 출고 ───────────────────────────────────────────────────────────
-       화면에는 '합친 값'(수기 있으면 수기, 없으면 자동)이 뜹니다. 저장할 때만
-       자동값과 비교해 달라진 것을 가려냅니다.
+    /* ── 출고 두 갈래 (실제 · 전산) ───────────────────────────────────────────
+       같은 표에 출고가 둘 있습니다. 나오는 곳이 다를 뿐 다루는 방식은 똑같아서
+       한 벌의 코드로 처리합니다.
+
+         실제 출고  지고 재고에서 역산한 값 (전일 재고 − 금일 재고 + 당일 입고)
+         전산 출고  공정 PC 가 찍은 출고 바코드를 용지별 롤 수로 센 값
+
+       둘 다 **자동값은 저장하지 않고 사람이 고친 값만** 남깁니다. 자동값을
+       저장하면 원본(지고 재고 · 스캔)을 고쳐도 옛 값이 남아, 오차 검증용
+       지표가 스스로 갈라집니다.
+
+       나란히 두는 이유는 **출처가 다르기** 때문입니다. 둘이 같이 틀리면 실사
+       쪽, 하나만 틀리면 그쪽 문제로 범위가 좁혀집니다. 그래서 어느 쪽을
+       손댔는지가 반드시 보여야 합니다 — 수기 칸은 색이 붙고 메모줄이 따라
+       나옵니다.
+
+       한 행(log_date, geupji_key)에 네 값이 같이 삽니다.
+         issue_roll · memo          실제 출고
+         sys_issue_roll · sys_memo  전산 출고
        ──────────────────────────────────────────────────────────────────────── */
-    function issueOf(key) {
-        return App.state.loadedIssue[key] || { auto: null, manual: null, memo: null };
+    const ISSUE_KINDS = [
+        { field: 'issue',    store: 'loadedIssue',    tag: '실제',
+          rollCol: 'issue_roll',     memoCol: 'memo' },
+        { field: 'sysissue', store: 'loadedSysIssue', tag: '전산',
+          rollCol: 'sys_issue_roll', memoCol: 'sys_memo' }
+    ];
+
+    function kindOf(field) {
+        return ISSUE_KINDS.find(k => k.field === field);
     }
 
-    App.applyIssue = function (byKey) {
-        App.state.loadedIssue = byKey || {};
+    function rowOf(kind, key) {
+        const store = App.state[kind.store] || {};
+        return store[key] || { auto: null, manual: null, memo: null };
+    }
+
+    /* 한 갈래를 화면에 얹습니다. 화면에는 '합친 값'(수기 있으면 수기, 없으면
+       자동)이 뜨고, 저장할 때만 자동값과 견줘 달라진 것을 가려냅니다. */
+    function applyKind(kind, byKey) {
+        App.state[kind.store] = byKey || {};
 
         App.TYPE_KEYS.forEach(key => {
-            const inp = getPanelEl('issue', key);
+            const inp = getPanelEl(kind.field, key);
             if (!inp) return;
 
-            const row = issueOf(key);
+            const row = rowOf(kind, key);
             const shown = (row.manual !== null && row.manual !== undefined)
                 ? row.manual : row.auto;
 
             inp.value = (shown === null || shown === undefined)
                 ? '' : App.utils.formatNum(shown);
 
-            /* 지고 재고를 안 적어 자동 계산이 안 되는 날입니다. 0 을 채우면
-               진짜 0 인지 안 센 건지 구분이 사라지므로 자리표시만 둡니다. */
+            /* 자동 계산이 안 되는 날입니다 — 실제 출고는 지고 재고를 안 적은 날,
+               전산 출고는 그날 스캔이 아예 없는 날(백업이 멈춰 있던 구간, 휴일).
+               0 을 채우면 "출고가 없었다"로 읽히는데 사실은 "자료가 없다"입니다. */
             const noAuto = (row.auto === null || row.auto === undefined);
             inp.placeholder = noAuto ? '–' : '';
             inp.classList.toggle('f1il-issue-none', noAuto);
         });
+    }
 
+    App.applyIssue = function (byKey) {
+        applyKind(kindOf('issue'), byKey);
         App.state.issueMemoKeys = '';   // 다음 refresh 가 무조건 다시 그리게
         App.refreshIssueMemos();
     };
 
+    /* 전산 출고 — 자동값은 바코드에서, 수기값·메모는 실제 출고와 같은 행에서
+       옵니다. api.js 의 fetchSysIssue 가 둘을 합쳐 넘깁니다. */
+    App.applySysIssue = function (byKey) {
+        applyKind(kindOf('sysissue'), byKey);
+        App.state.issueMemoKeys = '';
+        App.refreshIssueMemos();
+    };
+
     // 화면 값이 자동값과 다른 용지 = 지금 수기로 고쳐진 용지
-    function manualKeys() {
+    function manualKeys(kind) {
         return App.TYPE_KEYS.filter(key => {
-            const inp = getPanelEl('issue', key);
+            const inp = getPanelEl(kind.field, key);
             if (!inp) return false;
 
-            const auto = issueOf(key).auto;
+            const auto = rowOf(kind, key).auto;
             const raw = numOrNull(inp.value);
 
             if (raw === null) return false;                 // 비움 = 자동으로 되돌림
@@ -331,24 +373,22 @@
 
     /* 수기로 고쳐진 칸에 색을 입힙니다. 이 표시가 오차 검증의 핵심입니다 —
        자동값 그대로인 날과 손댄 날이 구분되지 않으면 오차를 해석할 수 없습니다. */
-    function paintIssueCells(keys) {
+    function paintIssueCells(kind, keys) {
         App.TYPE_KEYS.forEach(key => {
-            const inp = getPanelEl('issue', key);
+            const inp = getPanelEl(kind.field, key);
             if (inp) inp.classList.toggle('f1il-issue-manual', keys.indexOf(key) !== -1);
         });
     }
 
     /* 메모줄은 '지금 수기로 고쳐진 용지' + '메모가 이미 적힌 용지'에만 나옵니다.
        보기 모드에서는 글로, 수정 모드에서는 입력칸으로 그립니다.
+       실제 · 전산 두 갈래가 한 띠에 섞이므로 앞에 갈래 표를 답니다.
 
        입력 중에 매번 다시 그리면 글자를 한 자 칠 때마다 포커스가 날아갑니다.
-       대상 용지 목록이 바뀔 때만 다시 그리고, 그때도 이미 친 글자는 옮겨 담습니다. */
+       대상 목록이 바뀔 때만 다시 그리고, 그때도 이미 친 글자는 옮겨 담습니다. */
     App.refreshIssueMemos = function (isEditing) {
         const wrap = document.getElementById('f1ilIssueMemos');
         if (!wrap) return;
-
-        const keys = manualKeys();
-        paintIssueCells(keys);
 
         /* 모드 전환 중에는 헤더의 상태가 아직 안 바뀌어 있을 수 있어 인자로 받습니다.
            (setReadOnlyMode 가 넘겨 줍니다) */
@@ -356,95 +396,130 @@
             ? !!(App.headerApi && App.headerApi.isEditMode && App.headerApi.isEditMode())
             : !!isEditing;
 
-        const shown = App.TYPE_KEYS.filter(key => {
-            if (keys.indexOf(key) !== -1) return true;          // 지금 손댄 용지
-            return !editing && !!issueOf(key).memo;             // 보기 모드에서 적힌 메모
+        const lines = [];
+        ISSUE_KINDS.forEach(kind => {
+            const keys = manualKeys(kind);
+            paintIssueCells(kind, keys);
+
+            App.TYPE_KEYS.forEach(key => {
+                const touched = keys.indexOf(key) !== -1;            // 지금 손댄 용지
+                const written = !editing && !!rowOf(kind, key).memo;  // 보기 모드에서 적힌 메모
+                if (touched || written) lines.push({ kind: kind, key: key });
+            });
         });
 
-        const sig = (editing ? 'E|' : 'V|') + shown.join(',');
+        const sig = (editing ? 'E|' : 'V|')
+            + lines.map(l => l.kind.field + ':' + l.key).join(',');
         if (sig === App.state.issueMemoKeys) return;
 
         // 이미 친 글자를 잃지 않게 먼저 걷어 둡니다
         const typed = {};
         wrap.querySelectorAll('.f1il-issue-memo-input').forEach(i => {
-            typed[i.dataset.type] = i.value;
+            typed[i.dataset.kind + ':' + i.dataset.type] = i.value;
         });
 
         App.state.issueMemoKeys = sig;
         wrap.innerHTML = '';
 
-        shown.forEach(key => {
-            const line = document.createElement('div');
-            line.className = 'f1il-issue-memo';
+        lines.forEach(function (line) {
+            const kind = line.kind;
+            const key = line.key;
+
+            const row = document.createElement('div');
+            row.className = 'f1il-issue-memo';
+
+            // 실제 / 전산 — 어느 출고를 손댔는지 앞에 답니다
+            const tag = document.createElement('span');
+            tag.className = 'f1il-issue-memo-tag f1il-issue-tag-' + kind.field;
+            tag.textContent = kind.tag;
+            row.appendChild(tag);
 
             const label = document.createElement('span');
             label.className = 'f1il-issue-memo-label';
             label.textContent = App.TYPE_LABELS[key] || key;
-            line.appendChild(label);
+            row.appendChild(label);
 
-            const saved = issueOf(key).memo || '';
+            const saved = rowOf(kind, key).memo || '';
+            const cacheKey = kind.field + ':' + key;
 
             if (editing) {
                 const inp = document.createElement('input');
                 inp.type = 'text';
                 inp.className = 'f1il-issue-memo-input';
+                inp.dataset.kind = kind.field;
                 inp.dataset.type = key;
                 inp.maxLength = 200;
                 inp.placeholder = '수기로 고친 이유 (선택)';
-                inp.value = (typed[key] !== undefined) ? typed[key] : saved;
-                line.appendChild(inp);
+                inp.value = (typed[cacheKey] !== undefined) ? typed[cacheKey] : saved;
+                row.appendChild(inp);
             } else {
                 const txt = document.createElement('span');
                 txt.className = 'f1il-issue-memo-text';
                 txt.textContent = saved;
-                line.appendChild(txt);
+                row.appendChild(txt);
             }
 
-            wrap.appendChild(line);
+            wrap.appendChild(row);
         });
     };
 
-    function memoOf(key) {
-        const el = document.querySelector(`.f1il-issue-memo-input[data-type="${key}"]`);
+    function memoOf(kind, key) {
+        const el = document.querySelector(
+            '.f1il-issue-memo-input[data-kind="' + kind.field + '"][data-type="' + key + '"]');
         const v = el ? el.value.trim() : '';
         return v === '' ? null : v;
     }
 
+    /* 한 갈래의 저장값을 냅니다.
+         { roll, memo }  둘 다 null 이면 그 갈래는 자동값으로 되돌아간 것입니다. */
+    function collectKind(kind, key, keys) {
+        const isManual = keys.indexOf(key) !== -1;
+        const memo = memoOf(kind, key);
+        if (!isManual && !memo) return { roll: null, memo: null };
+
+        const inp = getPanelEl(kind.field, key);
+        const raw = numOrNull(inp && inp.value);
+
+        /* 값은 그대로 두고 메모만 적은 경우입니다. 적어 둔 글이 조용히
+           사라지지 않도록 그때 보이던 숫자를 함께 남깁니다. */
+        const val = (raw !== null) ? raw : rowOf(kind, key).auto;
+        if (val === null || val === undefined) return { roll: null, memo: null };
+
+        return { roll: val, memo: memo };
+    }
+
     /* 저장 대상을 가려냅니다.
-         upserts : 값이 자동값과 다르거나, 메모가 적힌 용지
-         deletes : 자동값으로 되돌아갔고 메모도 없는데 예전 행이 남아 있는 용지
+         upserts : 실제 · 전산 중 하나라도 수기값이나 메모가 있는 용지
+         deletes : 둘 다 자동값으로 되돌아갔고 메모도 없는데 예전 행이 남아 있는 용지
+
+       **네 컬럼을 언제나 함께 보냅니다.** 빠뜨리면 upsert 의 UPDATE 경로에서
+       그 컬럼만 옛 값으로 살아남아, 지운 수기값이 되살아납니다.
 
        비우면 행을 지웁니다(= 자동값 복귀). 잔여 주행지와 반대입니다 — 거기는
        뒤에 받쳐 줄 자동값이 없어서 0 을 적어야 했습니다. */
     App.collectIssue = function (logDate) {
         const upserts = [];
         const deletes = [];
-        const keys = manualKeys();
+        const keysByKind = ISSUE_KINDS.map(k => manualKeys(k));
 
         App.TYPE_KEYS.forEach(key => {
-            const row = issueOf(key);
-            const hadRow = (row.manual !== null && row.manual !== undefined);
-            const isManual = keys.indexOf(key) !== -1;
-            const memo = memoOf(key);
+            const parts = ISSUE_KINDS.map((kind, i) => collectKind(kind, key, keysByKind[i]));
+            const any = parts.some(p => p.roll !== null || p.memo !== null);
 
-            if (isManual || memo) {
-                const inp = getPanelEl('issue', key);
-                const raw = numOrNull(inp && inp.value);
-
-                /* 값은 그대로 두고 메모만 적은 경우입니다. 적어 둔 글이 조용히
-                   사라지지 않도록 그때 보이던 숫자를 함께 남깁니다. */
-                const val = (raw !== null) ? raw : row.auto;
-                if (val === null || val === undefined) return;
-
-                upserts.push({
-                    log_date: logDate,
-                    geupji_key: key,
-                    issue_roll: val,
-                    memo: memo
+            if (any) {
+                const row = { log_date: logDate, geupji_key: key };
+                ISSUE_KINDS.forEach((kind, i) => {
+                    row[kind.rollCol] = parts[i].roll;
+                    row[kind.memoCol] = parts[i].memo;
                 });
+                upserts.push(row);
                 return;
             }
 
+            const hadRow = ISSUE_KINDS.some(kind => {
+                const r = rowOf(kind, key);
+                return (r.manual !== null && r.manual !== undefined) || !!r.memo;
+            });
             if (hadRow) deletes.push(key);
         });
 
@@ -483,8 +558,10 @@
 
             tr.appendChild(title);
             tr.appendChild(td(readonlyCell('inventory', key, '0kg')));
+            /* 출고 두 칸 모두 입력칸입니다. 자동값이 채워져 있고, 사람이 고치면
+               그 값만 저장됩니다(자동값은 저장하지 않습니다). */
             tr.appendChild(td(inputCell('issue', key)));
-            tr.appendChild(td(readonlyCell('sysissue', key, '–'), 'f1il-erp-empty'));
+            tr.appendChild(td(inputCell('sysissue', key)));
             stockBody.appendChild(tr);
 
             // ── 사용량 상세 내역 ──
@@ -496,8 +573,8 @@
             usageBody.appendChild(ur);
         });
 
-        // ERP · 전산 출고는 값이 오기 전까지 옅게
-        App.elements.wrapper.querySelectorAll('.f1il-panel-cell[data-field="erp"], .f1il-panel-cell[data-field="sysissue"]')
+        // ERP 열은 값이 오기 전까지 옅게 (전산 출고는 입력칸이라 placeholder 로 처리)
+        App.elements.wrapper.querySelectorAll('.f1il-panel-cell[data-field="erp"]')
             .forEach(el => el.classList.add('f1il-erp-empty'));
     };
 
@@ -681,9 +758,12 @@
         App.TYPE_KEYS.forEach(key => {
             const issueInput = getPanelEl('issue', key);
             if (issueInput) issueInput.value = '';
+            const sysInput = getPanelEl('sysissue', key);
+            if (sysInput) sysInput.value = '';
         });
 
         App.applyErpUsage(null);   // ERP 열은 조회 결과가 오기 전까지 '–'
+        App.applySysIssue(null);   // 전산 출고도 마찬가지
         App.applyAlloc(null);      // 배분 입력칸도 비웁니다 (미입력 = 전액 잔여 품목)
 
         App.state.prevDayInventory = {};
@@ -726,7 +806,8 @@
         App.elements.wrapper
             .querySelectorAll('.f1il-cell[data-field="pre"], .f1il-cell[data-field="count"],'
                 + ' .f1il-cell[data-field="carry"],'
-                + ' .f1il-panel-cell[data-field="issue"], .f1il-panel-cell[data-field="alloc"]')
+                + ' .f1il-panel-cell[data-field="issue"], .f1il-panel-cell[data-field="sysissue"],'
+                + ' .f1il-panel-cell[data-field="alloc"]')
             .forEach(input => { input.readOnly = isReadOnly; });
         App.elements.wrapper
             .querySelectorAll('.f1il-cell[data-field="type1"], .f1il-cell[data-field="type2"]')

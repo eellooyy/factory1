@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1공장 전산 입출고 상세 내역</title>
+    <title>1공장 입출고 내역</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
@@ -26,7 +26,7 @@
     <div class="gf3-header">
         <div class="gf3-title-wrap">
             <span class="material-symbols-outlined gf3-hamburger">menu</span>
-            <span class="gf3-main-title">1공장 전산 입출고 상세 내역</span>
+            <span class="gf3-main-title">1공장 입출고 내역</span>
 
             <div class="gf3-dropdown">
                 <div class="gf3-dropdown-item">
@@ -92,40 +92,49 @@
 <div class="gf3-wrapper f1iob-wrapper" data-page-module="Factory1InoutboundModule" style="padding-top: 16px;">
 
     <!-- ============================================================
-         1층: 입고 (B5 · B6 합산)
+         1층: 스캔 상세 (입고 ↔ 출고)
 
-         B5 와 B6 는 스캔 테이블이 둘로 나뉘어 있을 뿐 같은 입고입니다.
-         화면에서는 하나로 합치고, 어느 층 것인지는 행의 floor 값으로만
-         남깁니다(3층 '확인 필요'의 구분 열에서만 드러납니다).
+         입고와 출고는 열 구성도 읽는 법도 같아 한 화면에 두고 우측
+         스위처로 방향만 바꿉니다. 좌측 상단 제목이 따라 바뀝니다.
+         한 번 조회할 때 두 방향을 모두 받아 두므로 스위처를 눌러도
+         다시 조회하지 않습니다.
+
+         입고는 B5·B6 를 한 표로 합칩니다. 5층(B5)에서 들어온 행만 배경색과
+         우측 '5층 입고' 태그로 구분합니다.
 
          표에는 **해석이 끝난 값**이 들어갑니다. 오독을 되살린 행도 되살린
          값 그대로입니다 — 원본을 늘어놓으면 사람이 매번 60=62, 4372=1404 를
-         암산해야 하니까요. 되살리지 못한 행은 3층으로 갑니다.
+         암산해야 하니까요. 되살리지 못한 행은 아래 '확인 필요'로 갑니다.
 
-         우측 칸은 품목별 롤 수 요약입니다. 표 카드와 높이가 서로 맞아
-         (.f1iob-split 의 align-items: stretch) 상세와 합계를 눈을 위아래로
-         옮기지 않고 나란히 읽습니다.
-
-         ※ 전산 입고는 실측 오류율이 0% 라 품질이 좋습니다. 웹 입고
-           페이지(factory1_ipgo)의 오타를 잡는 용도로 거의 그대로 쓸 수 있습니다.
+         표 좌우의 얇은 띠는 전날/다음날 이동입니다. 상단 헤더의 이전·다음과
+         같은 동작이고, 표를 보다가 손을 위로 올리지 않기 위한 것입니다.
 
          ※ thead / colgroup 은 constant.js 의 COLUMNS 순서와 짝입니다.
-           열을 넣거나 빼면 2층 표도 같이 고쳐야 합니다.
          ============================================================ -->
     <div class="f1iob-floor-container">
         <div class="panel-header-grid mb-3">
             <div class="header-left">
-                <span class="panel-title">입고</span>
-                <span class="panel-subtitle">B5 · B6 합산</span>
+                <span class="panel-title" id="f1iobDirTitle">입고</span>
+                <span class="panel-subtitle" id="f1iobBaseDate"></span>
             </div>
             <div class="header-center text-center"></div>
             <div class="header-right">
-                <span class="f1iob-count" id="f1iobSubtitle"></span>
+                <!-- 방향 스위처 — R/L · Kg 스위처와 같은 부품입니다 -->
+                <div class="unit-switcher f1iob-dir-switch" id="f1iobDirSwitch" title="입고 / 출고 전환">
+                    <div class="selection-bg mode-in"></div>
+                    <button class="unit-btn active" data-direction="in" type="button">입고</button>
+                    <button class="unit-btn" data-direction="out" type="button">출고</button>
+                </div>
             </div>
         </div>
 
         <div class="f1iob-split">
             <div class="f1iob-split-main">
+                <!-- 전날 -->
+                <button type="button" class="f1iob-daynav" id="f1iobDayPrev" title="전날">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+
                 <div class="inner-layout-card">
                     <div class="f1iob-table-scroll">
                         <table class="f1iob-table">
@@ -147,94 +156,59 @@
                                     <th>물류코드</th>
                                 </tr>
                             </thead>
-                            <tbody id="f1iobInBody">
+                            <tbody id="f1iobBody">
                                 <tr class="f1iob-placeholder"><td colspan="6">불러오는 중...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
+
+                <!-- 다음날 (오늘 이후로는 잠깁니다) -->
+                <button type="button" class="f1iob-daynav" id="f1iobDayNext" title="다음날">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
             </div>
 
             <!-- 품목별 롤 수 — 순서 고정, 0롤도 줄을 지킵니다 (render.js 가 채웁니다) -->
-            <div class="f1iob-split-side" id="f1iobInSide"></div>
+            <div class="f1iob-split-side" id="f1iobSide"></div>
         </div>
     </div>
 
     <!-- ============================================================
-         2층: 출고 (B6)
+         2층: 확인 필요 — 자동 해석이 안 된 행
 
-         전주 98.5% · 페이퍼 87% 가 깨져 들어옵니다(대한은 100% 정상).
-         그래도 남겨 두는 이유는 정확해서가 아니라 계산 출고(지고 재고 차이)와
-         출처가 다르기 때문입니다. 둘이 같이 틀리면 실사 쪽, 하나만 틀리면
-         그쪽 문제로 범위가 좁혀집니다.
-         ============================================================ -->
-    <div class="f1iob-floor-container">
-        <div class="panel-header-grid mb-3">
-            <div class="header-left">
-                <span class="panel-title">출고</span>
-                <span class="panel-subtitle">B6</span>
-            </div>
-            <div class="header-center text-center"></div>
-            <div class="header-right"></div>
-        </div>
-
-        <div class="f1iob-split">
-            <div class="f1iob-split-main">
-                <div class="inner-layout-card">
-                    <div class="f1iob-table-scroll">
-                        <table class="f1iob-table">
-                            <colgroup>
-                                <col class="f1iob-col-time">
-                                <col class="f1iob-col-vendor">
-                                <col class="f1iob-col-grade">
-                                <col class="f1iob-col-roll">
-                                <col class="f1iob-col-weight">
-                                <col class="f1iob-col-pcode">
-                            </colgroup>
-                            <thead>
-                                <tr>
-                                    <th>시간</th>
-                                    <th>회사</th>
-                                    <th>권종</th>
-                                    <th>RollNo</th>
-                                    <th>중량</th>
-                                    <th>물류코드</th>
-                                </tr>
-                            </thead>
-                            <tbody id="f1iobOutBody">
-                                <tr class="f1iob-placeholder"><td colspan="6">불러오는 중...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div class="f1iob-split-side" id="f1iobOutSide"></div>
-        </div>
-    </div>
-
-    <!-- ============================================================
-         3층: 확인 필요 — 자동 해석이 안 된 행
-
-         위 두 표에서 걸러져 내려온 행들입니다. 지우지 않고 모아 두는 이유는
+         위 표에서 걸러져 내려온 행들입니다. 지우지 않고 모아 두는 이유는
          ① 그 건수가 곧 "오늘 스캔이 얼마나 깨졌나" 이고,
          ② 인식 불가 롤(B5 의 0000/000/00)도 물건은 실제로 들어왔기 때문입니다.
             여기서 빼면 입고량이 조용히 줄어듭니다.
 
          값은 **원본 그대로**입니다. 판단 근거가 되어야 하므로 회사 자리에
-         해석 결과 대신 원본 제조사코드를 둡니다. 입고·출고가 섞이므로 맨 앞에
-         구분 열을 두고 시각순으로 세웁니다.
+         해석 결과 대신 원본 제조사코드를 둡니다.
+         위 표와 방향이 같이 움직입니다 — 입고를 보고 있으면 입고의 깨진 행만
+         나옵니다.
+
+         평소에는 제목 줄만 접어 둡니다. 대부분의 날은 0건이고(전 기간 6건),
+         그런 날 빈 표가 화면을 반쯤 차지하면 위의 상세 내역이 밀립니다.
+         건수는 접힌 채로도 제목 옆에 보이므로, 숫자가 붙은 날만 펼치면 됩니다.
 
          ※ 나중에 여기에 수기 보정을 붙일 자리입니다. (규칙을 추가할지,
            행 단위로 사람이 품목을 지정할지는 아직 정하지 않았습니다)
          ============================================================ -->
-    <div class="f1iob-floor-container f1iob-review">
+    <div class="f1iob-floor-container f1iob-review collapsed" id="f1iobReviewPanel">
         <div class="panel-header-grid mb-3">
             <div class="header-left">
                 <span class="panel-title">확인 필요</span>
                 <span class="panel-subtitle">자동 해석이 안 된 스캔 (원본 그대로)</span>
             </div>
-            <div class="header-center text-center"></div>
+            <!-- 표 좌우의 날짜 버튼과 같은 부품입니다 (아래 방향).
+                 제목과 건수 사이 한가운데에 넓게 두어, 접혀 있을 때 이 줄 자체가
+                 "여기를 누르면 열린다"로 읽히게 했습니다. -->
+            <div class="header-center text-center">
+                <button type="button" class="f1iob-daynav f1iob-expand" id="f1iobReviewToggle"
+                        title="펼치기" aria-expanded="false">
+                    <span class="material-symbols-outlined">expand_more</span>
+                </button>
+            </div>
             <div class="header-right">
                 <span class="f1iob-count warn" id="f1iobReviewCount"></span>
             </div>
@@ -271,7 +245,6 @@
         </div>
     </div>
 
-
 </div>
 
 <div id="f3iNoticeModal" class="f3i-nmodal-overlay">
@@ -295,7 +268,12 @@
 <script src="js/common_pdf.js"></script>
 <script src="js/common_subnav.js"></script>
 
+<!-- 바코드 해석 규칙 (급지 재고 페이지의 '전산 출고' 열과 공유합니다).
+     constant.js 가 로드 시점에 이 모듈의 ITEMS 를 읽으므로 반드시 먼저 옵니다. -->
+<script src="js/factory1_barcode.js"></script>
+
 <script src="js/factory1_inoutbound_constant.js"></script>
+<script src="js/factory1_inoutbound_api.js"></script>
 <script src="js/factory1_inoutbound_render.js"></script>
 <script src="js/factory1_inoutbound_main.js"></script>
 </body>

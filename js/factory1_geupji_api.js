@@ -210,6 +210,8 @@
        뷰가 자동계산값과 수기값을 함께 내줍니다. 화면은 합친 값을 보여주고,
        저장할 때만 자동값과 견줘 달라진 것을 가려냅니다.
        ──────────────────────────────────────────────────────────────────────── */
+    const numOrNull = v => (v === null || v === undefined) ? null : Number(v);
+
     async function fetchIssue(dateStr) {
         const { data, error } = await supabase
             .from(App.ISSUE_VIEW)
@@ -221,14 +223,85 @@
             return null;
         }
 
-        const num = v => (v === null || v === undefined) ? null : Number(v);
+        const byKey = {};
+        (data || []).forEach(r => {
+            byKey[r.geupji_key] = {
+                auto:   numOrNull(r.auto_roll),
+                manual: numOrNull(r.manual_roll),
+                memo:   r.memo || null
+            };
+        });
+        return byKey;
+    }
+
+    /* 전산 출고의 수기값·메모는 실제 출고와 **같은 행**에 삽니다
+       (factory1_geupji_issue 의 sys_issue_roll · sys_memo).
+
+       뷰(v_factory1_geupji_issue)를 고치지 않고 테이블을 한 번 더 읽는 이유는,
+       전산 출고의 자동값이 뷰가 아니라 화면에서 바코드로 계산되기 때문입니다.
+       뷰가 낼 것이 없으니 뷰를 건드릴 이유도 없습니다. */
+    async function fetchSysManual(dateStr) {
+        const { data, error } = await supabase
+            .from(App.ISSUE_TABLE)
+            .select('geupji_key, sys_issue_roll, sys_memo')
+            .eq('log_date', dateStr);
+
+        if (error) {
+            console.error('[factory1_geupji] 전산 출고 수기값 조회 실패:', error.message);
+            return {};
+        }
 
         const byKey = {};
         (data || []).forEach(r => {
             byKey[r.geupji_key] = {
-                auto:   num(r.auto_roll),
-                manual: num(r.manual_roll),
-                memo:   r.memo || null
+                manual: numOrNull(r.sys_issue_roll),
+                memo:   r.sys_memo || null
+            };
+        });
+        return byKey;
+    }
+
+    /* ── 전산 출고 ────────────────────────────────────────────────────────────
+       공정 PC 가 찍은 출고 바코드(factory1_outbound_b6)를 용지별 롤 수로 셉니다.
+       해석 규칙은 `js/factory1_barcode.js` 에 있고, 입출고 내역 페이지가 같은
+       파일을 씁니다 — 규칙을 두 벌 두면 두 화면의 숫자가 조용히 갈라집니다.
+
+       실제 출고(지고 재고에서 역산)와 나란히 두는 이유는 **출처가 다르기**
+       때문입니다. 둘이 같이 틀리면 실사 쪽, 하나만 틀리면 그쪽 문제로 범위가
+       좁혀집니다. 전산 출고는 전주 98.5% · 페이퍼 87% 가 오독으로 들어오지만
+       규칙으로 되살아나므로 롤 수는 쓸 만합니다.
+
+       total 을 함께 돌려주는 이유: 그날 스캔이 아예 없는 날(백업이 멈춰 있던
+       구간, 휴일)과 "그 용지만 0롤"인 날은 뜻이 다릅니다. 전자를 0 으로
+       보여주면 출고가 없었던 것처럼 읽힙니다.
+
+       ※ 48.8g(나라사랑)과 F.T 는 geupji_key 가 없어 여기서 빠집니다.
+         급지를 타지 않는 용지입니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    async function fetchSysIssue(dateStr) {
+        const Barcode = window.Factory1Barcode;
+        if (!Barcode) {
+            console.error('[factory1_geupji] factory1_barcode.js 가 로드되지 않았습니다.');
+            return null;
+        }
+
+        const [rows, manual] = await Promise.all([
+            Barcode.fetchRows(supabase, [{ name: Barcode.TABLES.OUT_B6, floor: 'B6' }], dateStr),
+            fetchSysManual(dateStr)
+        ]);
+
+        /* 스캔이 아예 없는 날은 자동값을 null 로 둡니다. 0 을 채우면
+           "출고가 없었다"로 읽히는데 사실은 "자료가 없다"입니다.
+           그런 날에도 사람이 적어 둔 값은 그대로 살립니다. */
+        const counted = (rows && rows.length) ? Barcode.countByGeupjiKey(rows) : null;
+
+        const byKey = {};
+        App.TYPE_KEYS.forEach(key => {
+            const m = manual[key] || {};
+            byKey[key] = {
+                auto:   counted ? (counted[key] || 0) : null,
+                manual: (m.manual === undefined) ? null : m.manual,
+                memo:   m.memo || null
             };
         });
         return byKey;
@@ -251,13 +324,14 @@
         App.resetToDefaults();
 
         // 서로 무관한 조회라 한꺼번에 보냅니다
-        const [rows, erp, prevStock, alloc, carry, issue] = await Promise.all([
+        const [rows, erp, prevStock, alloc, carry, issue, sysIssue] = await Promise.all([
             fetchGeupjiRows(dateStr),
             fetchErpUsage(dateStr),
             fetchStock(App.utils.addDays(dateStr, -1)),
             fetchAlloc(dateStr),
             fetchCarry(dateStr),
-            fetchIssue(dateStr)
+            fetchIssue(dateStr),
+            fetchSysIssue(dateStr)
         ]);
 
         /* 날짜를 빠르게 넘기면 응답이 순서를 바꿔 도착할 수 있습니다.
@@ -269,6 +343,7 @@
         App.applyAlloc(alloc);
         App.applyCarry(carry);
         App.applyIssue(issue);
+        App.applySysIssue(sysIssue);
         App.state.prevDayInventory = prevStock || {};
 
         App.calculateFields();
@@ -384,7 +459,7 @@
             const { error } = await supabase
                 .from(App.ISSUE_TABLE)
                 .upsert(issue.upserts, { onConflict: 'log_date,geupji_key' });
-            if (error) return fail('실제 출고 저장에 실패했습니다', error);
+            if (error) return fail('출고 수기 수정 저장에 실패했습니다', error);
         }
 
         // 자동값으로 되돌린 용지 — 행을 지우면 뷰가 다시 자동값을 내줍니다
@@ -394,7 +469,7 @@
                 .delete()
                 .eq('log_date', logDate)
                 .in('geupji_key', issue.deletes);
-            if (error) return fail('실제 출고 되돌리기에 실패했습니다', error);
+            if (error) return fail('출고 되돌리기에 실패했습니다', error);
         }
 
         // 저장된 상태가 곧 다음 저장의 기준이 됩니다
@@ -404,17 +479,27 @@
             if (!App.state.loadedCarry[r.geupji_key]) App.state.loadedCarry[r.geupji_key] = {};
             App.state.loadedCarry[r.geupji_key][r.slot] = r.remain_kg;
         });
-        issue.upserts.forEach(r => {
-            if (!App.state.loadedIssue[r.geupji_key]) {
-                App.state.loadedIssue[r.geupji_key] = { auto: null, manual: null, memo: null };
+        /* 실제 · 전산 두 갈래가 한 행에 같이 삽니다. 저장된 상태가 곧 다음
+           저장의 기준이 되므로 둘 다 갱신해야 합니다 — 한쪽만 옮기면 다음 저장
+           때 그쪽이 "안 바뀐 것"으로 보여 조용히 빠집니다. */
+        const touchIssue = (store, key, manual, memo) => {
+            if (!App.state[store][key]) {
+                App.state[store][key] = { auto: null, manual: null, memo: null };
             }
-            App.state.loadedIssue[r.geupji_key].manual = r.issue_roll;
-            App.state.loadedIssue[r.geupji_key].memo = r.memo;
+            App.state[store][key].manual = manual;
+            App.state[store][key].memo = memo;
+        };
+
+        issue.upserts.forEach(r => {
+            touchIssue('loadedIssue', r.geupji_key, r.issue_roll, r.memo);
+            touchIssue('loadedSysIssue', r.geupji_key, r.sys_issue_roll, r.sys_memo);
         });
         issue.deletes.forEach(key => {
-            if (!App.state.loadedIssue[key]) return;
-            App.state.loadedIssue[key].manual = null;
-            App.state.loadedIssue[key].memo = null;
+            ['loadedIssue', 'loadedSysIssue'].forEach(store => {
+                if (!App.state[store][key]) return;
+                App.state[store][key].manual = null;
+                App.state[store][key].memo = null;
+            });
         });
         App.state.isChanged = false;
 

@@ -214,9 +214,10 @@ input.f1il-panel-cell {
 .delta-negative { color: #c62828; }
 
 /* ================================================
-   실제 출고 — 자동계산값과 수기 수정값
+   출고 — 자동계산값과 수기 수정값 (실제 · 전산 두 갈래 공통)
 
-   기본값은 지고 재고에서 계산된 값(v_factory1_geupji_issue.auto_roll)입니다.
+   실제 출고의 기본값은 지고 재고에서 계산된 값(v_factory1_geupji_issue.auto_roll),
+   전산 출고의 기본값은 공정 PC 출고 바코드를 센 값입니다.
    사람이 고친 칸만 색을 달리해, 오차를 볼 때 "이 날은 손을 댔다"가 한눈에
    보이게 합니다. 이 구분이 없으면 오차 검증 자체가 성립하지 않습니다.
    ================================================ */
@@ -251,6 +252,19 @@ input.f1il-panel-cell.f1il-issue-none::placeholder {
     font-size: 11px;
     line-height: 1.3;
 }
+
+/* 어느 출고를 손댔는지 — 두 갈래가 한 띠에 섞이므로 앞에 답니다.
+   실제/전산이 구분되지 않으면 "무엇이 어긋났나"를 읽을 수가 없습니다. */
+.f1il-issue-memo-tag {
+    flex: 0 0 auto;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 3px;
+    padding: 1px 5px;
+    white-space: nowrap;
+}
+.f1il-issue-tag-issue    { color: #8a6100; background: #fdf0dd; }
+.f1il-issue-tag-sysissue { color: #1c6ec4; background: #e8f1fb; }
 
 .f1il-issue-memo-label {
     flex: 0 0 auto;
