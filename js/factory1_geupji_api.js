@@ -62,10 +62,53 @@
             });
         });
 
+        /* 잔여 주행지 표에 나올 용지 — 마스터 뷰가 아니라 base 테이블에서 읽습니다.
+           v_factory1_geupji_paper 를 건드리지 않으려는 것이고(컬럼을 끼워 넣으려면
+           뷰를 통째로 다시 만들어야 합니다), 행이 대여섯 개라 비용도 없습니다. */
+        const carry = await supabase
+            .from('factory1_geupji_paper')
+            .select('geupji_key')
+            .eq('is_carry', true)
+            .order('sort_order');
+
+        if (carry.error) {
+            console.error('[factory1_geupji] 잔여 주행지 용지 조회 실패:', carry.error.message);
+            App.CARRY_KEYS = [];
+        } else {
+            App.CARRY_KEYS = (carry.data || []).map(r => r.geupji_key);
+        }
+
         App.buildPaperOptions();
         App.buildPanels();
+        App.buildCarryTable();
         return true;
     };
+
+    /* ── 잔여 주행지 ──────────────────────────────────────────────────────────
+       계승까지 끝난 뷰를 읽습니다. 그 날짜에 행이 없어도 뷰가 직전 값을 채워
+       돌려주므로, 몇 달 전에 적은 값이 오늘 화면에 그대로 뜹니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    async function fetchCarry(dateStr) {
+        if (!App.CARRY_KEYS.length) return {};
+
+        const { data, error } = await supabase
+            .from(App.CARRY_VIEW)
+            .select('geupji_key, slot, remain_kg')
+            .eq('log_date', dateStr);
+
+        if (error) {
+            console.error('[factory1_geupji] 잔여 주행지 조회 실패:', error.message);
+            return null;
+        }
+
+        const byKey = {};
+        (data || []).forEach(r => {
+            if (r.remain_kg === null || r.remain_kg === undefined) return;
+            if (!byKey[r.geupji_key]) byKey[r.geupji_key] = {};
+            byKey[r.geupji_key][r.slot] = Number(r.remain_kg);
+        });
+        return byKey;
+    }
 
     /* ── 회계용 재고 배분 ─────────────────────────────────────────────────────
        { 품목코드: kg }. 입력한 품목만 행이 있고, 잔여 품목은 저장하지 않습니다.
@@ -178,11 +221,12 @@
         App.resetToDefaults();
 
         // 서로 무관한 조회라 한꺼번에 보냅니다
-        const [rows, erp, nextStock, alloc] = await Promise.all([
+        const [rows, erp, nextStock, alloc, carry] = await Promise.all([
             fetchGeupjiRows(dateStr),
             fetchErpUsage(dateStr),
             fetchStock(App.utils.addDays(dateStr, 1)),
-            fetchAlloc(dateStr)
+            fetchAlloc(dateStr),
+            fetchCarry(dateStr)
         ]);
 
         /* 날짜를 빠르게 넘기면 응답이 순서를 바꿔 도착할 수 있습니다.
@@ -192,6 +236,7 @@
         App.applyGeupjiRows(rows);
         App.applyErpUsage(erp);
         App.applyAlloc(alloc);
+        App.applyCarry(carry);
         App.state.nextDayInventory = nextStock || {};
 
         App.calculateFields();
@@ -226,9 +271,11 @@
 
         const { upserts, deletes, keep } = App.collectRows(logDate);
         const alloc = App.collectAlloc(logDate);
+        const carry = App.collectCarry(logDate);
 
         // 저장할 것도 지울 것도 없는 경우 — 조용히 빠져나가면 눌린 건지 아닌지 알 수 없습니다
-        if (!upserts.length && !deletes.length && !alloc.upserts.length && !alloc.deletes.length) {
+        if (!upserts.length && !deletes.length && !alloc.upserts.length
+            && !alloc.deletes.length && !carry.length) {
             alert('저장할 내용이 없습니다.');
             if (App.headerApi && App.headerApi.toggleEditMode) App.headerApi.toggleEditMode();
             return true;
@@ -284,9 +331,24 @@
             if (error) return fail('재고 배분 삭제에 실패했습니다', error);
         }
 
+        /* ── 잔여 주행지 ──
+           값이 바뀐 칸만 옵니다. 삭제 경로가 없는 것이 맞습니다 — 여기서 행을
+           지우면 뷰가 직전 값을 되살려 재고가 줄지 않습니다. 다 쓴 칸은 0 으로
+           들어옵니다. */
+        if (carry.length) {
+            const { error } = await supabase
+                .from(App.CARRY_TABLE)
+                .upsert(carry, { onConflict: 'log_date,geupji_key,slot' });
+            if (error) return fail('잔여 주행지 저장에 실패했습니다', error);
+        }
+
         // 저장된 상태가 곧 다음 저장의 기준이 됩니다
         App.state.loaded = keep;
         App.state.loadedAlloc = alloc.keep;
+        carry.forEach(r => {
+            if (!App.state.loadedCarry[r.geupji_key]) App.state.loadedCarry[r.geupji_key] = {};
+            App.state.loadedCarry[r.geupji_key][r.slot] = r.remain_kg;
+        });
         App.state.isChanged = false;
 
         if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '저장'; }
@@ -306,6 +368,7 @@
         const parts = [`급지대 ${upserts.length}칸`];
         if (deletes.length) parts.push(`${deletes.length}칸 비움`);
         if (alloc.upserts.length) parts.push(`배분 ${alloc.upserts.length}건`);
+        if (carry.length) parts.push(`주행지 ${carry.length}칸`);
         alert(`저장되었습니다. (${parts.join(', ')})`);
 
         return true;

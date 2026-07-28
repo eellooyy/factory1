@@ -174,6 +174,38 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- 잔여 주행지 — 급지대에 걸려 있지 않은 부분 롤 잔량
+
+                     호기 표와 일부러 분리했습니다. 호기 표에 넣으면 "R? 급지대에
+                     걸려 있다"는 뜻이 되는데, 여기 담기는 용지(대한 C)는 몇 달째
+                     급지대에 없이 세워져만 있습니다.
+
+                     매일 적지 않고 값이 바뀐 날만 적습니다. kg 라 매일 저울 숫자를
+                     보고 옮겨 적는 게 일이 되고, 실제로는 몇 달에 한 번 움직입니다.
+                     안 적은 날은 직전 값을 그대로 이어받습니다(계승).
+
+                     ※ tbody 는 비어 있습니다. factory1_geupji_paper.is_carry 가
+                       true 인 용지만 factory1_geupji_render.js 의 App.buildCarryTable()
+                       이 만들어 넣습니다. 48.8g 처럼 같은 성격의 용지가 늘어도
+                       마스터에 플래그만 켜면 되고 이 HTML 은 손대지 않습니다. -->
+                <div class="f1il-machine-box">
+                    <div class="f1il-machine-table-wrap">
+                        <table class="f1il-table f1il-machine-table f1il-carry-table border-outer">
+                            <thead>
+                                <tr>
+                                    <th class="f1il-th f1il-row-title">잔여 주행지</th>
+                                    <th class="f1il-th">①</th>
+                                    <th class="f1il-th">②</th>
+                                    <th class="f1il-th">③</th>
+                                    <th class="f1il-th">④</th>
+                                    <th class="f1il-th">합계</th>
+                                </tr>
+                            </thead>
+                            <tbody id="f1ilCarryBody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
 
             <aside class="f1il-side-panels">

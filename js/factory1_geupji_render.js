@@ -161,6 +161,122 @@
         return pop;
     }
 
+    /* ── 잔여 주행지 표 ──────────────────────────────────────────────────────
+       is_carry 가 켜진 용지마다 한 행. 칸은 CARRY_SLOTS 개이고 마지막에 합계가
+       붙습니다. 합계는 저장하지 않습니다 — 칸의 합이라 저장하면 칸을 고쳤을 때
+       조용히 갈라집니다. 재고실사 페이지는 같은 합을 뷰에서 읽습니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    function carryInput(key, slot) {
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'f1il-cell numeric-input';
+        inp.dataset.field = 'carry';
+        inp.dataset.type = key;
+        inp.dataset.slot = String(slot);
+        inp.inputMode = 'decimal';
+        inp.readOnly = true;   // 편집 모드에서만 열립니다 (setReadOnlyMode)
+        return inp;
+    }
+
+    App.buildCarryTable = function () {
+        const body = document.getElementById('f1ilCarryBody');
+        if (!body) return;
+
+        body.innerHTML = '';
+
+        /* 켜진 용지가 하나도 없으면 표를 통째로 감춥니다. 빈 표가 남아 있으면
+           좌측이 그만큼 길어져 우측 카드 높이까지 밀립니다. */
+        const box = body.closest('.f1il-machine-box');
+        if (!App.CARRY_KEYS.length) {
+            if (box) box.style.display = 'none';
+            return;
+        }
+        if (box) box.style.display = '';
+
+        App.CARRY_KEYS.forEach(key => {
+            const tr = document.createElement('tr');
+            tr.appendChild(rowTitle(App.TYPE_LABELS[key] || key));
+
+            for (let slot = 1; slot <= App.CARRY_SLOTS; slot++) {
+                tr.appendChild(td(carryInput(key, slot)));
+            }
+
+            const total = document.createElement('span');
+            total.className = 'f1il-panel-cell readonly';
+            total.dataset.field = 'carry-total';
+            total.dataset.type = key;
+            total.textContent = '0kg';
+            tr.appendChild(td(total));
+
+            body.appendChild(tr);
+        });
+    };
+
+    // 화면의 칸을 더해 합계 칸에 씁니다 (입력할 때마다 바로 따라 움직입니다)
+    App.calcCarryTotals = function () {
+        App.CARRY_KEYS.forEach(key => {
+            let sum = 0;
+            App.elements.wrapper
+                .querySelectorAll(`.f1il-cell[data-field="carry"][data-type="${key}"]`)
+                .forEach(inp => { sum += App.utils.parseNum(inp.value) || 0; });
+
+            const el = App.elements.wrapper
+                .querySelector(`[data-field="carry-total"][data-type="${key}"]`);
+            if (el) el.textContent = `${App.utils.formatNum(sum) || '0'}kg`;
+        });
+    };
+
+    /* DB(계승 뷰)에서 읽은 값을 칸에 채웁니다.
+       byKey[용지키][칸번호] = kg. 값이 없는 칸은 빈 칸으로 둡니다 — 0 과 다릅니다.
+       (0 은 "다 썼다", 빈 칸은 "그런 롤이 없다"입니다) */
+    App.applyCarry = function (byKey) {
+        App.state.loadedCarry = byKey || {};
+
+        App.elements.wrapper
+            .querySelectorAll('.f1il-cell[data-field="carry"]')
+            .forEach(inp => {
+                const slots = App.state.loadedCarry[inp.dataset.type];
+                const v = slots ? slots[inp.dataset.slot] : undefined;
+                inp.value = (v === undefined || v === null)
+                    ? '' : App.utils.formatNum(v);
+            });
+
+        App.calcCarryTotals();
+    };
+
+    /* 저장할 칸만 골라냅니다 — 계승된 현재 값과 다른 칸만.
+       빈 칸은 0 으로 봅니다. 화면에서 지웠다는 건 "그 롤을 다 썼다"는 뜻이고,
+       행을 안 만들면 뷰가 옛날 값을 이어받아 재고가 줄지 않습니다. */
+    App.collectCarry = function (logDate) {
+        const upserts = [];
+
+        App.elements.wrapper
+            .querySelectorAll('.f1il-cell[data-field="carry"]')
+            .forEach(inp => {
+                const key = inp.dataset.type;
+                const slot = Number(inp.dataset.slot);
+
+                const slots = App.state.loadedCarry[key] || {};
+                const before = slots[slot];
+                const raw = numOrNull(inp.value);
+
+                // 원래도 비어 있었고 지금도 비었다 — 아직 존재한 적 없는 칸입니다
+                if (raw === null && (before === undefined || before === null)) return;
+
+                const now = (raw === null) ? 0 : raw;
+                if (before !== undefined && before !== null && Number(before) === now) return;
+
+                upserts.push({
+                    log_date: logDate,
+                    geupji_key: key,
+                    slot: slot,
+                    remain_kg: now
+                });
+            });
+
+        return upserts;
+    };
+
     App.buildPanels = function () {
         const stockBody = document.getElementById('f1ilStockBody');
         const usageBody = document.getElementById('f1ilUsageBody');
@@ -251,9 +367,10 @@
         const upserts = [];
         const keep = new Set();
 
-        /* updated_at 은 컬럼 기본값이 now() 라 INSERT 때만 채워집니다.
-           upsert 가 UPDATE 로 돌면 옛날 시각이 그대로 남으므로 직접 넣습니다. */
-        const now = new Date().toISOString();
+        /* updated_at 은 DB 가 채웁니다 — INSERT 는 컬럼 기본값 now(),
+           UPDATE 는 touch_updated_at() 트리거입니다. 여기서 보내면 공장 PC
+           시계에 의존하게 되고, 파이썬 스크립트가 같은 테이블을 건드릴 때는
+           아예 안 걸립니다. */
 
         App.MACHINES.forEach(machine => {
             App.COLUMNS.forEach(stand => {
@@ -273,8 +390,7 @@
                     paper_pre: preVal === null ? null : (type1 ? type1.value : null),
                     pre_kg: preVal,
                     paper_roll: rollVal === null ? null : (type2 ? type2.value : null),
-                    roll_qty: rollVal,
-                    updated_at: now
+                    roll_qty: rollVal
                 });
             });
         });
@@ -435,6 +551,7 @@
            값이라, 수정 모드에서도 잠긴 채로 둡니다. (실사용 · 오차와 같은 성격) */
         App.elements.wrapper
             .querySelectorAll('.f1il-cell[data-field="pre"], .f1il-cell[data-field="count"],'
+                + ' .f1il-cell[data-field="carry"],'
                 + ' .f1il-panel-cell[data-field="issue"], .f1il-panel-cell[data-field="alloc"]')
             .forEach(input => { input.readOnly = isReadOnly; });
         App.elements.wrapper
@@ -556,6 +673,16 @@
                 }
             }
         });
+
+        /* 잔여 주행지 합계는 급지대 계산과 무관하지만, 입력 이벤트가 이 함수
+           하나로 모여 있어 여기서 같이 갱신합니다.
+
+           ※ 잔여 주행지는 위의 재고 · 실사용 계산에 넣지 않았습니다. 그 값들은
+             급지대에 걸린 양을 다루고, 다음날 재고를 v_factory1_geupji_stock
+             (호기 표만 보는 뷰)에서 읽어 옵니다. 한쪽에만 더하면 실사용량이
+             주행지 잔량만큼 어긋납니다. 두 값을 합치는 건 재고실사 페이지의
+             몫입니다. */
+        App.calcCarryTotals();
     };
 
     /* ── 배분 팝오버 열고 닫기 ────────────────────────────────────────────────

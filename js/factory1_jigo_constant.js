@@ -95,15 +95,15 @@
             { col: 5,  group: 'jeonju-bonji',  label: 'D',     itemCode: 'jj_bonji_d' },
             { col: 6,  group: 'jeonju-jeonja', label: 'A',     itemCode: 'jj_jeonja_a', sep: true },
             { col: 7,  group: 'jeonju-jeonja', label: 'D',     itemCode: 'jj_jeonja_d' },
-            /* 대한 C · 48.8g — 각자 전용 페이지에서 관리하기로 하고 여기서는 보류했습니다.
-               (대한 C = 1182 전용 페이지, 48.8g = 나라사랑 페이지)
-               열은 자리를 지켜야 하므로 남기고 입력만 막습니다. 전용 페이지가 생기면
-               source 를 붙여 F.T 3열과 똑같이 읽어오게 하면 됩니다. 지금은 읽을 곳이
-               없어 늘 '–' 입니다. 이 페이지에서 입력을 다시 열려면 readonly 만 지우면
-               되고, 저장 대상은 readonly 가 아닌 열에서 자동으로 정해집니다. */
-            { col: 8,  group: 'daehan-c',      label: 'C',     itemCode: 'daehan_c',   sep: true, readonly: true },
+            /* 대한 C — 창고 롤은 여기가 입력 주인입니다. 몇 달씩 안 움직이는 용지지만
+               carry 를 붙이지 않고 매일 적습니다. 창고 재고는 완롤 개수라 두 자리
+               이하이고, 무엇보다 출고 계산이 "행이 없는 날 = 0" 으로 읽기 때문입니다.
+               (급지대에 남은 부분 롤은 kg 라 매일 적기 어려워 급지 재고 페이지의
+                '잔여 주행지' 표에서 계승 방식으로 따로 관리합니다) */
+            { col: 8,  group: 'daehan-c',      label: 'C',     itemCode: 'daehan_c',   sep: true },
 
-            // 나라사랑 전용 용지 — 월 1회만 값이 바뀝니다 (위 [승계 열] 설명 참고)
+            /* 나라사랑 전용 용지 — 월 1회만 값이 바뀝니다 (위 [승계 열] 설명 참고).
+               나라사랑 페이지가 입력 주인이 될 예정이라 여기서는 아직 막아 둡니다. */
             { col: 9,  group: 'daehan-c',      label: '48.8g', itemCode: 'daehan_488', carry: true, readonly: true },
 
             // F.T 3종 — 입력은 'FT 일지' 페이지에서만 합니다 (위 [읽기 전용 열] 참고)
