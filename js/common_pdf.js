@@ -8,7 +8,7 @@
       → hideDuringCapture 배열로 넘긴 요소(#f3iNoticeTicker 등)를
         캡쳐 직전에 display:none 처리했다가 캡쳐 후 원복합니다.
 
-   2) (급지 일지 등) 셀 안의 입력값이 셀 위쪽에 붙어서 캡쳐되던 문제
+   2) (급지 재고 등) 셀 안의 입력값이 셀 위쪽에 붙어서 캡쳐되던 문제
       → html2canvas는 <input>/<select> 안의 텍스트를 실제 브라우저
         렌더링과 다르게(위쪽 정렬로) 그리는 고질적인 버그가 있습니다.
         캡쳐 직전에 모든 input/select의 line-height를 자기 높이에

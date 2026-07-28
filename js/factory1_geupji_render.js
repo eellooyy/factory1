@@ -1,8 +1,8 @@
-/* factory1_ilji_render.js — 1공장 일지 UI 계산 · 렌더링 · 입력 이벤트 바인딩 */
+/* factory1_geupji_render.js — 1공장 급지 재고 UI 계산 · 렌더링 · 입력 이벤트 바인딩 */
 (function () {
     'use strict';
 
-    const App = window.Factory1Ilji;
+    const App = window.Factory1GeupjiInv;
     if (!App) return;
 
     // ── 헬퍼: 요소 조회 ───────────────────────────────────────────────────────
@@ -60,20 +60,20 @@
         });
 
         const issue = {};
-        const erp = {};
         App.TYPE_KEYS.forEach(key => {
             const issueInput = getPanelEl('issue', key);
-            const erpInput = getPanelEl('erp', key);
             issue[key] = issueInput ? issueInput.value.trim() : '';
-            erp[key] = erpInput ? erpInput.value.trim() : '';
         });
 
+        /* ERP 열은 payload 에 넣지 않습니다. 사람이 입력하는 값이 아니라
+           v_factory1_usage_by_item 에서 읽어온 값이라, 여기 복사해 저장하면
+           나중에 회계 보정(adjustments)이 들어왔을 때 저장해 둔 숫자만 옛날
+           값으로 남습니다. 필요할 때 뷰에서 다시 읽는 게 언제나 맞습니다. */
         return {
             // 날짜 state의 원본은 CommonHeader이므로 우선 거기서 읽는다 (null 저장 방지)
             log_date: (App.headerApi && App.headerApi.getCurrentDate()) || App.state.currentDate,
             machines,
-            issue,
-            erp
+            issue
         };
     };
 
@@ -98,21 +98,50 @@
 
         App.TYPE_KEYS.forEach(key => {
             const issueInput = getPanelEl('issue', key);
-            const erpInput = getPanelEl('erp', key);
             if (issueInput) issueInput.value = '';
-            if (erpInput) erpInput.value = '';
         });
+
+        App.applyErpUsage(null);   // ERP 열은 조회 결과가 오기 전까지 '–'
 
         App.state.nextDayInventory = {};
         App.state.isChanged = false;
+    };
+
+    /* ── ERP 사용량 표시 ──────────────────────────────────────────────────────
+       byType 이 null 이거나 그 용지의 키가 없으면 '–' 입니다. 0kg 으로 적으면
+       "그날 안 썼다"로 읽히는데, 실제로는 실적이 아직 안 넘어온 경우가 대부분이라
+       오차 열이 실사용량을 통째로 오차라고 말하게 됩니다.
+
+       화면에 찍는 건 사람이 읽을 문자열이고, 계산에 쓸 원본 숫자는 dataset.value 에
+       따로 둡니다. "1,234kg" 을 다시 숫자로 파싱하는 일을 만들지 않기 위해서입니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    App.applyErpUsage = function (byType) {
+        App.TYPE_KEYS.forEach(key => {
+            const el = getPanelEl('erp', key);
+            if (!el) return;
+
+            const has = byType && Object.prototype.hasOwnProperty.call(byType, key);
+            if (!has) {
+                delete el.dataset.value;
+                el.textContent = '–';
+                el.classList.add('f1il-erp-empty');
+                return;
+            }
+
+            el.dataset.value = byType[key];
+            el.textContent = `${App.utils.formatNum(byType[key]) || '0'}kg`;
+            el.classList.remove('f1il-erp-empty');
+        });
     };
 
     // ── 읽기/편집 모드 전환 ───────────────────────────────────────────────────
     App.setReadOnlyMode = function (isReadOnly) {
         if (!App.elements.wrapper) return;
         App.elements.wrapper.classList.toggle('edit-mode', !isReadOnly);
+        /* ERP 열은 여기 없습니다. 사람이 적는 값이 아니라 사용량 뷰에서 읽어오는
+           값이라, 수정 모드에서도 잠긴 채로 둡니다. (실사용 · 오차와 같은 성격) */
         App.elements.wrapper
-            .querySelectorAll('.f1il-cell[data-field="pre"], .f1il-cell[data-field="count"], .f1il-panel-cell[data-field="issue"], .f1il-panel-cell[data-field="erp"]')
+            .querySelectorAll('.f1il-cell[data-field="pre"], .f1il-cell[data-field="count"], .f1il-panel-cell[data-field="issue"]')
             .forEach(input => { input.readOnly = isReadOnly; });
         App.elements.wrapper
             .querySelectorAll('.f1il-cell[data-field="type1"], .f1il-cell[data-field="type2"]')
@@ -169,15 +198,23 @@
             const actualEl = getPanelEl('actual', k);
             if (actualEl) actualEl.textContent = `${App.utils.formatNum(actualUsage) || '0'}kg`;
 
-            const erpInput = getPanelEl('erp', k);
-            const erpVal = App.utils.parseNum(erpInput?.value);
-            const diff = actualUsage - erpVal;
+            /* ERP 값은 입력칸이 아니라 사용량 뷰에서 받아 dataset.value 에 담아 둔
+               숫자입니다. 그 날짜 실적이 아직 없으면 오차도 낼 수 없어 '–' 입니다.
+               0 으로 두면 실사용량 전체가 오차인 것처럼 보입니다. */
+            const erpEl = getPanelEl('erp', k);
+            const hasErp = !!(erpEl && erpEl.dataset.value !== undefined && erpEl.dataset.value !== '');
 
             const diffEl = getPanelEl('diff', k);
             if (diffEl) {
-                diffEl.textContent = `${App.utils.formatNum(diff) || '0'}kg`;
-                diffEl.classList.toggle('delta-positive', diff > 0);
-                diffEl.classList.toggle('delta-negative', diff < 0);
+                if (!hasErp) {
+                    diffEl.textContent = '–';
+                    diffEl.classList.remove('delta-positive', 'delta-negative');
+                } else {
+                    const diff = actualUsage - App.utils.parseNum(erpEl.dataset.value);
+                    diffEl.textContent = `${App.utils.formatNum(diff) || '0'}kg`;
+                    diffEl.classList.toggle('delta-positive', diff > 0);
+                    diffEl.classList.toggle('delta-negative', diff < 0);
+                }
             }
         });
     };
