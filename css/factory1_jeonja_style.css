@@ -1,14 +1,27 @@
 /* factory1_jeonja_style.css — 1공장 전자신문 (용지재고대장) 페이지 스타일
    ────────────────────────────────────────────────────────────────
-   지고 재고 페이지(factory1_jigo_inventory_style.css)의 표 규격을 그대로
-   따릅니다. 같은 사이트 안에서 표가 두 종류로 보이면 안 되기 때문입니다.
+   나라사랑 페이지(factory1_narasarang_style.css)의 '패널 나누기'를 그대로
+   따릅니다. 덩어리마다 흰 카드를 따로 세우고 사이를 띄우는 방식입니다.
+   한 표 안에서 선이나 배경으로 나누는 것보다 경계가 분명하고, 무엇보다
+   같은 사이트의 다른 화면과 읽는 법이 같아집니다.
 
-   다른 점은 셋입니다.
-     · 층이 없습니다. 표가 하나뿐이라 스크롤 동기화도, 단위 스위처도
-       필요하지 않습니다. (원장이 R/L 과 kg 을 한 줄에 같이 적습니다)
-     · 조회 전용입니다. 입력칸 · 변경분 · 잠긴 행 스타일이 없습니다.
-     · 날짜가 아니라 '달'이 단위입니다. 전월재고 행이 맨 위에, 소계 행이
-       맨 아래에 붙습니다. 둘 다 원장에 있는 행이라 뺄 수 없습니다.
+     ① 날짜 · 면수   그날이 어떤 날인가
+     ② 입고(kg)      들어온 것
+     ③ 출고(kg)      나간 것
+     ④ 재고(kg)      이어지는 값
+
+   색으로는 아무것도 구분하지 않습니다. 배경색을 덩어리마다 깔아 봤더니
+   행 상태(기준일 · 휴간 · 미수신)와 색이 겹쳐서, 그날 줄이 어떤 상태인지가
+   가려졌습니다. 지금 화면에서 색이 붙는 자리는 행 상태와 요일뿐입니다.
+
+   ── 입고 안에서 1576 / 788 / 합계 가르기 ─────────────────────────
+   원장은 입고에 R/L(롤 수)과 수량(kg)을 열 두 개로 따로 적어 다섯 칸입니다.
+   여기서는 kg 아래 작은 글씨로 롤 수를 붙여 한 칸에 담았습니다. 그러면
+     · 입고가 세 칸(1576 · 788 · 합계)이 되어 출고와 열 구성이 똑같아지고
+     · 같은 자리에서 1576끼리 · 788끼리 위아래로 바로 읽힙니다
+     · 규격을 가르는 데 선 하나(.f1jn-sep)면 충분해집니다
+   숫자 칸은 모두 '큰 줄 + 작은 줄' 두 줄짜리 상자입니다. 작은 줄이 없는
+   칸도 빈 줄을 그대로 두어, 네 패널의 숫자가 전부 같은 높이에 옵니다.
 
    .f1jn-*
    ──────────────────────────────────────────────────────────────── */
@@ -20,41 +33,31 @@
     --panel-title-left-offset: 12px;
 
     /*
-      [날짜 열 너비]
-      "7/26(일)" 이 한 줄에 편하게 들어갑니다. 지고 재고와 같은 값입니다.
+      [머리글 높이]
+      2단(44px × 2). 패널 ①은 아랫줄이 비어 있어 CSS 로 높이를 맞춥니다.
     */
-    --f1jn-date-col-width: 84px;
-
-    /*
-      [면수 열 너비]
-      두 자리 숫자 + 증면 표시가 들어갑니다. 데이터 열보다 좁게 둡니다.
-    */
-    --f1jn-myeon-col-width: 62px;
+    --f1jn-head-height: 88px;
 
     /*
       [표 높이]
-      계산식: 헤더 2줄(44px × 2 = 88px) + 행 높이 44px × 보고 싶은 일수
+      계산식: 머리글 88px + 행 높이 44px × 보고 싶은 일수
                12일 → 88 + 44 × 12 = 616px
 
       한 달치가 31행 + 전월재고 + 소계라 한 화면에 다 넣을 수는 없습니다.
-      12일치로 잡아 주 단위(작업일 5일 + 휴무 2일)가 두 묶음 들어오게 했습니다.
-      소계는 tfoot 으로 바닥에 붙어 있어 스크롤과 무관하게 항상 보입니다.
+      12일치로 잡아 주 단위(작업일 5일 + 휴무 2일)가 두 묶음 들어옵니다.
+      소계는 tfoot 으로 바닥에 붙어 스크롤과 무관하게 항상 보입니다.
     */
     --f1jn-scroll-height: 616px;
 
-    /*
-      [데이터 열 개수]
-      입고 5 + 출고 3 + 재고 1 = 9. 열을 늘리면 HTML 의 colgroup span 과
-      이 값을 함께 맞춰 주세요.
-    */
-    --f1jn-data-col-count: 9;
+    /* [날짜 패널 폭] 날짜 84 + 면수 62 + 테두리 */
+    --f1jn-meta-width: 152px;
 }
 
 .f1jn-wrapper {
     gap: 14px;
 }
 
-/* 외곽 프레임 — 지고 재고 · 사용량 · 입고 페이지의 층 컨테이너와 같은 규격 */
+/* 외곽 프레임 — 나라사랑 · 지고 재고의 층 컨테이너와 같은 규격 */
 .f1jn-floor-container {
     background: #ffffff;
     border-radius: 16px;
@@ -133,18 +136,36 @@
 .mb-3 { margin-bottom: 14px; }
 
 /* ================================================
-   표 카드 / 스크롤 영역
+   패널 (덩어리) — 나라사랑과 같은 규격
+   화면이 좁으면 가로 스크롤은 바깥 상자가 받습니다. 패널마다 따로
+   굴리면 네 표의 가로 위치가 어긋나므로 패널 안쪽은 가로를 잠급니다.
    ================================================ */
+.f1jn-panels-outer {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 6px;
+}
+
 .f1jn-panel {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    min-width: 0;
     background: #ffffff;
     border: 1px solid #e5e5ea;
     border-radius: 12px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
 }
+
+/* ① 날짜 · 면수는 글자 폭이 정해져 있어 고정입니다. 늘려 봐야 빈칸만
+   넓어집니다. ②③ 은 열 수가 같아 폭도 같게 두어, 입고와 출고의 1576 이
+   화면에서 같은 너비로 마주 봅니다. */
+.f1jn-panel-1 { flex: 0 0 var(--f1jn-meta-width); }
+.f1jn-panel-2 { flex: 1.5; min-width: 250px; }   /* 입고 1576 · 788 · 합계 */
+.f1jn-panel-3 { flex: 1.5; min-width: 250px; }   /* 출고 1576 · 788 · 합계 */
+.f1jn-panel-4 { flex: 0.5; min-width: 96px; }    /* 재고 */
 
 .f1jn-scroll-area {
     position: relative;
@@ -166,11 +187,12 @@
     table-layout: fixed;
 }
 
-.f1jn-table col.f1jn-col-date { width: var(--f1jn-date-col-width); }
-.f1jn-table col.f1jn-col-myeon { width: var(--f1jn-myeon-col-width); }
-.f1jn-table col.f1jn-col-data {
-    width: calc((100% - var(--f1jn-date-col-width) - var(--f1jn-myeon-col-width)) / var(--f1jn-data-col-count));
-}
+/* 열 폭은 패널 안에서의 비율입니다. 한 패널의 col 합이 100% 입니다. */
+.f1jn-table col.f1jn-col-date  { width: 57%; }
+.f1jn-table col.f1jn-col-myeon { width: 43%; }
+.f1jn-table col.f1jn-col-spec  { width: 34%; }
+.f1jn-table col.f1jn-col-sum   { width: 32%; }
+.f1jn-table col.f1jn-col-stock { width: 100%; }
 
 .f1jn-table thead {
     position: sticky;
@@ -179,7 +201,7 @@
     background: #ffffff;
 }
 
-/* ─ 1레벨 헤더 행 ─ */
+/* ─ 1레벨 머리글 — 패널 이름 ─ */
 .f1jn-thead-lv1 th {
     padding: 8px 2px 5px;
     font-size: 12.5px;
@@ -191,25 +213,19 @@
     white-space: nowrap;
     height: 44px;
     box-sizing: border-box;
-}
-
-.f1jn-group-th {
-    font-size: 12.5px;
-    font-weight: 800;
-    color: #1d1d1f;
-    padding: 8px 2px 5px;
-    background: #ffffff;
     letter-spacing: -0.3px;
 }
 
-/* 재고는 두 행을 병합한 1레벨 헤더입니다 */
-.f1jn-stock-th {
-    vertical-align: middle;
+.f1jn-thead-lv1 th small {
+    font-size: 10px;
+    font-weight: 600;
+    color: #a1a1a8;
+    letter-spacing: 0;
 }
 
-/* ─ 2레벨 헤더 행 ─ */
+/* ─ 2레벨 머리글 — 롤 규격 ─ */
 .f1jn-thead-lv2 th {
-    padding: 4px 1px 5px;
+    padding: 6px 1px 7px;
     font-size: 11.5px;
     font-weight: 700;
     color: #636366;
@@ -219,45 +235,25 @@
     white-space: nowrap;
     height: 44px;
     box-sizing: border-box;
-}
-
-.f1jn-leaf-th {
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #636366 !important;
-    text-align: center;
     letter-spacing: -0.3px;
 }
 
-/* 롤 규격(1576 / 788)과 단위(R/L / kg)를 두 줄로 겹쳐 놓습니다.
-   원장은 헤더가 3단이지만, 사이트의 다른 표가 전부 2단이라 여기만
-   3단으로 두면 같은 자리에서 다른 높이로 읽히게 됩니다. */
-.f1jn-leaf-2line {
-    white-space: normal !important;
-    line-height: 1.25;
+/* 합계는 옆 칸들의 결과입니다. 색을 쓰지 않고 글자 무게로만 구분합니다. */
+.f1jn-sum-th { color: #1d1d1f; font-weight: 800; }
+
+/* 패널 ① 은 2레벨 줄이 비어 있어 그대로 두면 머리글이 44px 로 주저앉고
+   옆 패널과 줄이 어긋납니다. 병합 칸에 전체 높이를 직접 줍니다. */
+.f1jn-panel-1 .f1jn-thead-lv1 th[rowspan="2"] {
+    height: var(--f1jn-head-height);
+    vertical-align: middle;
 }
 
-.f1jn-leaf-2line small {
-    font-size: 9.5px;
-    font-weight: 600;
-    color: #a1a1a8;
-    letter-spacing: 0;
-}
-
-/* 합계 열 머리글 — 옆 칸들의 결과라는 것이 보이게 */
-.f1jn-leaf-sum {
-    color: #1d1d1f !important;
-    font-weight: 800;
-}
-
-/* ─ 그룹 구분선 ─ */
-.f1jn-sep {
-    border-left: 1px solid #e0e0e0 !important;
-}
+/* ─ 열 구분선 — 패널 안에서 규격이 바뀌는 자리 ─ */
+.f1jn-sep { border-left: 1px solid #e0e0e0 !important; }
 
 /* ─ 데이터 셀 ─ */
 .f1jn-table td {
-    padding: 9px 4px;
+    padding: 5px 4px;
     font-size: 13px;
     font-weight: 600;
     text-align: center;
@@ -267,92 +263,56 @@
     height: 44px;
     box-sizing: border-box;
     font-variant-numeric: tabular-nums;
+    vertical-align: middle;
 }
 
-/* ─ 날짜 헤더 & 셀 (좌측 고정) ─ */
+/* 숫자 칸은 모두 두 줄짜리 상자입니다 — 큰 줄(값) + 작은 줄(부기).
+   부기가 없는 칸도 빈 줄을 남겨 두어야 네 패널의 숫자가 같은 높이에
+   옵니다. 빈 줄을 지우면 입고만 아래로 반 줄 내려앉습니다. */
+.f1jn-v {
+    display: block;
+    line-height: 1.15;
+}
+
+.f1jn-sub-v {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.1;
+    color: #a1a1a8;
+    margin-top: 1px;
+    letter-spacing: -0.2px;
+    min-height: 11px;
+}
+
+/* ─ 날짜 (패널 ①) ─ */
 .f1jn-date-th {
-    position: sticky;
-    left: 0;
-    background: #ffffff !important;
-    z-index: 11;
     text-align: center;
-    min-width: var(--f1jn-date-col-width) !important;
-    width: var(--f1jn-date-col-width) !important;
-    border-right: 1px solid #e0e0e0 !important;
-    border-bottom: 1px solid #e0e0e0 !important;
     font-size: 12.5px;
     font-weight: 800;
     color: #1d1d1f;
-    box-sizing: border-box;
     white-space: nowrap;
-    vertical-align: middle;
 }
 
 .f1jn-table td.f1jn-date-td {
-    position: sticky;
-    left: 0;
-    background: #ffffff;
-    z-index: 5;
-    text-align: center;
     white-space: nowrap;
-    border-right: 1px solid #e0e0e0 !important;
     font-size: 12px;
     font-weight: 700;
-    min-width: var(--f1jn-date-col-width) !important;
-    width: var(--f1jn-date-col-width) !important;
-    box-sizing: border-box;
-}
-
-/* ─ 면수 열 ─ */
-.f1jn-myeon-th {
-    vertical-align: middle;
-    font-size: 12.5px;
-    font-weight: 800;
-    color: #1d1d1f;
-    border-bottom: 1px solid #e0e0e0;
-    background: #ffffff;
 }
 
 .f1jn-table td.f1jn-myeon-td {
     font-size: 12.5px;
     font-weight: 700;
     color: #48484a;
-    border-right: 1px solid #e0e0e0;
 }
 
-/* 증면일(본지 + 특집) — 숫자 옆에 작은 점 하나로만 표시합니다.
-   배경을 칠하면 한 달에 4~5줄이 통째로 튀어 재고 흐름이 안 읽힙니다. */
-.f1jn-myeon-plus {
-    color: #c05a00 !important;
-    font-weight: 800;
-}
-
-.f1jn-myeon-plus::after {
-    content: "";
-    display: inline-block;
-    width: 5px; height: 5px;
-    margin-left: 4px;
-    border-radius: 50%;
-    background: #ff9500;
-    vertical-align: 2px;
-}
-
-/* ─ 재고 열 — 이 표의 결론이라 조금 무겁게 둡니다 ─ */
-.f1jn-table td.f1jn-stock-td {
-    font-weight: 800;
-    background: #fafafc;
-    border-left: 1px solid #e0e0e0;
-}
-
-/* ─ 합계 열 ─ */
-.f1jn-table td.f1jn-sum-td {
-    font-weight: 700;
-    color: #1d1d1f;
-}
+/* 합계 · 재고는 옆 칸들의 결과라 조금 무겁게 둡니다 */
+.f1jn-table td.f1jn-sum-td,
+.f1jn-table td.f1jn-stock-td { font-weight: 800; }
 
 /* ─ 요일 색 (지고 재고와 동일) ─ */
-.f1jn-sat { color: #007aff !important; }
-.f1jn-sun { color: #ff3b30 !important; }
+.f1jn-sat .f1jn-v { color: #007aff; }
+.f1jn-sun .f1jn-v { color: #ff3b30; }
 
 /* 값이 없는 칸 — 0 이 아니라 '움직임이 없었다'는 뜻입니다.
    원장이 '-' 로 적는 자리라 그대로 따릅니다. */
@@ -369,15 +329,11 @@
     border-bottom: 1px solid #d1d1d6;
 }
 
-.f1jn-row-carry .f1jn-date-td {
-    background: #f0f0f5 !important;
-    color: #48484a;
-}
+.f1jn-row-carry .f1jn-date-td { color: #48484a; }
 
 /* 휴간 · 미작업일 — 출고가 없는 날. 줄 전체를 옅게 깔아
    작업일 줄만 눈에 들어오게 합니다 */
 .f1jn-row-off td { background: #fcfcfd !important; }
-.f1jn-row-off .f1jn-date-td { background: #fcfcfd; }
 
 /* 원장이 아직 여기까지 오지 않은 날 (주차 마감 전) */
 .f1jn-row-pending td {
@@ -385,15 +341,14 @@
     color: #b8b8be;
 }
 
-.f1jn-row-pending .f1jn-date-td { background: #fffdf7; }
-.f1jn-row-pending .f1jn-stock-td { color: #b8b8be !important; }
-
 /* 기준일 — 상단 날짜 네비게이션이 가리키는 줄 */
 .f1jn-row-base td { background: #e8f4fd !important; }
-.f1jn-row-base .f1jn-date-td { background: #bbdefb !important; }
-.f1jn-row-base .f1jn-stock-td { background: #dbeefb !important; }
+.f1jn-panel-1 .f1jn-row-base td { background: #bbdefb !important; }
 
-.f1jn-table tbody tr:not(.f1jn-row-base):hover td { background: #f4f4f8 !important; }
+/* 마우스를 올린 줄 — 네 패널에 동시에 걸립니다(render.js).
+   표가 넷으로 갈라져 있어 이게 없으면 오른쪽 패널에서 왼쪽 날짜를
+   되짚어 갈 방법이 없습니다. */
+.f1jn-table tbody tr.f1jn-row-hover:not(.f1jn-row-base) td { background: #f0f0f4 !important; }
 
 /* ================================================
    소계 (tfoot) — 바닥 고정
@@ -413,72 +368,63 @@
     border-bottom: none;
 }
 
-.f1jn-table tfoot td.f1jn-date-td {
-    background: #e8e8ee;
-    z-index: 10;
-    font-weight: 800;
-}
-
-.f1jn-table tfoot td.f1jn-stock-td {
-    background: #e8e8ee;
-}
-
 /* ================================================
-   표 아래 범례
+   월 이동 버튼 — 본문 좌우 여백에 세로로 세웁니다
+   ────────────────────────────────────────────────
+   모양은 서브메뉴 이동 버튼(common_subnav.css .gf3-subnav)을 그대로
+   씁니다. 다른 점은 '숨은 기능'이 아니라는 것입니다. 이 표는 달이 단위라
+   월 이동이 주된 조작이므로 평소에도 보이게 기본 투명도를 올립니다.
+   (서브메뉴 버튼은 0.12 → 여기는 0.42)
+
+   common_subnav.css 가 이 파일보다 뒤에 실려서 .f1jn-monthnav 하나만으로는
+   .gf3-subnav 를 못 이깁니다. 두 클래스를 겹쳐 씁니다.
    ================================================ */
-.f1jn-legend {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-    margin-top: 12px;
-    padding: 0 4px;
-    font-size: 11.5px;
-    font-weight: 600;
-    color: #8e8e93;
-    letter-spacing: -0.2px;
-}
-
-.f1jn-legend-item {
-    display: inline-flex;
-    align-items: center;
+.gf3-subnav.f1jn-monthnav {
+    flex-direction: column;
     gap: 5px;
+    opacity: 0.42;
+    background: rgba(0, 0, 0, 0.025);
+    border: 1px solid transparent;
+    padding: 0;
+    font-family: inherit;
 }
 
-.f1jn-dot {
-    display: inline-block;
-    width: 7px; height: 7px;
-    border-radius: 50%;
+.gf3-subnav.f1jn-monthnav:hover,
+.gf3-subnav.f1jn-monthnav:focus-visible {
+    opacity: 1;
+    background: #ffffff;
+    border-color: #e5e5ea;
+    color: #007aff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    outline: none;
 }
 
-.f1jn-dot-plus { background: #ff9500; }
-.f1jn-dot-off { background: #d1d1d6; }
+/* 세로로 쓴 대상 월 — 화살표만 있으면 '다음 페이지'로 오해합니다.
+   달만 적습니다. 연도는 표 위 제목에 이미 있습니다. */
+.f1jn-monthnav-label {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: inherit;
+    white-space: nowrap;
+}
 
-.f1jn-legend-sep { color: #d1d1d6; }
-
-.f1jn-legend-note {
-    color: #a1a1a8;
-    font-weight: 500;
+/* 오늘이 든 달보다 뒤로는 갈 수 없습니다 — 원장이 없는 구간입니다 */
+.gf3-subnav.f1jn-monthnav.is-disabled {
+    opacity: 0.08;
+    pointer-events: none;
 }
 
 /* ================================================
    좁은 화면
    ================================================ */
 @media (max-width: 1200px) {
-    :root {
-        --f1jn-date-col-width: 72px;
-        --f1jn-myeon-col-width: 52px;
-    }
-    .f1jn-table td { font-size: 12px; padding: 9px 2px; }
-    .f1jn-thead-lv1 th, .f1jn-group-th { font-size: 11.5px; }
-    .f1jn-thead-lv2 th, .f1jn-leaf-th { font-size: 10.5px; }
-}
-
-/* 11열이 다 들어가기엔 좁은 화면 — 표 안에서 가로로 스크롤합니다.
-   열을 접거나 숨기지 않습니다. 거래처 원장과 같은 열을 같은 순서로
-   보는 것이 이 화면의 목적이기 때문입니다. */
-@media (max-width: 900px) {
-    .f1jn-scroll-area { overflow-x: auto; }
-    .f1jn-table { min-width: 820px; }
-    .f1jn-legend { font-size: 10.5px; }
+    :root { --f1jn-meta-width: 132px; }
+    .f1jn-panels-outer { gap: 8px; }
+    .f1jn-panel-2, .f1jn-panel-3 { min-width: 230px; }
+    .f1jn-table td { font-size: 12px; padding: 5px 2px; }
+    .f1jn-thead-lv1 th { font-size: 11.5px; }
+    .f1jn-thead-lv2 th { font-size: 10.5px; }
 }

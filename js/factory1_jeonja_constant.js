@@ -123,15 +123,21 @@
             // 상단 네비게이션이 가리키는 날 (이 날이 속한 달을 그립니다)
             currentDate: null,
             currentMonth: null,   // 'YYYY-MM'
+            hoverDay: null,       // 마우스가 올라간 줄 — 네 패널에 같이 걸립니다
             isLoading: false
         },
 
         elements: {
             wrapper: null,
-            body: null,
-            foot: null,
-            scroll: null,
-            monthTitle: null
+            // 패널 번호(1~4) → 요소. 네 표가 같은 줄을 나눠 그립니다.
+            //   1 날짜·면수   2 입고   3 출고   4 재고
+            body: {},
+            foot: {},
+            scroll: {},
+            monthTitle: null,
+            // 본문 좌우 여백에 세우는 월 이동 버튼 — render.js 가 만들어 붙입니다
+            prevMonthBtn: null,
+            nextMonthBtn: null
         }
     };
 

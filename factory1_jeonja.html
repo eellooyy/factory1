@@ -98,17 +98,31 @@
 
     <!-- ============================================================
          전자신문 용지재고대장
-         거래처(전자신문)가 쓰는 원장 그대로의 열 구성입니다. 이 화면을 뽑아
-         그쪽 원장과 나란히 놓고 맞추는 것이 목적이라, 열을 늘리거나 순서를
-         바꾸지 않았습니다.
-
-         원장에 없는데 넣은 열은 '면수' 하나뿐입니다. 출고가 면수에서
-         나오는 값이라, 면수가 화면에 없으면 왜 그 숫자인지 읽을 수가
-         없습니다. (출고 = 정미사용량 × 1.03)
 
          날짜 단위가 아니라 '달' 단위 표입니다. 상단 날짜 네비게이션은 그대로
          두고, 고른 날이 속한 달을 통째로 그린 뒤 그 날 줄을 잡아 줍니다.
          원장 자체가 월 마감 단위라 하루만 떼어 보면 의미가 없습니다.
+         달을 넘기는 것은 본문 좌우의 세로 버튼이 맡습니다.
+
+         [표를 넷으로 나눈 이유] — 나라사랑(factory1_narasarang)과 같은 구성입니다.
+           ① 날짜 · 면수   그날이 어떤 날인가
+           ② 입고(kg)      들어온 것 — 제지사에서 오는 값
+           ③ 출고(kg)      나간 것   — 면수에서 계산되는 값
+           ④ 재고(kg)      ②③에서 이어지는 값
+         값의 출처와 성격이 덩어리마다 달라서, 한 표에 붙여 두면 어디까지가
+         실물이고 어디부터가 계산인지 경계가 보이지 않습니다.
+         네 패널은 세로 스크롤이 묶여 있어 같은 줄이 항상 같은 높이에 옵니다.
+
+         [원장과 달라진 점]
+         원장은 입고에 R/L(롤 수)과 수량(kg)을 열 두 개로 따로 적습니다.
+         여기서는 kg 아래 작은 글씨로 롤 수를 붙여 한 칸에 담았습니다.
+         그래서 입고와 출고가 1576 · 788 · 합계로 열 구성이 똑같아지고,
+         같은 자리에서 1576끼리 · 788끼리 바로 위아래로 읽힙니다.
+         원장 열을 그대로 두는 편이 나으면 되돌리기 쉽습니다 — 입고 패널의
+         colgroup 과 render.js 의 IN_COLS 만 다섯 칸으로 되돌리면 됩니다.
+
+         면수는 원장에 없는 열입니다. 출고가 면수에서 나오는 값이라,
+         면수가 화면에 없으면 왜 그 숫자인지 읽을 수가 없습니다.
          ============================================================ -->
     <div class="f1jn-floor-container">
         <div class="panel-header-grid mb-3">
@@ -125,49 +139,100 @@
             </div>
         </div>
 
-        <div class="f1jn-panel">
-            <div class="f1jn-scroll-area" id="f1jnScroll">
-                <table class="f1jn-table">
-                    <!-- 날짜 · 면수는 고정폭, 나머지 9개 데이터 열은 균등 분할 -->
-                    <colgroup>
-                        <col class="f1jn-col-date">
-                        <col class="f1jn-col-myeon">
-                        <col class="f1jn-col-data" span="9">
-                    </colgroup>
-                    <thead>
-                        <tr class="f1jn-thead-lv1">
-                            <th class="f1jn-date-th" rowspan="2">날짜</th>
-                            <th class="f1jn-myeon-th" rowspan="2">면수</th>
-                            <th colspan="5" class="f1jn-group-th f1jn-sep" data-group="in">입고</th>
-                            <th colspan="3" class="f1jn-group-th f1jn-sep" data-group="out">출고</th>
-                            <th rowspan="2" class="f1jn-group-th f1jn-sep f1jn-stock-th" data-group="stock">재고</th>
-                        </tr>
-                        <tr class="f1jn-thead-lv2">
-                            <!-- 원장은 입고만 R/L(롤 수)과 수량(kg)을 같이 적습니다.
-                                 출고는 kg 뿐이라 그대로 따랐습니다. -->
-                            <th class="f1jn-leaf-th f1jn-sep f1jn-leaf-2line" data-col="in_a_rl">1576<br><small>R/L</small></th>
-                            <th class="f1jn-leaf-th f1jn-leaf-2line" data-col="in_a_kg">1576<br><small>kg</small></th>
-                            <th class="f1jn-leaf-th f1jn-leaf-2line" data-col="in_d_rl">788<br><small>R/L</small></th>
-                            <th class="f1jn-leaf-th f1jn-leaf-2line" data-col="in_d_kg">788<br><small>kg</small></th>
-                            <th class="f1jn-leaf-th f1jn-leaf-sum" data-col="in_sum">합계</th>
-                            <th class="f1jn-leaf-th f1jn-sep" data-col="out_a">1576</th>
-                            <th class="f1jn-leaf-th" data-col="out_d">788</th>
-                            <th class="f1jn-leaf-th f1jn-leaf-sum" data-col="out_sum">합계</th>
-                        </tr>
-                    </thead>
-                    <tbody id="f1jnBody"></tbody>
-                    <!-- 소계는 원장에 있는 행입니다. 스크롤해도 바닥에 붙여 둡니다 -->
-                    <tfoot id="f1jnFoot"></tfoot>
-                </table>
-            </div>
-        </div>
+        <div class="f1jn-panels-outer">
 
-        <!-- 표 아래 한 줄 설명. 원장 숫자의 근거라 화면에서 빼지 않습니다. -->
-        <div class="f1jn-legend">
-            <span class="f1jn-legend-item"><i class="f1jn-dot f1jn-dot-plus"></i>증면일 — 본지 28면 + 특집 8면</span>
-            <span class="f1jn-legend-item"><i class="f1jn-dot f1jn-dot-off"></i>휴간 · 미작업일 — 출고 없음</span>
-            <span class="f1jn-legend-sep">|</span>
-            <span class="f1jn-legend-note">출고 = 정미사용량 × 1.03 (약정 손지 3%) · 1576롤 1R/L = 1,404kg · 788롤 1R/L = 702kg</span>
+            <!-- ① 그날이 어떤 날인가 -->
+            <div class="f1jn-panel f1jn-panel-1">
+                <div class="f1jn-scroll-area" id="f1jnScroll1">
+                    <table class="f1jn-table">
+                        <colgroup>
+                            <col class="f1jn-col-date">
+                            <col class="f1jn-col-myeon">
+                        </colgroup>
+                        <thead>
+                            <!-- 이 패널만 2단 머리글의 아랫줄이 비어 있습니다.
+                                 높이는 CSS 가 다른 패널과 맞춰 줍니다. -->
+                            <tr class="f1jn-thead-lv1">
+                                <th class="f1jn-date-th" rowspan="2">날짜</th>
+                                <th class="f1jn-sep" rowspan="2">면수</th>
+                            </tr>
+                            <tr class="f1jn-thead-lv2"></tr>
+                        </thead>
+                        <tbody id="f1jnBody1"></tbody>
+                        <tfoot id="f1jnFoot1"></tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ② 들어온 것 — kg 아래 작은 글씨가 롤 수(R/L)입니다 -->
+            <div class="f1jn-panel f1jn-panel-2">
+                <div class="f1jn-scroll-area" id="f1jnScroll2">
+                    <table class="f1jn-table">
+                        <colgroup>
+                            <col class="f1jn-col-spec" span="2">
+                            <col class="f1jn-col-sum">
+                        </colgroup>
+                        <thead>
+                            <tr class="f1jn-thead-lv1">
+                                <th colspan="3">입고 <small>(kg)</small></th>
+                            </tr>
+                            <tr class="f1jn-thead-lv2">
+                                <th>1576</th>
+                                <th class="f1jn-sep">788</th>
+                                <th class="f1jn-sep f1jn-sum-th">합계</th>
+                            </tr>
+                        </thead>
+                        <tbody id="f1jnBody2"></tbody>
+                        <tfoot id="f1jnFoot2"></tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ③ 나간 것 — 면수에서 계산되는 값 -->
+            <div class="f1jn-panel f1jn-panel-3">
+                <div class="f1jn-scroll-area" id="f1jnScroll3">
+                    <table class="f1jn-table">
+                        <colgroup>
+                            <col class="f1jn-col-spec" span="2">
+                            <col class="f1jn-col-sum">
+                        </colgroup>
+                        <thead>
+                            <tr class="f1jn-thead-lv1">
+                                <th colspan="3">출고 <small>(kg)</small></th>
+                            </tr>
+                            <tr class="f1jn-thead-lv2">
+                                <th>1576</th>
+                                <th class="f1jn-sep">788</th>
+                                <th class="f1jn-sep f1jn-sum-th">합계</th>
+                            </tr>
+                        </thead>
+                        <tbody id="f1jnBody3"></tbody>
+                        <tfoot id="f1jnFoot3"></tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ④ 이어지는 값 — 1576 · 788 합산입니다 (원장이 나눠 적지 않습니다) -->
+            <div class="f1jn-panel f1jn-panel-4">
+                <div class="f1jn-scroll-area" id="f1jnScroll4">
+                    <table class="f1jn-table">
+                        <colgroup>
+                            <col class="f1jn-col-stock">
+                        </colgroup>
+                        <thead>
+                            <tr class="f1jn-thead-lv1">
+                                <th>재고 <small>(kg)</small></th>
+                            </tr>
+                            <tr class="f1jn-thead-lv2">
+                                <th>합산</th>
+                            </tr>
+                        </thead>
+                        <tbody id="f1jnBody4"></tbody>
+                        <tfoot id="f1jnFoot4"></tfoot>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>

@@ -1,13 +1,15 @@
 /* factory1_jeonja_render.js — 1공장 전자신문 (용지재고대장) 렌더링
    ────────────────────────────────────────────────────────────────
-   지고 재고 페이지(factory1_jigo_render.js)의 표 구성을 따르되, 훨씬
-   얇습니다. 조회 전용이라 셀 편집 · 변경분 추적 · 단위 스위처가 없고,
-   층이 하나뿐이라 스크롤 동기화도 없습니다.
+   나라사랑 페이지(factory1_narasarang_render.js)처럼 표가 넷으로 갈라져
+   있습니다. 네 패널은 열 구성이 다르지만 줄은 같은 날짜로 1:1 대응하므로,
+   한 번에 네 tbody 를 같은 순서로 그립니다. 한 곳이라도 줄 수가 어긋나면
+   전체가 밀리므로 행 생성은 rowsFor() 한 군데에서만 합니다.
 
-   이 파일이 하는 일은 셋뿐입니다.
-     1. 고른 날이 속한 '달'을 통째로 그린다 (전월재고 → 1일 ~ 말일 → 소계)
-     2. 그 날 줄을 잡아 화면 가운데로 끌어온다
-     3. 값이 없는 칸을 '-' 로 깐다
+   하는 일은 넷입니다.
+     1. 고른 날이 속한 '달'을 통째로 그린다 (전월재고 → 1일~말일 → 소계)
+     2. 네 패널의 세로 스크롤을 묶는다
+     3. 마우스를 올린 줄을 네 패널에 동시에 표시한다
+     4. 본문 좌우의 월 이동 버튼을 관리한다
 
    달을 통째로 그리는 이유는 원장이 월 마감 단위이기 때문입니다. 재고는
    전월재고에서 하루씩 이어지는 값이라, 하루만 떼어 보면 그 숫자가 맞는지
@@ -23,28 +25,21 @@
     if (!App) return;
 
     const state = App.state;
+    const PANELS = [1, 2, 3, 4];
 
     /* ── 날짜 유틸 ─────────────────────────────────────────────── */
     function pad(n) { return String(n).padStart(2, '0'); }
 
-    function monthOf(dateStr) {
-        return dateStr ? dateStr.slice(0, 7) : null;
-    }
-
-    function dayOf(dateStr) {
-        return dateStr ? Number(dateStr.slice(8, 10)) : null;
-    }
+    function monthOf(dateStr) { return dateStr ? dateStr.slice(0, 7) : null; }
+    function dayOf(dateStr) { return dateStr ? Number(dateStr.slice(8, 10)) : null; }
 
     function daysInMonth(monthStr) {
-        const y = Number(monthStr.slice(0, 4));
-        const m = Number(monthStr.slice(5, 7));
-        return new Date(y, m, 0).getDate();
+        return new Date(Number(monthStr.slice(0, 4)), Number(monthStr.slice(5, 7)), 0).getDate();
     }
 
     function weekdayOf(monthStr, d) {
-        const y = Number(monthStr.slice(0, 4));
-        const m = Number(monthStr.slice(5, 7));
-        return App.WD_KR[new Date(y, m - 1, d).getDay()];
+        const dt = new Date(Number(monthStr.slice(0, 4)), Number(monthStr.slice(5, 7)) - 1, d);
+        return App.WD_KR[dt.getDay()];
     }
 
     /* ── 숫자 표기 ─────────────────────────────────────────────
@@ -52,18 +47,30 @@
        입출고에서 0 은 '0kg 이 움직였다'가 아니라 '움직임이 없었다'는 뜻이고,
        그 자리에 0 을 찍으면 실제로 0kg 을 받은 날처럼 읽힙니다.
        (재고 열만 예외입니다 — 거기서 0 은 진짜 0 입니다) */
+    const DASH = '<span class="f1jn-empty">–</span>';
+
     function fmt(v) {
-        if (v === null || v === undefined || v === 0 || v === '') {
-            return '<span class="f1jn-empty">–</span>';
-        }
+        if (v === null || v === undefined || v === 0 || v === '') return DASH;
         return Number(v).toLocaleString('ko-KR');
     }
 
     function fmtStock(v) {
-        if (v === null || v === undefined || v === '') {
-            return '<span class="f1jn-empty">–</span>';
-        }
+        if (v === null || v === undefined || v === '') return DASH;
         return Number(v).toLocaleString('ko-KR');
+    }
+
+    /* 칸 하나. 큰 줄(값) + 작은 줄(부기)로 된 두 줄짜리 상자입니다.
+       부기가 없어도 빈 줄을 그대로 둡니다 — 지우면 그 칸만 반 줄 내려앉아
+       네 패널의 숫자가 같은 높이에 오지 않습니다. */
+    function cell(main, sub, cls) {
+        return `<td class="${cls || ''}">`
+             + `<span class="f1jn-v">${main}</span>`
+             + `<span class="f1jn-sub-v">${sub || ''}</span></td>`;
+    }
+
+    // 입고 칸 — kg 아래에 롤 수를 붙입니다 (원장의 R/L 열을 대신합니다)
+    function inCell(kg, rl, cls) {
+        return cell(fmt(kg), rl ? `${rl} R/L` : '', cls);
     }
 
     /* ── 데이터 ────────────────────────────────────────────────
@@ -83,83 +90,60 @@
         return { carryStock: null, rows: rows, total: null };
     }
 
-    /* ── 행 그리기 ─────────────────────────────────────────────── */
+    /* ── 행 그리기 ─────────────────────────────────────────────
+       한 줄을 네 패널의 <tr> 네 개로 만들어 돌려줍니다. 줄 클래스와
+       data-day 는 네 개가 똑같아야 스크롤·호버가 맞물립니다. */
+    function rowSet(opts) {
+        const v = opts.v || {};
+        const open = `<tr class="${opts.cls || ''}"${opts.day ? ` data-day="${opts.day}"` : ''}>`;
 
-    // 전월재고 — 입출고 칸은 비우고 재고만 적습니다
-    function carryRowHtml(carryStock) {
-        return `
-            <tr class="f1jn-row-carry">
-                <td class="f1jn-date-td">전월재고</td>
-                <td class="f1jn-myeon-td">${fmt(null)}</td>
-                <td>${fmt(null)}</td>
-                <td>${fmt(null)}</td>
-                <td>${fmt(null)}</td>
-                <td>${fmt(null)}</td>
-                <td class="f1jn-sum-td">${fmt(null)}</td>
-                <td>${fmt(null)}</td>
-                <td>${fmt(null)}</td>
-                <td class="f1jn-sum-td">${fmt(null)}</td>
-                <td class="f1jn-stock-td">${fmtStock(carryStock)}</td>
-            </tr>`;
+        return {
+            1: open
+                + cell(opts.label, '', `f1jn-date-td ${opts.dateCls || ''}`)
+                + cell(opts.myeon || DASH, opts.myeonSub || '', 'f1jn-myeon-td f1jn-sep')
+                + '</tr>',
+            2: open
+                + inCell(v.inAKg, v.inARl)
+                + inCell(v.inDKg, v.inDRl, 'f1jn-sep')
+                + cell(fmt(v.inSum), '', 'f1jn-sum-td f1jn-sep')
+                + '</tr>',
+            3: open
+                + cell(fmt(v.outA), '')
+                + cell(fmt(v.outD), '', 'f1jn-sep')
+                + cell(fmt(v.outSum), '', 'f1jn-sum-td f1jn-sep')
+                + '</tr>',
+            4: open + cell(fmtStock(v.stock), '', 'f1jn-stock-td') + '</tr>'
+        };
     }
 
-    function dayRowHtml(monthStr, r, baseDay) {
+    function dayRowSet(monthStr, r, baseDay) {
         const wd = weekdayOf(monthStr, r.d);
 
-        const rowCls = [];
-        if (r.kind === App.ROW_OFF) rowCls.push('f1jn-row-off');
-        else if (r.kind === App.ROW_PENDING) rowCls.push('f1jn-row-pending');
-        if (r.d === baseDay) rowCls.push('f1jn-row-base');
+        const cls = [];
+        if (r.kind === App.ROW_OFF) cls.push('f1jn-row-off');
+        else if (r.kind === App.ROW_PENDING) cls.push('f1jn-row-pending');
+        if (r.d === baseDay) cls.push('f1jn-row-base');
 
         let dateCls = '';
         if (wd === '토') dateCls = 'f1jn-sat';
         else if (wd === '일') dateCls = 'f1jn-sun';
 
-        // 증면일 — 본지(28면)보다 많은 날. 점 하나로만 구분합니다
-        const myeonCls = (r.myeon && r.myeon > 28) ? 'f1jn-myeon-plus' : '';
-        const myeonHtml = r.myeon ? `<span class="${myeonCls}">${r.myeon}</span>` : fmt(null);
-
-        const month = Number(monthStr.slice(5, 7));
-
-        return `
-            <tr class="${rowCls.join(' ')}" data-day="${r.d}">
-                <td class="f1jn-date-td ${dateCls}">${month}/${r.d}(${wd})</td>
-                <td class="f1jn-myeon-td">${myeonHtml}</td>
-                <td class="f1jn-sep">${fmt(r.inARl)}</td>
-                <td>${fmt(r.inAKg)}</td>
-                <td>${fmt(r.inDRl)}</td>
-                <td>${fmt(r.inDKg)}</td>
-                <td class="f1jn-sum-td">${fmt(r.inSum)}</td>
-                <td class="f1jn-sep">${fmt(r.outA)}</td>
-                <td>${fmt(r.outD)}</td>
-                <td class="f1jn-sum-td">${fmt(r.outSum)}</td>
-                <td class="f1jn-stock-td">${fmtStock(r.stock)}</td>
-            </tr>`;
-    }
-
-    // 소계 — 원장에 있는 행이라 화면에서 다시 더하지 않고 원장값을 씁니다
-    function totalRowHtml(total) {
-        if (!total) total = {};
-        return `
-            <tr>
-                <td class="f1jn-date-td">소계</td>
-                <td class="f1jn-myeon-td">${fmt(null)}</td>
-                <td class="f1jn-sep">${fmt(total.inARl)}</td>
-                <td>${fmt(total.inAKg)}</td>
-                <td>${fmt(total.inDRl)}</td>
-                <td>${fmt(total.inDKg)}</td>
-                <td>${fmt(total.inSum)}</td>
-                <td class="f1jn-sep">${fmt(total.outA)}</td>
-                <td>${fmt(total.outD)}</td>
-                <td>${fmt(total.outSum)}</td>
-                <td class="f1jn-stock-td">${fmtStock(total.stock)}</td>
-            </tr>`;
+        return rowSet({
+            cls: cls.join(' '),
+            day: r.d,
+            dateCls: dateCls,
+            label: `${Number(monthStr.slice(5, 7))}/${r.d}(${wd})`,
+            myeon: r.myeon ? String(r.myeon) : DASH,
+            // 본지(28면)보다 많은 날. 색 대신 면수 아래 작은 글씨로 적습니다.
+            myeonSub: (r.myeon && r.myeon > 28) ? '증면' : '',
+            v: r
+        });
     }
 
     /* ── 전체 렌더 ─────────────────────────────────────────────── */
     function render(dateStr) {
         const el = App.elements;
-        if (!el.body) return;
+        if (!el.body[1]) return;
 
         const monthStr = monthOf(dateStr);
         const baseDay = dayOf(dateStr);
@@ -172,12 +156,20 @@
             el.monthTitle.textContent = `${monthStr.slice(0, 4)}년 ${monthStr.slice(5, 7)}월`;
         }
 
-        const html = [carryRowHtml(data.carryStock)];
-        data.rows.forEach(r => html.push(dayRowHtml(monthStr, r, baseDay)));
-        el.body.innerHTML = html.join('');
+        const buf = { 1: [], 2: [], 3: [], 4: [] };
+        const push = set => PANELS.forEach(p => buf[p].push(set[p]));
 
-        if (el.foot) el.foot.innerHTML = totalRowHtml(data.total);
+        push(rowSet({ cls: 'f1jn-row-carry', label: '전월재고', v: { stock: data.carryStock } }));
+        data.rows.forEach(r => push(dayRowSet(monthStr, r, baseDay)));
 
+        const foot = rowSet({ label: '소계', v: data.total || {} });
+
+        PANELS.forEach(p => {
+            el.body[p].innerHTML = buf[p].join('');
+            el.foot[p].innerHTML = foot[p];
+        });
+
+        updateMonthNav();
         scrollToBase();
     }
 
@@ -185,22 +177,181 @@
        표가 1일부터 시작해 있으면 매번 손으로 내려야 합니다. */
     function scrollToBase() {
         const el = App.elements;
-        if (!el.scroll || !el.body) return;
+        const area = el.scroll[1];
+        if (!area) return;
 
-        const row = el.body.querySelector('.f1jn-row-base');
-        if (!row) { el.scroll.scrollTop = 0; return; }
+        const row = el.body[1].querySelector('.f1jn-row-base');
+        const top = row
+            ? Math.max(0, row.offsetTop - (area.clientHeight / 2) + (row.offsetHeight / 2))
+            : 0;
 
-        const target = row.offsetTop - (el.scroll.clientHeight / 2) + (row.offsetHeight / 2);
-        el.scroll.scrollTop = Math.max(0, target);
+        PANELS.forEach(p => { el.scroll[p].scrollTop = top; });
+    }
+
+    /* ── 네 패널 묶기 ──────────────────────────────────────────
+       세로 스크롤과 호버를 함께 묶습니다. 표가 넷으로 갈라져 있어 이게
+       없으면 오른쪽 패널에서 왼쪽 날짜를 되짚어 갈 방법이 없습니다. */
+    function bindPanels() {
+        const el = App.elements;
+        let syncing = false;
+
+        PANELS.forEach(p => {
+            const area = el.scroll[p];
+            if (!area) return;
+
+            area.addEventListener('scroll', function () {
+                if (syncing) return;
+                syncing = true;
+                PANELS.forEach(q => {
+                    if (q !== p && el.scroll[q]) el.scroll[q].scrollTop = area.scrollTop;
+                });
+                window.requestAnimationFrame(function () { syncing = false; });
+            });
+
+            // 줄 강조는 위임으로 답니다 — 행이 매달 다시 그려지기 때문입니다
+            area.addEventListener('mouseover', function (e) {
+                const tr = e.target.closest('tr[data-day]');
+                setHoverDay(tr ? tr.dataset.day : null);
+            });
+            area.addEventListener('mouseleave', function () { setHoverDay(null); });
+        });
+    }
+
+    function setHoverDay(day) {
+        const el = App.elements;
+        if (state.hoverDay === day) return;
+        state.hoverDay = day;
+
+        PANELS.forEach(p => {
+            if (!el.body[p]) return;
+            el.body[p].querySelectorAll('tr.f1jn-row-hover')
+                .forEach(tr => tr.classList.remove('f1jn-row-hover'));
+            if (day) {
+                const tr = el.body[p].querySelector(`tr[data-day="${day}"]`);
+                if (tr) tr.classList.add('f1jn-row-hover');
+            }
+        });
+    }
+
+    /* ── 월 이동 버튼 ──────────────────────────────────────────
+       본문 좌우 여백에 세로로 긴 띠를 세웁니다. 모양은 서브메뉴 이동
+       버튼(common_subnav)과 같고, 하는 일만 다릅니다 — 페이지 이동이
+       아니라 이 표의 달을 바꿉니다.
+
+       상단 날짜 네비게이션과 따로 놀면 안 되므로, 버튼은 직접 그리지 않고
+       공통 헤더의 setCurrentDate() 를 부릅니다. 그러면 날짜 표시 · 다음날
+       버튼 잠금 · 표가 한 번에 같이 움직입니다. */
+
+    function shiftMonth(delta) {
+        if (!App.headerApi || !state.currentMonth) return;
+
+        const t = new Date(Number(state.currentMonth.slice(0, 4)),
+                           Number(state.currentMonth.slice(5, 7)) - 1 + delta, 1);
+        const tm = `${t.getFullYear()}-${pad(t.getMonth() + 1)}`;
+
+        /* 옮겨 갈 날짜 — 보던 날짜(일)를 그대로 유지합니다. 그 달에 없는
+           날이면 말일로, 오늘을 넘어가면 오늘로 당깁니다. 공통 헤더가
+           '오늘 이후'를 막고 있어 넘겨 주면 다음날 버튼 상태가 어긋납니다. */
+        const day = Math.min(dayOf(state.currentDate) || 1, daysInMonth(tm));
+        let target = `${tm}-${pad(day)}`;
+        const today = window.Factory3Utils.getTodayStr();
+        if (target > today) target = today;
+
+        App.headerApi.setCurrentDate(target);
+    }
+
+    function makeMonthBtn(side) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = `gf3-subnav gf3-subnav-${side} f1jn-monthnav`;
+
+        const icon = document.createElement('span');
+        icon.className = 'material-symbols-outlined';
+        icon.textContent = (side === 'right') ? 'chevron_right' : 'chevron_left';
+
+        const label = document.createElement('span');
+        label.className = 'f1jn-monthnav-label';
+
+        b.appendChild(icon);
+        b.appendChild(label);
+        b.addEventListener('click', () => shiftMonth(side === 'right' ? 1 : -1));
+        return b;
+    }
+
+    // 버튼에 대상 달을 적고, 오늘이 든 달보다 뒤로는 못 가게 잠급니다
+    function updateMonthNav() {
+        const el = App.elements;
+        if (!el.prevMonthBtn || !state.currentMonth) return;
+
+        const y = Number(state.currentMonth.slice(0, 4));
+        const m = Number(state.currentMonth.slice(5, 7));
+        const label = d => `${new Date(y, m - 1 + d, 1).getMonth() + 1}월`;
+
+        el.prevMonthBtn.querySelector('.f1jn-monthnav-label').textContent = label(-1);
+        el.nextMonthBtn.querySelector('.f1jn-monthnav-label').textContent = label(1);
+
+        const thisMonth = window.Factory3Utils.getTodayStr().slice(0, 7);
+        el.nextMonthBtn.classList.toggle('is-disabled', state.currentMonth >= thisMonth);
+    }
+
+    /* 버튼을 표 카드의 상하폭에 맞춰 세우고, 자리가 없으면 뺍니다.
+       common_subnav.js 와 같은 방식입니다 — body 에 zoom 이 걸려 있어
+       '몇 px 이상이면 보인다'를 미리 계산해 두면 틀립니다. 실제로 놓아
+       보고 화면 밖으로 나가면 그때 뺍니다. */
+    const EDGE_SLACK = 4;
+
+    function layoutMonthNav() {
+        const el = App.elements;
+        if (!el.wrapper || !el.prevMonthBtn) return;
+
+        const cs = window.getComputedStyle(el.wrapper);
+        const top = parseFloat(cs.paddingTop) || 0;
+        const bottom = parseFloat(cs.paddingBottom) || 0;
+        const viewW = document.documentElement.clientWidth;
+
+        [el.prevMonthBtn, el.nextMonthBtn].forEach(btn => {
+            btn.style.top = `${top}px`;
+            btn.style.bottom = `${bottom}px`;
+
+            btn.style.visibility = 'hidden';
+            btn.style.display = 'flex';
+
+            const r = btn.getBoundingClientRect();
+            const fits = (r.left >= EDGE_SLACK) && (r.right <= viewW - EDGE_SLACK);
+
+            btn.style.display = fits ? 'flex' : 'none';
+            btn.style.visibility = '';
+        });
     }
 
     /* ── 초기화 ────────────────────────────────────────────────── */
     function initUI() {
         const el = App.elements;
-        el.body = document.getElementById('f1jnBody');
-        el.foot = document.getElementById('f1jnFoot');
-        el.scroll = document.getElementById('f1jnScroll');
+        el.body = {}; el.foot = {}; el.scroll = {};
+        PANELS.forEach(p => {
+            el.body[p] = document.getElementById(`f1jnBody${p}`);
+            el.foot[p] = document.getElementById(`f1jnFoot${p}`);
+            el.scroll[p] = document.getElementById(`f1jnScroll${p}`);
+        });
         el.monthTitle = document.getElementById('f1jnMonthTitle');
+
+        bindPanels();
+
+        if (el.wrapper) {
+            el.wrapper.classList.add('gf3-subnav-host');
+            el.prevMonthBtn = makeMonthBtn('left');
+            el.nextMonthBtn = makeMonthBtn('right');
+            el.wrapper.appendChild(el.prevMonthBtn);
+            el.wrapper.appendChild(el.nextMonthBtn);
+
+            /* load 에서 한 번 더 재는 이유는 웹폰트(Material Symbols)가 늦게
+               붙으면서 버튼 폭이 확정되기 때문입니다. 표의 행이 늘어나는 것은
+               다시 잴 필요가 없습니다 — top/bottom 으로 고정해 두어 카드
+               높이를 저절로 따라갑니다. */
+            window.addEventListener('load', layoutMonthNav);
+            window.addEventListener('resize', layoutMonthNav);
+            layoutMonthNav();
+        }
     }
 
     App.initUI = initUI;
