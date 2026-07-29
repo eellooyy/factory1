@@ -285,8 +285,17 @@
 .f1inv-diff-negative { color: #ff3b30 !important; font-weight: 800; }
 .f1inv-diff-zero { color: #8e8e93 !important; font-weight: 700; }
 
-/* 값이 아직 없는 셀 (DB 연결 전 / 데이터 없음) */
+/* 값이 아직 없는 셀 — 0 이 아니라 '그날 실사 입력이 없었다'는 뜻입니다 */
 .f1inv-empty { color: #c7c7cc; font-weight: 400; }
+
+/* DB가 아니라 constant.js 에 박아 둔 고정값 (나투라 등).
+   숫자만 보면 DB 값과 구분되지 않아 왜 안 변하는지 알 수 없으므로 표시합니다. */
+.f1inv-fixed {
+    color: #8e8e93;
+    text-decoration: underline dotted #c7c7cc;
+    text-underline-offset: 3px;
+    cursor: help;
+}
 
 /* 행 hover */
 .f1inv-table tbody tr:hover td { background-color: #fafafa; }

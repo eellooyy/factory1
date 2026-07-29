@@ -105,6 +105,8 @@
 
          [열 구성]
            입고 · 지고 재고   완롤 개수. 다른 페이지가 입력 주인이고 여기서는 읽기만.
+           출고(R/L)          직전 줄의 지고 재고 + 입고 − 이 줄의 지고 재고.
+                              저장하지 않는 계산값입니다.
            B5 주행지 잔량     다 쓰지 않고 남은 부분 롤(kg). **이 페이지가 입력하는
                               유일한 값.** 보통 5자리, 많을 때 6자리까지 나옵니다.
                               담기는 곳은 급지 재고와 같은 factory1_geupji_carry 이고,
@@ -112,7 +114,16 @@
            재고(kg)           지고 재고 × 롤중량 + 잔량 합계. 저장하지 않는 계산값입니다.
            출고(kg)           ERP 사용량(v_factory1_usage_by_item) 그대로.
 
-         ERP 대조 열은 아직 없습니다. 붙일 자리는 출고 오른쪽입니다.
+         [표를 넷으로 나눈 이유] — 3공장 재고 종합(factory3_io)과 같은 구성입니다.
+           ① 날짜 · 입고 · 출고 · 지고 재고   완롤로 세는 자리
+           ② B5 주행지 잔량                   사람이 적는 자리 (여기만 입력)
+           ③ 재고(kg)                         ①②에서 만들어지는 값
+           ④ 출고(kg)                         ERP 에서 오는 값
+         세는 단위(롤/kg)와 값의 출처가 덩어리마다 달라서, 한 표에 붙여 두면
+         어디까지가 실물이고 어디부터가 전산인지 경계가 보이지 않습니다.
+         네 패널은 세로 스크롤이 묶여 있어 같은 줄이 항상 같은 높이에 옵니다.
+
+         ERP 대조 열은 아직 없습니다. 붙일 자리는 ④ 오른쪽입니다.
          ============================================================ -->
     <div class="f1ns-floor-container">
         <div class="panel-header-grid mb-3">
@@ -143,44 +154,103 @@
             </div>
         </div>
 
-        <div class="f1ns-panel">
-            <div class="f1ns-scroll-area locked" id="f1nsScroll">
-                <table class="f1ns-table">
-                    <colgroup>
-                        <col class="f1ns-col-date">
-                        <col class="f1ns-col-roll">
-                        <col class="f1ns-col-jigo">
-                        <col class="f1ns-col-slot" span="6">
-                        <col class="f1ns-col-sum">
-                        <col class="f1ns-col-stock">
-                        <col class="f1ns-col-out">
-                    </colgroup>
-                    <thead>
-                        <tr class="f1ns-thead-lv1">
-                            <th class="f1ns-date-th" rowspan="2">날짜</th>
-                            <th class="f1ns-sep">입고</th>
-                            <th class="f1ns-sep">지고 재고</th>
-                            <th class="f1ns-sep" colspan="7">B5 주행지 잔량(kg)</th>
-                            <th class="f1ns-sep">재고</th>
-                            <th class="f1ns-sep">출고</th>
-                        </tr>
-                        <tr class="f1ns-thead-lv2">
-                            <th class="f1ns-sep">R/L</th>
-                            <th class="f1ns-sep">R/L</th>
-                            <th class="f1ns-sep">1</th>
-                            <th>2</th>
-                            <th>3</th>
-                            <th>4</th>
-                            <th>5</th>
-                            <th>6</th>
-                            <th>합계</th>
-                            <th class="f1ns-sep">Kg</th>
-                            <th class="f1ns-sep">Kg</th>
-                        </tr>
-                    </thead>
-                    <tbody id="f1nsBody"></tbody>
-                </table>
+        <div class="f1ns-panels-outer">
+
+            <!-- ① 완롤로 세는 자리 — 출고는 계산값입니다 -->
+            <div class="f1ns-panel f1ns-panel-1">
+                <div class="f1ns-scroll-area locked" id="f1nsScroll1">
+                    <table class="f1ns-table">
+                        <colgroup>
+                            <col class="f1ns-col-date">
+                            <col class="f1ns-col-roll">
+                            <col class="f1ns-col-roll">
+                            <col class="f1ns-col-jigo">
+                        </colgroup>
+                        <thead>
+                            <tr class="f1ns-thead-lv1">
+                                <th class="f1ns-date-th" rowspan="2">날짜</th>
+                                <th>입고</th>
+                                <th class="f1ns-sep">출고</th>
+                                <th class="f1ns-sep">지고 재고</th>
+                            </tr>
+                            <tr class="f1ns-thead-lv2">
+                                <th>R/L</th>
+                                <th class="f1ns-sep">R/L</th>
+                                <th class="f1ns-sep">R/L</th>
+                            </tr>
+                        </thead>
+                        <tbody id="f1nsBody1"></tbody>
+                    </table>
+                </div>
             </div>
+
+            <!-- ② 사람이 적는 자리 — 이 페이지가 입력하는 유일한 값 -->
+            <div class="f1ns-panel f1ns-panel-2">
+                <div class="f1ns-scroll-area locked" id="f1nsScroll2">
+                    <table class="f1ns-table">
+                        <colgroup>
+                            <col class="f1ns-col-slot" span="6">
+                            <col class="f1ns-col-sum">
+                        </colgroup>
+                        <thead>
+                            <tr class="f1ns-thead-lv1">
+                                <th colspan="7">B5 주행지 잔량(kg)</th>
+                            </tr>
+                            <tr class="f1ns-thead-lv2">
+                                <th>1</th>
+                                <th>2</th>
+                                <th>3</th>
+                                <th>4</th>
+                                <th>5</th>
+                                <th>6</th>
+                                <th class="f1ns-sep">합계</th>
+                            </tr>
+                        </thead>
+                        <tbody id="f1nsBody2"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ③ 지고 재고 × 롤중량 + 잔량 합계 -->
+            <div class="f1ns-panel f1ns-panel-3">
+                <div class="f1ns-scroll-area locked" id="f1nsScroll3">
+                    <table class="f1ns-table">
+                        <colgroup>
+                            <col class="f1ns-col-stock">
+                        </colgroup>
+                        <thead>
+                            <tr class="f1ns-thead-lv1">
+                                <th>재고</th>
+                            </tr>
+                            <tr class="f1ns-thead-lv2">
+                                <th>Kg</th>
+                            </tr>
+                        </thead>
+                        <tbody id="f1nsBody3"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ④ ERP 사용량 그대로 -->
+            <div class="f1ns-panel f1ns-panel-4">
+                <div class="f1ns-scroll-area locked" id="f1nsScroll4">
+                    <table class="f1ns-table">
+                        <colgroup>
+                            <col class="f1ns-col-out">
+                        </colgroup>
+                        <thead>
+                            <tr class="f1ns-thead-lv1">
+                                <th>출고</th>
+                            </tr>
+                            <tr class="f1ns-thead-lv2">
+                                <th>Kg</th>
+                            </tr>
+                        </thead>
+                        <tbody id="f1nsBody4"></tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 

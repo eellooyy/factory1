@@ -120,8 +120,11 @@
 
         state.isChanged = state.dirtyRows.size > 0;
 
-        const tr = App.elements.wrapper.querySelector(`tr[data-date="${date}"]`);
-        if (tr) tr.classList.toggle('f1ns-row-dirty', state.dirtyRows.has(date));
+        /* 한 줄이 네 표에 걸쳐 있으니 넷을 같이 칠합니다 (눈에 띄는 건 날짜
+           칸이지만, 줄 상태를 한 패널만 알고 있으면 나중에 반드시 어긋납니다) */
+        App.elements.wrapper.querySelectorAll(`tr[data-date="${date}"]`).forEach(tr => {
+            tr.classList.toggle('f1ns-row-dirty', state.dirtyRows.has(date));
+        });
 
         refreshRowTotals(date);
     }
@@ -149,73 +152,118 @@
         }
     }
 
-    // ── 표 ───────────────────────────────────────────────────────────────────
-    App.renderRows = function () {
-        const body = document.getElementById('f1nsBody');
-        if (!body) return;
+    /* ── 네 패널 ─────────────────────────────────────────────────────────────
+       한 줄이 네 표에 걸쳐 있습니다. 줄을 만들 때도, 지울 때도, 문구를 띄울
+       때도 넷을 같이 건드려야 합니다 — 하나만 빠지면 그 아래 줄이 전부 한 칸씩
+       밀려 다른 날짜와 나란히 서게 됩니다.
+       ──────────────────────────────────────────────────────────────────────── */
+    function panelBodies() {
+        const bodies = App.BODY_IDS.map(id => document.getElementById(id));
+        return bodies.every(Boolean) ? bodies : null;
+    }
 
-        body.innerHTML = '';
+    /* 표에 그릴 줄이 없을 때. 문구는 첫 패널에만 쓰고 나머지는 같은 높이의
+       빈 줄로 채웁니다. 네 표의 높이가 어긋나면 카드 아랫단이 들쭉날쭉해집니다. */
+    App.renderMessage = function (text) {
+        const bodies = panelBodies();
+        if (!bodies) return;
 
-        if (!state.rows.length) {
+        bodies.forEach((body, i) => {
             const tr = document.createElement('tr');
             const td = document.createElement('td');
-            td.colSpan = 5 + App.SLOTS;
+            td.colSpan = App.PANEL_COLS[i];
             td.className = 'f1ns-blank';
-            td.textContent = `${state.year}년에는 입고 · 출고 · 잔량 기록이 없습니다.`;
+            td.textContent = (i === 0) ? text : '';
             tr.appendChild(td);
+            body.innerHTML = '';
             body.appendChild(tr);
+        });
+    };
+
+    // ── 표 ───────────────────────────────────────────────────────────────────
+    App.renderRows = function () {
+        const bodies = panelBodies();
+        if (!bodies) return;
+
+        bodies.forEach(b => { b.innerHTML = ''; });
+
+        if (!state.rows.length) {
+            App.renderMessage(`${state.year}년에는 입고 · 출고 · 잔량 기록이 없습니다.`);
             return;
         }
 
         const cursorDate = App.headerApi ? App.headerApi.getCurrentDate() : null;
 
+        /* ── 출고(완롤) ──────────────────────────────────────────────────
+           출고 = 직전 줄의 지고 재고 + 그 사이의 입고 − 이 줄의 지고 재고.
+           줄이 연속된 날짜가 아니라 '일이 있었던 날'뿐이라, 두 줄 사이가 몇
+           달일 수 있습니다. 그래도 재고가 줄어든 만큼이 나간 양이라는 건 같습니다.
+
+           지고 재고가 없는 날은 뺄 기준이 없으므로 출고를 비웁니다. 대신 그
+           줄의 입고는 pendingIn 에 쌓아 두었다가 다음에 지고 재고가 나오는
+           줄에서 함께 텁니다 — 버리면 그 입고만큼 출고가 부풀어 오릅니다.
+           맨 윗줄(기준행)은 직전이 없어 언제나 비어 있습니다.
+           ──────────────────────────────────────────────────────────── */
+        let prevJigo = null;
+        let pendingIn = 0;
+
         state.rows.forEach(row => {
             const d = row.date;
-            const tr = document.createElement('tr');
-            tr.dataset.date = d;
-            if (row.isBase) tr.classList.add('f1ns-row-base');
-            if (d === cursorDate) tr.classList.add('f1ns-row-cursor');
 
-            // 날짜
+            const trs = bodies.map(body => {
+                const tr = document.createElement('tr');
+                tr.dataset.date = d;
+                if (row.isBase) tr.classList.add('f1ns-row-base');
+                if (d === cursorDate) tr.classList.add('f1ns-row-cursor');
+                body.appendChild(tr);
+                return tr;
+            });
+
+            // ① 날짜 · 입고 · 출고 · 지고 재고 (완롤)
             const dateTd = document.createElement('td');
             dateTd.className = 'f1ns-date-td ' + dayClass(d);
             dateTd.textContent = fmtDate(d);
             if (row.isBase) dateTd.title = `${d} — 이전 연도의 마지막 기록입니다. 여기서 재고가 이어집니다.`;
-            tr.appendChild(dateTd);
+            trs[0].appendChild(dateTd);
 
-            // 입고 · 지고 재고 (완롤)
-            tr.appendChild(textCell(fmt(state.ipgo[d], 0), 'f1ns-sep'));
-            tr.appendChild(textCell(fmt(state.jigo[d], 0), 'f1ns-sep'));
+            const jigoNow = state.jigo[d];
+            pendingIn += (state.ipgo[d] || 0);
 
-            // B5 주행지 잔량 6칸
+            let outRoll = null;
+            if (jigoNow !== undefined && jigoNow !== null) {
+                if (prevJigo !== null) outRoll = prevJigo + pendingIn - jigoNow;
+                prevJigo = jigoNow;
+                pendingIn = 0;
+            }
+
+            trs[0].appendChild(textCell(fmt(state.ipgo[d], 0)));
+            trs[0].appendChild(textCell(fmt(outRoll, 0), 'f1ns-out-roll-td f1ns-sep'));
+            trs[0].appendChild(textCell(fmt(jigoNow, 0), 'f1ns-sep'));
+
+            // ② B5 주행지 잔량 6칸 + 합계
             const carried = state.carry[d] || {};
             for (let s = 1; s <= App.SLOTS; s++) {
                 if (row.isBase) {
                     // 기준행은 읽기만 — 조회 연도 밖이라 여기서 고칠 값이 아닙니다
-                    tr.appendChild(textCell(fmt(carried[s]), s === 1 ? 'f1ns-sep' : ''));
+                    trs[1].appendChild(textCell(fmt(carried[s])));
                 } else {
-                    const td = slotInput(d, s, carried[s]);
-                    if (s === 1) td.classList.add('f1ns-sep');
-                    tr.appendChild(td);
+                    trs[1].appendChild(slotInput(d, s, carried[s]));
                 }
             }
 
-            // 잔량 합계 (계산값)
             const totalTd = document.createElement('td');
-            totalTd.className = 'f1ns-sum-td';
+            totalTd.className = 'f1ns-sum-td f1ns-sep';
             totalTd.dataset.total = d;
-            tr.appendChild(totalTd);
+            trs[1].appendChild(totalTd);
 
-            // 재고(kg) = 지고 재고 × 롤중량 + 잔량 합계 (계산값)
+            // ③ 재고(kg) = 지고 재고 × 롤중량 + 잔량 합계 (계산값)
             const stockTd = document.createElement('td');
-            stockTd.className = 'f1ns-stock-td f1ns-sep';
+            stockTd.className = 'f1ns-stock-td';
             stockTd.dataset.stock = d;
-            tr.appendChild(stockTd);
+            trs[2].appendChild(stockTd);
 
-            // 출고(kg) — ERP 사용량
-            tr.appendChild(textCell(fmt(state.usage[d], 0), 'f1ns-sep'));
-
-            body.appendChild(tr);
+            // ④ 출고(kg) — ERP 사용량
+            trs[3].appendChild(textCell(fmt(state.usage[d], 0)));
         });
 
         state.rows.forEach(row => refreshRowTotals(row.date));
@@ -223,8 +271,10 @@
         /* 맨 아래(가장 최근)로 내려놓습니다. 이 표는 위가 과거고 아래가 현재라,
            열자마자 보여야 하는 건 몇 달 전 줄이 아니라 방금 있었던 일입니다.
            잠금 상태(overflow-y: hidden)에서도 scrollTop 은 그대로 먹습니다. */
-        const sc = document.getElementById('f1nsScroll');
-        if (sc) sc.scrollTop = sc.scrollHeight;
+        App.PANEL_IDS.forEach(id => {
+            const sc = document.getElementById(id);
+            if (sc) sc.scrollTop = sc.scrollHeight;
+        });
 
         // 편집 모드 중에 다시 그렸다면 입력칸을 다시 열어 줍니다
         if (App.headerApi && App.headerApi.isEditMode()) App.setReadOnlyMode(false);
@@ -289,11 +339,7 @@
         state.loading = false;
 
         if (!ok) {
-            const body = document.getElementById('f1nsBody');
-            if (body) {
-                body.innerHTML =
-                    `<tr><td class="f1ns-blank" colspan="${5 + App.SLOTS}">조회에 실패했습니다. 잠시 후 다시 시도해 주세요.</td></tr>`;
-            }
+            App.renderMessage('조회에 실패했습니다. 잠시 후 다시 시도해 주세요.');
             return;
         }
 
@@ -311,16 +357,32 @@
 
         /* 스크롤 잠금 — 기본은 OFF(잠김)입니다. 표 안에 8줄만 보이고 그 아래는
            가려지는데, 잠가 두면 표 위에서 휠을 굴려도 페이지가 스크롤됩니다.
-           표만 따로 굴리고 싶을 때 켭니다. (지고 재고 · 사용량 페이지와 동일) */
-        const scroll = document.getElementById('f1nsScroll');
+           표만 따로 굴리고 싶을 때 켭니다. (지고 재고 · 사용량 페이지와 동일)
+           패널이 넷이라 넷을 한꺼번에 여닫습니다. */
+        const panels = App.PANEL_IDS.map(id => document.getElementById(id)).filter(Boolean);
         const toggle = document.getElementById('f1nsScrollToggle');
-        if (scroll && toggle) {
+        if (panels.length && toggle) {
             toggle.checked = false;
-            scroll.classList.add('locked');
+            panels.forEach(p => p.classList.add('locked'));
             toggle.addEventListener('change', function () {
-                scroll.classList.toggle('locked', !toggle.checked);
+                panels.forEach(p => p.classList.toggle('locked', !toggle.checked));
             });
         }
+
+        /* 한 줄이 네 표에 걸쳐 있으므로 세로 스크롤을 묶습니다. 따로 굴리면
+           같은 높이에 다른 날짜가 서고, 그 순간 표가 거짓말을 합니다.
+           _syncLock 은 되받아치는 scroll 이벤트를 한 번만 무시하려는 것입니다.
+           (3공장 재고 종합과 같은 처리) */
+        let syncLock = false;
+        panels.forEach(el => {
+            el.addEventListener('scroll', function () {
+                if (syncLock) return;
+                syncLock = true;
+                const top = el.scrollTop;
+                panels.forEach(other => { if (other !== el) other.scrollTop = top; });
+                syncLock = false;
+            });
+        });
     };
 
     App.utils = { parseNum, fmt, fmtDate };
