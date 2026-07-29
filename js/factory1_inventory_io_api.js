@@ -236,6 +236,44 @@
         return { a: numOrNull(row.erp_a), d: numOrNull(row.erp_d) };
     }
 
+    /* ────────────────────────────────────────────────────────────
+       재고 확인 상태 (확인 / 보류 / 미확인)
+
+       '미확인'이 기본값이라 DB에 행이 없습니다. 행이 없는 날 = 아직 안 봤다.
+       확인·보류를 고른 날만 행이 생기고 미확인으로 되돌리면 행을 지웁니다.
+       (급지 재고의 '실제 출고'가 자동값으로 되돌아갈 때 행을 지우는 것과 같은
+        방식입니다 — 기본값을 굳이 저장하면 표만 커지고 뜻은 같습니다)
+       ──────────────────────────────────────────────────────────── */
+    App.fetchStatus = async function (dateStr) {
+        const { data, error } = await supabase
+            .from(App.TABLES.CHECK)
+            .select('status')
+            .eq('check_date', dateStr);
+
+        if (error) {
+            console.error('[factory1_inventory_io] 확인 상태 조회 실패:', error.message);
+            return App.STATUS_DEFAULT;
+        }
+        const row = (data || [])[0];
+        return (row && row.status) || App.STATUS_DEFAULT;
+    };
+
+    App.saveStatus = async function (dateStr, status) {
+        if (status === App.STATUS_DEFAULT) {
+            const { error } = await supabase
+                .from(App.TABLES.CHECK)
+                .delete()
+                .eq('check_date', dateStr);
+            if (error) throw new Error(error.message);
+            return;
+        }
+
+        const { error } = await supabase
+            .from(App.TABLES.CHECK)
+            .upsert({ check_date: dateStr, status: status }, { onConflict: 'check_date' });
+        if (error) throw new Error(error.message);
+    };
+
     /* 화면이 쓰는 값 묶음을 만듭니다.
        constant.js 의 fixed 는 DB가 아니라 파일에 박아 둔 상수라 뷰 값보다
        우선합니다(나투라 440). 뷰에 같은 칸이 생기면 그때 fixed 를 지우면 됩니다. */

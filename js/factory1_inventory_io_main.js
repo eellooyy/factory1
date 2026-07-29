@@ -1,9 +1,9 @@
 /* factory1_inventory_io_main.js — 1공장 재고 종합 모듈 진입점
    ────────────────────────────────────────────────────────────────
    factory1_ft_io_main.js 와 동일한 패턴으로 CommonHeader.init()을 호출합니다.
-   이 페이지는 여러 테이블의 데이터를 모아 보여주기만 하는 조회 전용 화면이라
-   편집 폼이 없습니다. (상단 수정/저장 버튼은 마스터 모드의 공지사항 편집용으로
-   다른 페이지들과 동일하게 유지합니다)
+   표의 숫자는 전부 다른 화면에서 온 것이라 여기서 고칠 수 없고, 사람이 적는
+   값은 우측의 '재고 확인' 상태(확인 / 보류 / 미확인) 하나뿐입니다. 그래서
+   수정 → 선택 → 저장 순서로 다른 페이지들과 같게 동작합니다.
    ──────────────────────────────────────────────────────────────── */
 (function () {
     'use strict';
@@ -16,18 +16,19 @@
             App.elements.wrapper = document.querySelector('.f1inv-wrapper');
             if (!App.elements.wrapper) return;
 
-            App.elements.body = document.getElementById('f1invBody');
+            App.elements.blocks = document.getElementById('f1invBlocks');
             App.elements.subtitle = document.getElementById('f1invSubtitle');
+            App.elements.status = document.getElementById('f1invStatus');
+
+            App.bindStatus();
+            App.renderStatus();
 
             App.headerApi = window.CommonHeader.init({
                 idPrefix: 'f1Inv',
                 wrapperSelector: '.gf3-wrapper',
                 onDateChange: App.loadData,
-                onSave: function () {
-                    // 조회 전용 페이지 — 저장할 입력값이 없습니다.
-                    // (마스터 모드에서 공지사항을 편집한 경우 모달 안의 [이 공지만 저장]을 사용합니다)
-                    alert('재고 종합은 조회 전용 화면입니다.');
-                },
+                onEditModeChange: App.setEditMode,
+                onSave: App.saveData,
                 onExportExcel: function () {
                     const pdfBtn = App.headerApi.elements.excelBtn;
                     const btnInner = pdfBtn.innerHTML;

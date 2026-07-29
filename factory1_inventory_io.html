@@ -97,59 +97,24 @@
     <div class="f1inv-floor-container">
         <div class="panel-header-grid mb-3">
             <div class="header-left">
-                <span class="panel-title">재고 종합</span>
                 <span class="panel-subtitle" id="f1invSubtitle"></span>
             </div>
             <div class="header-center text-center"></div>
             <div class="header-right">
-                <div class="f1inv-legend">
-                    <span class="f1inv-legend-item"><i class="f1inv-legend-dot plus"></i>실재고 &gt; ERP재고</span>
-                    <span class="f1inv-legend-item"><i class="f1inv-legend-dot minus"></i>실재고 &lt; ERP재고</span>
-                </div>
+                <!-- 재고 확인 상태 — 날짜별로 저장됩니다.
+                     매일 실사를 할 수 있는 것이 아니고 숫자가 애매한 날도 있어서,
+                     그날의 표를 어디까지 믿을 수 있는지 남겨 두는 자리입니다.
+                     버튼은 render.js 가 STATUS_OPTIONS 로 그립니다. -->
+                <div class="f1inv-status" id="f1invStatus"></div>
             </div>
         </div>
 
-        <!-- 레이아웃 안의 레이아웃 프레임 (표 전용 카드) -->
-        <div class="inner-layout-card">
-            <div class="f1inv-table-scroll">
-                <table class="f1inv-table">
-                    <colgroup>
-                        <col class="f1inv-col-loc">   <!-- 저장위치 -->
-                        <col class="f1inv-col-code">  <!-- 품목코드 -->
-                        <col>                         <!-- 품목명 (남은 공간 전부) -->
-                        <col class="f1inv-col-erp">   <!-- ERP 재고 -->
-                        <col class="f1inv-col-io">    <!-- 입고 -->
-                        <col class="f1inv-col-io">    <!-- 사용량 -->
-                        <col class="f1inv-col-real">  <!-- B5 -->
-                        <col class="f1inv-col-real">  <!-- B6 -->
-                        <col class="f1inv-col-real">  <!-- B6(주행지) -->
-                        <col class="f1inv-col-sum">   <!-- 합계 -->
-                        <col class="f1inv-col-diff">  <!-- 실재고 - ERP재고 -->
-                    </colgroup>
-                    <thead>
-                        <tr class="f1inv-thead-lv1">
-                            <th>저장위치</th>
-                            <th colspan="2" class="f1inv-sep">품목</th>
-                            <th rowspan="2" class="f1inv-sep">ERP 재고</th>
-                            <th rowspan="2">입고</th>
-                            <th rowspan="2">사용량</th>
-                            <th colspan="4" class="f1inv-sep">실재고</th>
-                            <th rowspan="2" class="f1inv-sep">실재고<br>- ERP재고</th>
-                        </tr>
-                        <tr class="f1inv-thead-lv2">
-                            <th>저장위치명</th>
-                            <th class="f1inv-sep">품목코드</th>
-                            <th>품목명</th>
-                            <th class="f1inv-sep">B5</th>
-                            <th>B6</th>
-                            <th>B6(주행지)</th>
-                            <th>합계</th>
-                        </tr>
-                    </thead>
-                    <tbody id="f1invBody">
-                        <tr class="f1inv-placeholder"><td colspan="11">불러오는 중...</td></tr>
-                    </tbody>
-                </table>
+        <!-- 저장위치별로 카드를 나눕니다. 표 머리글은 첫 카드에만 있고, 아래
+             카드들은 같은 colgroup 을 써서 열이 그대로 맞습니다. 가로 스크롤은
+             바깥 프레임이 맡아 카드 전체가 같이 밀립니다. -->
+        <div class="f1inv-table-scroll">
+            <div class="f1inv-blocks" id="f1invBlocks">
+                <div class="f1inv-placeholder-box">불러오는 중...</div>
             </div>
         </div>
     </div>

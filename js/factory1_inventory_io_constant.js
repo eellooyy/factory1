@@ -56,8 +56,22 @@
             FT_ERP: 'v_factory1_ft_erp_stock',
             F3_STOCK: 'v_factory3_daily_stock',
 
-            PAPER_ITEM: 'factory1_paper_item'          // 입고의 item_code → ERP 품목코드
+            PAPER_ITEM: 'factory1_paper_item',         // 입고의 item_code → ERP 품목코드
+            CHECK: 'factory1_inventory_check'          // 날짜별 재고 확인 상태
         },
+
+        /* 재고 확인 상태 — 매일 실사를 할 수 있는 것이 아니고 숫자가 애매한 날도
+           있어서, 그날의 표를 어디까지 믿을 수 있는지 남겨 둡니다.
+
+           '미확인'은 기본값이라 DB에 행이 없습니다. 확인·보류를 고른 날만 행이
+           생기고 미확인으로 되돌리면 행을 지웁니다. 그래서 DB의 CHECK 제약에는
+           'confirmed'·'hold' 둘만 있습니다. */
+        STATUS_DEFAULT: 'unchecked',
+        STATUS_OPTIONS: [
+            { key: 'confirmed', label: '확인' },
+            { key: 'hold', label: '보류' },
+            { key: 'unchecked', label: '미확인' }
+        ],
 
         // 실재고 하위 열 정의 (창고 구분) — 열 추가/이름 변경 시 여기만 수정
         REAL_COLUMNS: [
@@ -97,6 +111,14 @@
                 ]
             },
             {
+                locName: '(사급)1공장 용지창고(전자신문)',
+                locCode: 'WB11102',
+                items: [
+                    { code: '11BNP-0000003', name: '사급-(전주)신문용지 46g 1576롤' },
+                    { code: '11BNP-0000004', name: '사급-(전주)신문용지 46g 788롤' }
+                ]
+            },
+            {
                 /* ftErp: ERP 재고를 v_factory1_ft_erp_stock 에서 읽습니다.
                    ftGrade 가 그 뷰의 item(A/C/D)입니다. 나투라는 등급이 없어 '–'. */
                 locName: '(사급)1공장 용지창고(FT)',
@@ -128,14 +150,6 @@
                 ]
             },
             {
-                locName: '(사급)1공장 용지창고(전자신문)',
-                locCode: 'WB11102',
-                items: [
-                    { code: '11BNP-0000003', name: '사급-(전주)신문용지 46g 1576롤' },
-                    { code: '11BNP-0000004', name: '사급-(전주)신문용지 46g 788롤' }
-                ]
-            },
-            {
                 /* 별관은 층 구분도 주행지 개념도 없습니다. 표의 열을 빌려
                    B6 = 지고 재고, B6(주행지) = 급지 재고로 쓰고 B5 는 항상 0 입니다.
 
@@ -162,13 +176,20 @@
             isLoading: false,
 
             // (저장위치코드|품목코드) → { erp, inQty, useQty, b5, b6, b6run }
-            values: {}
+            values: {},
+
+            // 재고 확인 상태 — status 는 화면의 현재 선택, savedStatus 는 DB 값.
+            // 둘을 나눠 두어야 '고쳤는데 저장 안 함'을 알 수 있습니다.
+            status: 'unchecked',
+            savedStatus: 'unchecked',
+            isEditMode: false
         },
 
         elements: {
             wrapper: null,
-            body: null,
-            subtitle: null
+            blocks: null,
+            subtitle: null,
+            status: null
         }
     };
 

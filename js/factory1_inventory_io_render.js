@@ -36,17 +36,26 @@
         return `<td class="${cls.join(' ')}"${attr}>${Number(value).toLocaleString('ko-KR')}</td>`;
     }
 
-    // 실재고 − ERP재고 차이 셀 (양수 초록 / 음수 빨강 / 0 회색)
+    /* 실재고 − ERP재고 차이 셀
+       남는 쪽(+, 초록) / 모자란 쪽(−, 빨강)을 부호로도 드러냅니다. 색만으로는
+       인쇄물이나 흑백 PDF 에서 방향이 사라집니다. 0 은 부호 없이 회색. */
     function diffCell(diff) {
         if (diff === null || diff === undefined || isNaN(diff)) {
             return `<td class="f1inv-num f1inv-sep f1inv-empty">${EMPTY}</td>`;
         }
 
+        const n = Number(diff);
         let cls = 'f1inv-diff-zero';
-        if (diff > 0) cls = 'f1inv-diff-positive';
-        else if (diff < 0) cls = 'f1inv-diff-negative';
+        let text = '0';
+        if (n > 0) {
+            cls = 'f1inv-diff-positive';
+            text = '+' + n.toLocaleString('ko-KR');
+        } else if (n < 0) {
+            cls = 'f1inv-diff-negative';
+            text = '-' + Math.abs(n).toLocaleString('ko-KR');
+        }
 
-        return `<td class="f1inv-num f1inv-sep ${cls}">${Number(diff).toLocaleString('ko-KR')}</td>`;
+        return `<td class="f1inv-num f1inv-sep ${cls}">${text}</td>`;
     }
 
     // 한 품목 행의 숫자 묶음. api.js 가 fixed 까지 얹어 둡니다.
@@ -67,14 +76,62 @@
         return parts.reduce((acc, p) => acc + Number(p), 0);
     }
 
+    /* 표 머리글은 첫 카드에만 붙습니다. 아래 카드들도 같은 colgroup 을 쓰고
+       table-layout: fixed 라 열이 그대로 이어집니다 — colgroup 을 한쪽만 고치면
+       카드끼리 열이 어긋나므로 반드시 이 한 곳에서만 관리합니다. */
+    const COLGROUP = `
+        <colgroup>
+            <col class="f1inv-col-loc">   <!-- 저장위치 -->
+            <col class="f1inv-col-code">  <!-- 품목코드 -->
+            <col>                         <!-- 품목명 (남은 공간 전부) -->
+            <col class="f1inv-col-erp">   <!-- ERP 재고 -->
+            <col class="f1inv-col-io">    <!-- 입고 -->
+            <col class="f1inv-col-io">    <!-- 사용량 -->
+            <col class="f1inv-col-real">  <!-- B5 -->
+            <col class="f1inv-col-real">  <!-- B6 -->
+            <col class="f1inv-col-real">  <!-- B6(주행지) -->
+            <col class="f1inv-col-sum">   <!-- 합계 -->
+            <col class="f1inv-col-diff">  <!-- 실재고 - ERP재고 -->
+        </colgroup>`;
+
+    const THEAD = `
+        <thead>
+            <tr class="f1inv-thead-lv1">
+                <th>저장위치</th>
+                <th colspan="2" class="f1inv-sep">품목</th>
+                <th rowspan="2" class="f1inv-sep">ERP 재고</th>
+                <th rowspan="2">입고</th>
+                <th rowspan="2">사용량</th>
+                <th colspan="4" class="f1inv-sep">실재고</th>
+                <th rowspan="2" class="f1inv-sep">실재고<br>- ERP재고</th>
+            </tr>
+            <tr class="f1inv-thead-lv2">
+                <th>저장위치명</th>
+                <th class="f1inv-sep">품목코드</th>
+                <th>품목명</th>
+                <th class="f1inv-sep">B5</th>
+                <th>B6</th>
+                <th>B6(주행지)</th>
+                <th>합계</th>
+            </tr>
+        </thead>`;
+
     function renderTable() {
-        const body = App.elements.body;
-        if (!body) return;
+        const host = App.elements.blocks;
+        if (!host) return;
 
         let html = '';
+        let cardIndex = 0;
 
         App.LOCATIONS.forEach(loc => {
             const items = visibleItems(loc);
+            if (!items.length) return;
+
+            html += '<div class="inner-layout-card">';
+            html += '<table class="f1inv-table">' + COLGROUP;
+            if (cardIndex === 0) html += THEAD;
+            html += '<tbody>';
+            cardIndex += 1;
 
             items.forEach((item, idx) => {
                 const v = getValues(loc.locCode, item);
@@ -82,7 +139,7 @@
                 const erp = (v.erp === null || v.erp === undefined || v.erp === '' || isNaN(v.erp)) ? null : Number(v.erp);
                 const diff = (sum === null || erp === null) ? null : sum - erp;
 
-                html += `<tr class="${idx === 0 ? 'f1inv-group-start' : ''}">`;
+                html += '<tr>';
 
                 // 저장위치 셀 — 그룹의 첫 행에서 품목 수만큼 세로 병합
                 if (idx === 0) {
@@ -115,19 +172,61 @@
 
                 html += '</tr>';
             });
+
+            html += '</tbody></table></div>';
         });
 
         if (!html) {
-            html = `<tr class="f1inv-placeholder"><td colspan="11">표시할 품목이 없습니다.</td></tr>`;
+            html = '<div class="f1inv-placeholder-box">표시할 품목이 없습니다.</div>';
         }
 
-        body.innerHTML = html;
+        host.innerHTML = html;
     }
 
     function renderLoading() {
-        const body = App.elements.body;
-        if (!body) return;
-        body.innerHTML = `<tr class="f1inv-placeholder"><td colspan="11">불러오는 중...</td></tr>`;
+        const host = App.elements.blocks;
+        if (!host) return;
+        host.innerHTML = '<div class="f1inv-placeholder-box">불러오는 중...</div>';
+    }
+
+    /* ── 재고 확인 상태 ─────────────────────────────────────────────────────
+       고른 값만 색이 찹니다. 수정 모드가 아니면 눌러도 바뀌지 않고, 클릭
+       처리는 위임(delegation)이라 다시 그려도 다시 붙일 필요가 없습니다. */
+    function renderStatus() {
+        const el = App.elements.status;
+        if (!el) return;
+
+        const cur = App.state.status || App.STATUS_DEFAULT;
+        el.className = 'f1inv-status' + (App.state.isEditMode ? ' is-editable' : '');
+        el.innerHTML =
+            '<span class="f1inv-status-title">재고 확인</span>' +
+            '<div class="f1inv-status-group">' +
+            App.STATUS_OPTIONS.map(opt =>
+                `<button type="button" class="f1inv-status-btn${opt.key === cur ? ' active' : ''}"` +
+                ` data-status="${opt.key}">${opt.label}</button>`
+            ).join('') +
+            '</div>';
+    }
+
+    function bindStatus() {
+        const el = App.elements.status;
+        if (!el) return;
+        el.addEventListener('click', function (e) {
+            if (!App.state.isEditMode) return;
+            const btn = e.target.closest('.f1inv-status-btn');
+            if (!btn) return;
+            const next = btn.dataset.status;
+            if (!next || next === App.state.status) return;
+            App.state.status = next;
+            renderStatus();
+        });
+    }
+
+    // 수정 모드 전환 — 이 페이지에서 사람이 고치는 값은 확인 상태 하나뿐입니다.
+    function setEditMode(isEdit) {
+        App.state.isEditMode = !!isEdit;
+        if (!isEdit) App.state.status = App.state.savedStatus;   // 취소하면 되돌립니다
+        renderStatus();
     }
 
     // 카드 제목 옆 기준일 안내 문구 갱신
@@ -148,8 +247,11 @@
 
         App.state.isLoading = true;
         let values = {};
+        let status = App.STATUS_DEFAULT;
         try {
-            values = await App.fetchAll(dateStr);
+            const got = await Promise.all([App.fetchAll(dateStr), App.fetchStatus(dateStr)]);
+            values = got[0];
+            status = got[1];
         } catch (e) {
             console.error('[factory1_inventory_io] 조회 실패:', e);
         }
@@ -158,12 +260,39 @@
         if (App.state.currentDate !== dateStr) return;
 
         App.state.values = values;
+        App.state.savedStatus = status;
+        App.state.status = status;
         renderTable();
+        renderStatus();
+    }
+
+    // 저장 — 이 페이지에서 사람이 고치는 값은 확인 상태 하나뿐입니다.
+    async function saveData() {
+        const dateStr = (App.headerApi && App.headerApi.getCurrentDate()) || App.state.currentDate;
+        if (!dateStr) {
+            alert('저장할 날짜를 확인할 수 없습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.');
+            return;
+        }
+
+        try {
+            await App.saveStatus(dateStr, App.state.status);
+        } catch (e) {
+            console.error('[factory1_inventory_io] 확인 상태 저장 실패:', e);
+            alert('저장에 실패했습니다.\n' + e.message);
+            return;
+        }
+
+        App.state.savedStatus = App.state.status;
+        if (App.headerApi && App.headerApi.toggleEditMode) App.headerApi.toggleEditMode();
     }
 
     App.renderTable = renderTable;
     App.renderLoading = renderLoading;
     App.renderSubtitle = renderSubtitle;
+    App.renderStatus = renderStatus;
+    App.bindStatus = bindStatus;
+    App.setEditMode = setEditMode;
     App.loadData = loadData;
+    App.saveData = saveData;
 
 })();
