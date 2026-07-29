@@ -251,7 +251,19 @@
             App.headerApi.toggleEditMode();
         }
 
-        App.state.compBaseDate = dateStr || App.state.compBaseDate || todayStr();
+        /* 조회 한계(오늘 -COMP_MAX_PAST_DAYS)보다 더 과거를 고르면 빈 구간이
+           돌아와 표가 그 자리에 멈춰 있었습니다. 한계까지만 당겨 오고, 헤더
+           날짜도 실제로 보여 주는 날짜에 맞춥니다. */
+        let base = dateStr || App.state.compBaseDate || todayStr();
+        const minDate = addDays(todayStr(), -App.COMP_MAX_PAST_DAYS);
+        if (base < minDate) {
+            base = minDate;
+            if (App.headerApi && App.headerApi.setCurrentDate) {
+                App.headerApi.setCurrentDate(base, false);
+            }
+        }
+
+        App.state.compBaseDate = base;
         App.state.compHasNext = true;
         App.state.compHasPrev = true;
         App.state.isInitialLoad = true;

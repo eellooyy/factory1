@@ -341,14 +341,16 @@
     color: #b8b8be;
 }
 
-/* 기준일 — 상단 날짜 네비게이션이 가리키는 줄 */
-.f1jn-row-base td { background: #e8f4fd !important; }
-.f1jn-panel-1 .f1jn-row-base td { background: #bbdefb !important; }
+/* 기준일 — 상단 날짜 네비게이션이 가리키는 줄.
+   다른 페이지의 선택 행과 같은 회색입니다. (푸른색은 '오늘/기준일'처럼
+   날짜 자체가 특별한 줄에만 씁니다) */
+.f1jn-row-base td { background: #f4f4f8 !important; }
+.f1jn-panel-1 .f1jn-row-base td { background: #ebebf0 !important; }
 
 /* 마우스를 올린 줄 — 네 패널에 동시에 걸립니다(render.js).
    표가 넷으로 갈라져 있어 이게 없으면 오른쪽 패널에서 왼쪽 날짜를
    되짚어 갈 방법이 없습니다. */
-.f1jn-table tbody tr.f1jn-row-hover:not(.f1jn-row-base) td { background: #f0f0f4 !important; }
+.f1jn-table tbody tr.f1jn-row-hover:not(.f1jn-row-base) td { background: #f7f7fa !important; }
 
 /* ================================================
    소계 (tfoot) — 바닥 고정

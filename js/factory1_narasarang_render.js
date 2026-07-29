@@ -270,10 +270,18 @@
 
         /* 맨 아래(가장 최근)로 내려놓습니다. 이 표는 위가 과거고 아래가 현재라,
            열자마자 보여야 하는 건 몇 달 전 줄이 아니라 방금 있었던 일입니다.
-           잠금 상태(overflow-y: hidden)에서도 scrollTop 은 그대로 먹습니다. */
+           잠금 상태(overflow-y: hidden)에서도 scrollTop 은 그대로 먹습니다.
+
+           단 헤더에서 고른 날짜에 해당하는 줄이 있으면 그 줄을 가운데로
+           끌어옵니다. 연초 날짜를 골라도 화면은 늘 맨 아래라 어느 줄이
+           잡혔는지 손으로 찾아 올라가야 했습니다. */
+        const cursorRow = bodies[0].querySelector('.f1ns-row-cursor');
         App.PANEL_IDS.forEach(id => {
             const sc = document.getElementById(id);
-            if (sc) sc.scrollTop = sc.scrollHeight;
+            if (!sc) return;
+            sc.scrollTop = cursorRow
+                ? Math.max(0, cursorRow.offsetTop - (sc.clientHeight / 2) + (cursorRow.offsetHeight / 2))
+                : sc.scrollHeight;
         });
 
         // 편집 모드 중에 다시 그렸다면 입력칸을 다시 열어 줍니다

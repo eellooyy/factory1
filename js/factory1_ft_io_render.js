@@ -291,19 +291,27 @@
             bodies[3].innerHTML = htmls.html4;
 
             if (panel1) {
-                let targetRow = bodies[0].querySelector(`tr[data-date="${yesterdayStr()}"]`);
+                /* 기준 행은 헤더에서 고른 날짜입니다. 예전에는 어제 행을 먼저
+                   찾는 바람에, 최근 날짜를 고르면 그 날짜가 아니라 늘 어제 줄로
+                   내려가 표가 안 움직이는 것처럼 보였습니다. */
+                let targetRow = bodies[0].querySelector(`tr[data-date="${state.compBaseDate}"]`);
+                if (!targetRow) targetRow = bodies[0].querySelector(`tr[data-date="${yesterdayStr()}"]`);
                 if (!targetRow) targetRow = bodies[0].querySelector('.comp-row-today');
-                if (!targetRow) targetRow = bodies[0].querySelector(`tr[data-date="${state.compBaseDate}"]`);
+                if (!targetRow) targetRow = bodies[0].lastElementChild;
 
                 if (targetRow) {
-                    requestAnimationFrame(() => {
-                        const wrapH = panel1.clientHeight;
-                        const top = targetRow.offsetTop + targetRow.offsetHeight - wrapH;
+                    /* 백그라운드 탭에서는 requestAnimationFrame 이 실행되지 않아
+                       위치 지정이 통째로 빠집니다. 즉시 한 번 잡고 rAF 에서 한 번
+                       더 보정합니다. (factory1_ipgo 와 같은 처리) */
+                    const applyTop = () => {
+                        const top = Math.max(0, targetRow.offsetTop + targetRow.offsetHeight - panel1.clientHeight);
                         PANEL_IDS.forEach(id => {
                             const p = document.getElementById(id);
-                            if (p) p.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+                            if (p) p.scrollTop = top;
                         });
-                    });
+                    };
+                    applyTop();
+                    requestAnimationFrame(applyTop);
                 }
             }
 
@@ -337,11 +345,13 @@
         }
     }
 
+    /* 처음 잡히는 셀 — 스크롤 기준 행과 같은 순서로 찾습니다.
+       (둘이 어긋나면 화면은 고른 날짜에 가 있는데 강조만 딴 줄에 남습니다) */
     function selectDefaultCell() {
-        const yest = yesterdayStr();
         const body1 = document.getElementById('compBody1');
         if (!body1) return;
-        let row = body1.querySelector(`tr[data-date="${yest}"]`);
+        let row = body1.querySelector(`tr[data-date="${state.compBaseDate}"]`);
+        if (!row) row = body1.querySelector(`tr[data-date="${yesterdayStr()}"]`);
         if (!row) row = body1.querySelector('.comp-row-today');
         if (!row && body1.children.length > 0) row = body1.lastElementChild;
         if (row) applyHighlight(1, row.getAttribute('data-date'), '1');

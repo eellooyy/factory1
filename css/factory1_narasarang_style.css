@@ -370,9 +370,10 @@
     color: #3a3a41;
 }
 
-/* 헤더 날짜와 같은 줄 */
-.f1ns-row-cursor td { background: #e8f4fd !important; }
-.f1ns-row-cursor .f1ns-date-td { background: #bbdefb !important; }
+/* 헤더 날짜와 같은 줄 — 다른 페이지의 선택 행과 같은 회색입니다.
+   (푸른색은 '오늘/기준일'처럼 날짜 자체가 특별한 줄에만 씁니다) */
+.f1ns-row-cursor td { background: #f4f4f8 !important; }
+.f1ns-row-cursor .f1ns-date-td { background: #ebebf0 !important; }
 
 /* 저장하지 않은 변경이 있는 줄 */
 .f1ns-row-dirty .f1ns-date-td {

@@ -430,9 +430,28 @@
 
     // 상단 달력에서 날짜를 바꾸면 그 날짜를 마지막 행으로 두고 다시 그립니다.
     App.loadData = function (dateStr) {
-        state.baseDate = dateStr || yesterdayStr();
+        let base = dateStr || yesterdayStr();
+
+        /* 조회 한계(오늘 -MAX_PAST_DAYS)보다 더 과거를 고르면 만들 행이 하나도
+           없어 표가 그 자리에 멈춰 있었습니다. 한계까지만 당겨 오고, 헤더 날짜도
+           실제로 보여 주는 날짜에 맞춥니다. */
+        const min = addDays(todayStr(), -App.MAX_PAST_DAYS);
+        if (base < min) {
+            base = min;
+            const api = headerApi();
+            if (api && api.setCurrentDate) api.setCurrentDate(base, false);
+        }
+
+        state.baseDate = base;
         state.hasPrev = true;
         state.hasNext = true;
+
+        /* 표를 통째로 다시 그리므로 강조도 다시 걸어야 합니다. 이 줄이 없으면
+           clearHighlights() 로 지운 뒤 아무 줄도 잡히지 않아, 달력으로 날짜를
+           옮겼을 때 그 줄 배경이 칠해지지 않았습니다.
+           (loadRows('none') 안에서 이 값을 보고 기준일 줄을 잡습니다) */
+        state.isInitialLoad = true;
+
         clearHighlights();
         App.loadRows('none');
     };

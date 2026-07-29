@@ -720,6 +720,15 @@
             else if (direction === 'prev') baseDate = ledgerBody.firstElementChild.getAttribute('data-date');
         }
 
+        /* 헤더에서 고른 날짜가 불러올 수 있는 구간(오늘 -MAX_PAST_DAYS ~ maxDate)을
+           벗어나면 그 구간의 끝으로 당겨 옵니다. 예전에는 아래 from > to 에 걸려
+           그냥 돌아가는 바람에 표가 그 자리에 멈춰 있었습니다. */
+        if (direction === 'none') {
+            if (baseDate < minDate) baseDate = minDate;
+            else if (baseDate > maxDate) baseDate = maxDate;
+            state.baseDate = baseDate;
+        }
+
         let from, to;
         if (direction === 'next') {
             from = addDays(baseDate, 1);
@@ -757,27 +766,39 @@
                 if (body) body.innerHTML = htmlFor(p.idx, rows);
             });
 
-            // 오늘 행이 '위에서 TODAY_ROW_FROM_TOP 번째 줄'에 오도록 스크롤
-            // (sticky 헤더 아래로 오늘 위에 TODAY_ROW_FROM_TOP - 1 개의 행이 보입니다)
-            //
-            // smooth 로 움직이면 rAF 재보정이 애니메이션을 가로채면서 최종 위치가
-            // 행 경계에서 소수점만큼 어긋납니다. 최초 배치는 즉시 이동시키고
-            // 정수로 반올림해 행이 잘려 보이지 않게 합니다.
-            const todayRow = ledgerBody.querySelector(`tr[data-date="${today}"]`) || ledgerBody.lastElementChild;
-            if (todayRow) {
+            /* 기준 행(헤더에서 고른 날짜)이 '위에서 TODAY_ROW_FROM_TOP 번째 줄'에
+               오도록 스크롤합니다. (sticky 헤더 아래로 그 위에 TODAY_ROW_FROM_TOP - 1
+               개의 행이 보입니다)
+
+               ※ 예전에는 오늘 행만 찾았습니다. 헤더 날짜를 과거로 옮기면 렌더 구간
+                  (고른 날짜 ±RANGE)에 오늘이 들어있지 않아 맨 아래 행으로 넘어갔고,
+                  그 행으로 스크롤·강조가 되면서 강조가 헤더 날짜까지 되돌려 써
+                  고른 날짜가 풀려 버렸습니다.
+
+               smooth 로 움직이면 rAF 재보정이 애니메이션을 가로채면서 최종 위치가
+               행 경계에서 소수점만큼 어긋납니다. 최초 배치는 즉시 이동시키고
+               정수로 반올림해 행이 잘려 보이지 않게 합니다. */
+            const anchorRow = ledgerBody.querySelector(`tr[data-date="${baseDate}"]`)
+                || ledgerBody.querySelector(`tr[data-date="${today}"]`)
+                || ledgerBody.lastElementChild;
+
+            if (anchorRow) {
                 applyScrollTwice(() => {
                     const thead = ledgerPanel.querySelector('thead');
                     const theadH = thead ? thead.getBoundingClientRect().height : 0;
-                    const rowH = todayRow.offsetHeight;
-                    const rowTop = getOffsetRelativeToPanel(todayRow, ledgerPanel).top;
+                    const rowH = anchorRow.offsetHeight;
+                    const rowTop = getOffsetRelativeToPanel(anchorRow, ledgerPanel).top;
                     return Math.round(rowTop - theadH - (App.TODAY_ROW_FROM_TOP - 1) * rowH);
                 }, false);
             }
 
             if (state.isInitialLoad) {
                 state.isInitialLoad = false;
+                const anchorDate = anchorRow ? anchorRow.getAttribute('data-date') : null;
                 setTimeout(() => {
-                    const row = ledgerBody.querySelector(`tr[data-date="${today}"]`) || ledgerBody.lastElementChild;
+                    // 150ms 사이에 표가 다시 그려졌을 수 있어 날짜로 다시 찾습니다.
+                    const row = (anchorDate && ledgerBody.querySelector(`tr[data-date="${anchorDate}"]`))
+                        || ledgerBody.lastElementChild;
                     if (row) applyHighlight(1, row.getAttribute('data-date'), '1');
                 }, 150);
             }
