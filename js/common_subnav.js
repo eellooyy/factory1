@@ -30,12 +30,10 @@
             ]
         },
         {
-            /* 지금은 한 장뿐이라 이동 버튼이 나오지 않습니다(앞도 뒤도 없음).
-               묶음을 미리 적어 두는 것은, 여기에 페이지가 하나 더 붙는 순간
-               이 파일을 다시 찾아올 필요가 없게 하기 위해서입니다. */
             menu: '기타',
             pages: [
-                { file: 'factory1_inoutbound.html', label: '입출고 상세 내역' }
+                { file: 'factory1_inoutbound.html', label: '입출고 상세 내역' },
+                { file: 'factory1_rollcac.html',    label: '롤 무게 계산' }
             ]
         }
     ];

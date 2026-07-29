@@ -1,0 +1,458 @@
+/* factory1_rollcac_style.css — 1공장 롤 무게 계산 스타일
+   ────────────────────────────────────────────────────────────────
+   1공장 입출고 내역(factory1_inoutbound_style.css)과 같은 카드/색상/타이포
+   규격을 따릅니다. 표가 없는 페이지라 표 관련 규칙만 빠졌습니다.
+
+   화면은 좌우 두 칸입니다 — 좌측이 입력과 결과, 우측이 측정 방법 그림.
+   그림을 위아래가 아니라 옆에 둔 것은, 처음 재 보는 사람이 롤 앞에서
+   그림과 입력칸을 번갈아 보기 때문입니다.
+   ──────────────────────────────────────────────────────────────── */
+
+:root {
+    /* [제목 좌측 여백 옵션] 다른 1공장 페이지와 같은 값 */
+    --panel-title-left-offset: 12px;
+
+    /* [우측 그림 폭 옵션] */
+    --rc-side-width: 300px;
+
+    /* [결과 숫자 크기 옵션] 멀리서도 읽히는 것이 목적입니다 */
+    --rc-result-size: 56px;
+}
+
+.f1rc-wrapper {
+    gap: 14px;
+}
+
+/* 층 외곽 프레임 — 다른 1공장 페이지의 floor-container 와 동일 규격 */
+.f1rc-floor-container {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+    border: 1px solid #dcdce4;
+}
+
+/* 패널 헤더 그리드 — 제목은 좌측 상단 고정 */
+.panel-header-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: stretch;
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+}
+.panel-header-grid .header-left,
+.panel-header-grid .header-center,
+.panel-header-grid .header-right {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+.panel-header-grid .header-left {
+    justify-content: flex-start;
+    padding-left: var(--panel-title-left-offset);
+}
+.panel-header-grid .header-center { justify-content: center; }
+.panel-header-grid .header-right { justify-content: flex-end; gap: 8px; }
+
+.panel-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #000000 !important;
+    letter-spacing: -0.3px;
+    margin: 0;
+}
+.panel-subtitle {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8e8e93;
+    margin-left: 10px;
+    white-space: nowrap;
+}
+
+/* 초기화 버튼 — 헤더의 [오늘] 버튼과 같은 크기/모양 계열입니다 */
+.f1rc-reset-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid #e5e5ea;
+    background: #f5f5f7;
+    color: #48484a;
+    padding: 5px 12px 5px 9px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.f1rc-reset-btn:hover {
+    background: #e8f4fd;
+    border-color: #cfe2f8;
+    color: #007aff;
+}
+.f1rc-reset-btn .material-symbols-outlined {
+    font-size: 17px;
+    line-height: 1;
+}
+
+/* ========================================
+   좌우 두 칸 — 좌측 입력·결과 / 우측 측정 방법
+   ======================================== */
+.f1rc-split {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+}
+.f1rc-split-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 레이아웃 안의 레이아웃 (카드) — 다른 페이지의 inner-layout-card 와 동일 */
+.inner-layout-card {
+    background: #ffffff;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+/* ── 입력부 ──────────────────────────────────────────────────────
+   고르는 칸 셋(회사 · 롤 규격 · 표준 무게)과 적는 칸 하나(두께).
+   왼쪽에서 오른쪽으로 좁혀 가는 순서라 한 줄에 나란히 둡니다.
+   ──────────────────────────────────────────────────────────────── */
+.f1rc-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 158px;
+    gap: 12px;
+    padding: 18px 20px;
+}
+
+.f1rc-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+.f1rc-label {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #636366;
+    letter-spacing: -0.2px;
+    padding-left: 2px;
+}
+
+/* 적는 칸은 고르는 칸들과 성격이 달라 한 칸 띄웁니다 */
+.f1rc-field-measure { padding-left: 8px; }
+
+/* ── 드롭다운 ────────────────────────────────────────────────────
+   네이티브 <select> 가 아니라 버튼 + 목록입니다. body 에 걸린 zoom:115%
+   때문에 크롬이 select 팝업 위치를 어긋나게 잡아, 열자마자 닫히는 일이
+   있었습니다(main.js 의 같은 주석 참고).
+
+   목록은 버튼 바로 아래에 붙습니다. 상단 헤더 드롭다운(z-index 1000)
+   보다는 아래, 본문 카드보다는 위에 뜨게 z-index 를 잡았습니다.
+   ──────────────────────────────────────────────────────────────── */
+.f1rc-dd { position: relative; }
+
+.f1rc-dd-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 44px;
+    padding: 0 34px 0 14px;
+    border: 1px solid #d1d1d6;
+    border-radius: 10px;
+    background-color: #ffffff;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%238e8e93' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+.f1rc-dd-btn:hover { border-color: #b9b9c0; }
+.f1rc-dd-btn:focus-visible,
+.f1rc-dd.is-open .f1rc-dd-btn {
+    border-color: #007aff;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+}
+
+.f1rc-dd-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1d1d1f;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* 아직 안 고른 칸 — 글자는 있지만 값은 아니라는 표시 */
+.f1rc-dd-text.is-placeholder { color: #c7c7cc; font-weight: 600; }
+
+/* 앞 칸을 고르기 전에는 눌리지 않습니다. 숨기지 않고 흐리게만 두는 것은,
+   앞으로 무엇을 더 골라야 하는지가 그대로 보여야 하기 때문입니다. */
+.f1rc-dd.is-disabled .f1rc-dd-btn {
+    background-color: #fafafc;
+    border-color: #e5e5ea;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+.f1rc-dd.is-disabled .f1rc-dd-text { color: #d1d1d6; }
+
+.f1rc-dd-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 90;
+    max-height: 264px;
+    overflow-y: auto;
+    padding: 5px;
+    background: #ffffff;
+    border: 1px solid #e5e5ea;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    scrollbar-width: thin;
+    scrollbar-color: #d1d1d6 transparent;
+}
+.f1rc-dd.is-open .f1rc-dd-panel { display: block; }
+.f1rc-dd-panel::-webkit-scrollbar { width: 6px; }
+.f1rc-dd-panel::-webkit-scrollbar-track { background: transparent; }
+.f1rc-dd-panel::-webkit-scrollbar-thumb { background-color: #d1d1d6; border-radius: 6px; }
+
+.f1rc-dd-option {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #3a3a3c;
+    letter-spacing: -0.2px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    outline: none;
+    transition: background 0.15s, color 0.15s;
+}
+.f1rc-dd-option:hover,
+.f1rc-dd-option:focus-visible { background: #f5f5f7; color: #1d1d1f; }
+.f1rc-dd-option.is-selected { background: #e8f4fd; color: #007aff; }
+
+/* 두께 입력 — 단위(cm)를 칸 안 오른쪽에 붙박이로 둡니다.
+   단위 칸을 따로 세우면 줄이 길어지고, 없으면 mm 로 적는 사람이 나옵니다. */
+.f1rc-input-wrap { position: relative; }
+.f1rc-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 44px 0 14px;
+    border: 1px solid #d1d1d6;
+    border-radius: 10px;
+    background: #ffffff;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 800;
+    color: #1d1d1f;
+    letter-spacing: -0.3px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.f1rc-input::-webkit-outer-spin-button,
+.f1rc-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.f1rc-input { -moz-appearance: textfield; }
+.f1rc-input:hover { border-color: #b9b9c0; }
+.f1rc-input:focus {
+    border-color: #007aff;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+}
+.f1rc-input::placeholder { color: #c7c7cc; font-weight: 700; }
+
+.f1rc-unit {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    font-size: 13px;
+    font-weight: 800;
+    color: #8e8e93;
+    pointer-events: none;
+}
+
+/* ── 결과부 ──────────────────────────────────────────────────────
+   숫자 하나가 주인공입니다. 나머지(선택 규격 · 완롤 무게 · 완롤 대비)는
+   그 숫자가 맞는지 눈으로 되짚기 위한 것이라 한 단계 여리게 둡니다.
+   ──────────────────────────────────────────────────────────────── */
+.f1rc-result {
+    background: #fafafc;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1 1 auto;
+}
+
+.f1rc-result-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+.f1rc-result-label {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #636366;
+    letter-spacing: -0.2px;
+}
+.f1rc-hint {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #8e8e93;
+    text-align: right;
+    letter-spacing: -0.2px;
+}
+.f1rc-hint.warn { color: #c9302c; font-weight: 700; }
+
+/* 결과 카드는 우측 그림 칸의 높이를 따라 늘어납니다. 그때 남는 높이를
+   숫자 위아래로 반씩 나눠 가지게 해서, 숫자가 카드 한가운데에 섭니다.
+   (align-items 로 가운데를 맞추면 'kg' 이 큰 숫자와 밑선이 어긋납니다) */
+.f1rc-value-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    padding: 4px 0 10px;
+    margin: auto 0;
+}
+.f1rc-value {
+    font-size: var(--rc-result-size);
+    font-weight: 800;
+    color: #1d1d1f;
+    line-height: 1;
+    letter-spacing: -2px;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+}
+.f1rc-value.is-empty { color: #d1d1d6; letter-spacing: 0; }
+.f1rc-value-unit {
+    font-size: 20px;
+    font-weight: 800;
+    color: #8e8e93;
+    letter-spacing: -0.5px;
+}
+
+/* ========================================
+   우측 — 측정 방법
+   ======================================== */
+.f1rc-split-side {
+    flex: 0 0 var(--rc-side-width);
+    display: flex;
+    flex-direction: column;
+
+    background: #ffffff;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    padding: 12px 14px 14px;
+}
+
+.f1rc-side-title {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #636366;
+    letter-spacing: -0.2px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f2f2f7;
+    flex-shrink: 0;
+}
+
+.f1rc-figure {
+    margin: 0;
+    padding: 6px 0 2px;
+}
+.f1rc-figure svg { width: 100%; height: auto; display: block; }
+
+.f1rc-figure figcaption {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #6b6b70;
+    line-height: 1.5;
+    letter-spacing: -0.2px;
+    padding: 2px 2px 0;
+}
+.f1rc-figure figcaption b { color: #1d1d1f; font-weight: 800; }
+
+/* 기준값 — 계산이 무엇을 전제하고 있는지입니다.
+   숫자가 이상할 때 제일 먼저 의심해야 하는 값들이라 접어 두지 않습니다. */
+.f1rc-spec {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid #f2f2f7;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.f1rc-spec-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+.f1rc-spec-key {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #8e8e93;
+    letter-spacing: -0.2px;
+}
+.f1rc-spec-val {
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #48484a;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 공통 유틸 (다른 1공장 페이지와 동일) */
+.text-center { text-align: center; }
+.mb-3 { margin-bottom: 14px; }
+
+/* ── 반응형 ── */
+@media (max-width: 1010px) {
+    .f1rc-split { flex-direction: column; }
+    .f1rc-split-side { flex: 0 0 auto; }
+    .f1rc-figure svg { max-width: 320px; margin: 0 auto; }
+}
+
+/* 네 칸이 한 줄에 들어가기엔 좁아지는 구간 — 고르는 칸 셋을 한 줄로,
+   적는 칸을 그 아래로 내립니다 */
+@media (max-width: 1180px) {
+    .f1rc-form { grid-template-columns: repeat(3, 1fr); }
+    .f1rc-field-measure { grid-column: 1; padding-left: 0; }
+}
+
+@media (max-width: 640px) {
+    .f1rc-floor-container { padding: 14px; border-radius: 14px; }
+    .panel-title { font-size: 16px; }
+    .panel-subtitle { display: none; }
+
+    .f1rc-form { grid-template-columns: 1fr; padding: 14px; }
+    .f1rc-result { padding: 16px 14px; }
+    .f1rc-value { font-size: 44px; }
+}
