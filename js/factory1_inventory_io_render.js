@@ -23,6 +23,13 @@
         return `${locCode}|${itemCode}`;
     }
 
+    // 메모는 사람이 적는 자유 문자열이라 그대로 붙이면 태그로 해석됩니다
+    function escapeHtml(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     // 숫자 포맷 (천 단위 콤마). 값이 없으면 회색 '–'
     function numCell(value, extraClass, title) {
         const cls = ['f1inv-num'];
@@ -153,17 +160,22 @@
                 html += `<td class="f1inv-item-code">${item.code}</td>`;
                 html += `<td class="f1inv-item-name" title="${item.name}">${item.name}</td>`;
 
-                html += numCell(erp, 'f1inv-sep');
-                html += numCell(v.inQty);
-                html += numCell(v.useQty);
-
                 /* 고정값 칸은 점선 밑줄 + 툴팁으로 표시합니다. DB에서 온 숫자와
-                   파일에 박아 둔 숫자가 같아 보이면 왜 안 변하는지 알 수 없습니다. */
+                   파일에 박아 둔 숫자가 같아 보이면 왜 안 변하는지 알 수 없습니다.
+                   합계·차이는 계산값이라 표시하지 않습니다. */
                 const fixed = item.fixed || {};
+                const fixedCls = key => (
+                    Object.prototype.hasOwnProperty.call(fixed, key) ? ' f1inv-fixed' : ''
+                );
+
+                html += numCell(erp, 'f1inv-sep' + fixedCls('erp'), item.fixedNote);
+                html += numCell(v.inQty, fixedCls('inQty').trim(), item.fixedNote);
+                html += numCell(v.useQty, fixedCls('useQty').trim(), item.fixedNote);
+
                 App.REAL_COLUMNS.forEach((col, i) => {
                     const cls = [];
                     if (i === 0) cls.push('f1inv-sep');
-                    if (Object.prototype.hasOwnProperty.call(fixed, col.key)) cls.push('f1inv-fixed');
+                    if (fixedCls(col.key)) cls.push('f1inv-fixed');
                     html += numCell(v[col.key], cls.join(' '), item.fixedNote);
                 });
 
@@ -191,19 +203,42 @@
 
     /* ── 재고 확인 상태 ─────────────────────────────────────────────────────
        고른 값만 색이 찹니다. 수정 모드가 아니면 눌러도 바뀌지 않고, 클릭
-       처리는 위임(delegation)이라 다시 그려도 다시 붙일 필요가 없습니다. */
+       처리는 위임(delegation)이라 다시 그려도 다시 붙일 필요가 없습니다.
+
+       버튼 왼쪽 자리는 상태에 따라 셋 중 하나입니다.
+         확인          → 고정 문구('재고실사 확인됨'). 메모를 받지 않습니다.
+         보류 · 미확인 → 수정 모드면 메모 입력칸, 읽기 모드면 적어 둔 메모.
+       왜 그런지가 곧 정보인 쪽에만 메모를 두었습니다. */
+    function statusOption(key) {
+        return App.STATUS_OPTIONS.find(o => o.key === key) || {};
+    }
+
     function renderStatus() {
         const el = App.elements.status;
         if (!el) return;
 
         const cur = App.state.status || App.STATUS_DEFAULT;
+        const opt = statusOption(cur);
+        const memo = App.state.memo || '';
+
+        let slot = '';
+        if (opt.message) {
+            slot = `<span class="f1inv-status-msg is-done">${escapeHtml(opt.message)}</span>`;
+        } else if (opt.memo && App.state.isEditMode) {
+            slot = '<input type="text" class="f1inv-status-memo" maxlength="200"' +
+                   ` placeholder="메모 (선택)" value="${escapeHtml(memo)}">`;
+        } else if (opt.memo && memo) {
+            slot = `<span class="f1inv-status-msg" title="${escapeHtml(memo)}">${escapeHtml(memo)}</span>`;
+        }
+
         el.className = 'f1inv-status' + (App.state.isEditMode ? ' is-editable' : '');
         el.innerHTML =
+            slot +
             '<span class="f1inv-status-title">재고 확인</span>' +
             '<div class="f1inv-status-group">' +
-            App.STATUS_OPTIONS.map(opt =>
-                `<button type="button" class="f1inv-status-btn${opt.key === cur ? ' active' : ''}"` +
-                ` data-status="${opt.key}">${opt.label}</button>`
+            App.STATUS_OPTIONS.map(o =>
+                `<button type="button" class="f1inv-status-btn${o.key === cur ? ' active' : ''}"` +
+                ` data-status="${o.key}">${o.label}</button>`
             ).join('') +
             '</div>';
     }
@@ -211,6 +246,7 @@
     function bindStatus() {
         const el = App.elements.status;
         if (!el) return;
+
         el.addEventListener('click', function (e) {
             if (!App.state.isEditMode) return;
             const btn = e.target.closest('.f1inv-status-btn');
@@ -219,13 +255,27 @@
             if (!next || next === App.state.status) return;
             App.state.status = next;
             renderStatus();
+
+            // 메모를 받는 상태로 바꿨으면 바로 적을 수 있게 커서를 넣어 줍니다
+            const input = el.querySelector('.f1inv-status-memo');
+            if (input) input.focus();
+        });
+
+        /* 입력할 때마다 다시 그리면 커서가 튀므로 state 만 갱신합니다.
+           (renderStatus 는 상태 전환·모드 전환·날짜 이동에서만 부릅니다) */
+        el.addEventListener('input', function (e) {
+            if (!e.target.classList.contains('f1inv-status-memo')) return;
+            App.state.memo = e.target.value;
         });
     }
 
-    // 수정 모드 전환 — 이 페이지에서 사람이 고치는 값은 확인 상태 하나뿐입니다.
+    // 수정 모드 전환 — 이 페이지에서 사람이 고치는 값은 확인 상태와 메모뿐입니다.
     function setEditMode(isEdit) {
         App.state.isEditMode = !!isEdit;
-        if (!isEdit) App.state.status = App.state.savedStatus;   // 취소하면 되돌립니다
+        if (!isEdit) {                       // 취소하면 저장된 값으로 되돌립니다
+            App.state.status = App.state.savedStatus;
+            App.state.memo = App.state.savedMemo;
+        }
         renderStatus();
     }
 
@@ -247,11 +297,11 @@
 
         App.state.isLoading = true;
         let values = {};
-        let status = App.STATUS_DEFAULT;
+        let check = { status: App.STATUS_DEFAULT, memo: '' };
         try {
             const got = await Promise.all([App.fetchAll(dateStr), App.fetchStatus(dateStr)]);
             values = got[0];
-            status = got[1];
+            check = got[1];
         } catch (e) {
             console.error('[factory1_inventory_io] 조회 실패:', e);
         }
@@ -260,8 +310,10 @@
         if (App.state.currentDate !== dateStr) return;
 
         App.state.values = values;
-        App.state.savedStatus = status;
-        App.state.status = status;
+        App.state.savedStatus = check.status;
+        App.state.savedMemo = check.memo;
+        App.state.status = check.status;
+        App.state.memo = check.memo;
         renderTable();
         renderStatus();
     }
@@ -275,14 +327,19 @@
         }
 
         try {
-            await App.saveStatus(dateStr, App.state.status);
+            await App.saveStatus(dateStr, App.state.status, App.state.memo);
         } catch (e) {
             console.error('[factory1_inventory_io] 확인 상태 저장 실패:', e);
             alert('저장에 실패했습니다.\n' + e.message);
             return;
         }
 
+        // '확인'은 메모를 저장하지 않으므로 화면 상태도 같이 비웁니다
+        const opt = statusOption(App.state.status);
+        if (!opt.memo) App.state.memo = '';
+
         App.state.savedStatus = App.state.status;
+        App.state.savedMemo = App.state.memo;
         if (App.headerApi && App.headerApi.toggleEditMode) App.headerApi.toggleEditMode();
     }
 

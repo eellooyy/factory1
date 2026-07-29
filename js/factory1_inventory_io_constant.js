@@ -6,7 +6,8 @@
 
    숫자는 api.js가 뷰에서 읽어 state.values 를 채웁니다.
      실재고(B5 / B6 / B6주행지)  →  v_factory1_actual_stock
-     ERP 재고 / 입고 / 사용량    →  아직 미연결 ('–' 로 비어 있습니다)
+     ERP 재고 / 입고 / 사용량    →  v_factory1_erp_stock (1공장 3개 창고)
+                                   3공장 원본 3곳        (별관)
 
    ※ 합계 = B5 + B6 + B6(주행지),  실재고-ERP재고 = 합계 − ERP 재고
      두 값은 render.js에서 계산합니다. 저장하지 않는 이유는 원본을 고쳤을 때
@@ -28,7 +29,7 @@
         // (adjustments)이 반영되지 않고, 실재고는 출처가 다섯 군데라 화면에서
         // 합치면 다른 페이지와 숫자가 갈라집니다.
         /* 입고와 사용량은 ERP 전산값(v_factory1_stock_daily 의 rcpt_qt/iss_qt)이
-           아니라 현장 원본에서 읽습니다.
+           아니라 현장 원본(입고 페이지 · 급지 실적)에서 옵니다.
 
            숫자는 같습니다 — 대한1576 7/20~7/27 을 전 일자 대조해 ipgo 와 ERP 입고가
            한 건도 다르지 않았습니다. 다른 것은 '언제 들어오느냐'입니다. ERP 백업은
@@ -38,39 +39,46 @@
         TABLES: {
             ACTUAL_STOCK: 'v_factory1_actual_stock',   // B5 / B6 / B6(주행지)
 
-            IPGO: 'v_factory1_ipgo',                   // 입고 — 입고 페이지 수기 입력
-            USAGE: 'v_factory1_usage_by_item',         // 사용량 — 급지 실적
+            /* 1공장 3개 창고의 ERP 재고 · 입고 · 사용량을 한 번에 냅니다.
+
+               'ERP 재고'는 ERP 원장을 그대로 옮긴 값이 아닙니다. 결재가 밀리면
+               하루·이틀, 길게는 일주일 전 자료도 안 들어와 원장을 출처로 쓸 수
+               없습니다. 대신 결산 시점의 재고를 앵커로 잡고
+
+                   앵커 + Σ입고 − Σ사용량 (+ adjustments 회계 보정)
+
+               을 누적한 값입니다. 앵커는 factory1_erp_anchor 표에 있고, 날짜마다
+               '그 날짜 이하의 가장 최근 앵커'를 골라 거기서부터만 누적합니다.
+               월말에 앵커를 한 줄 더 넣으면 그 지점에서 오차가 끊깁니다.
+
+               뷰가 원장값(erp_raw)도 같이 내주지만 화면은 쓰지 않습니다.
+               나중에 만들 대조 페이지 몫입니다. */
+            ERP_STOCK: 'v_factory1_erp_stock',
+
             F3_IPGO: 'factory3_io',                    // 별관 입고 (in_a_kg / in_d_kg)
             F3_USAGE: 'v_factory3_usage_by_item',      // 별관 사용량
+            F3_STOCK: 'v_factory3_daily_stock',        // 별관 ERP 재고 (erp_a / erp_d)
 
-            /* ERP 재고 — 'ERP 원장을 그대로 옮긴 값'이 아닙니다.
-               결재가 밀리면 하루·이틀, 길게는 일주일 전 자료도 안 들어오기 때문에
-               ERP 원본(factory1_erp_history)은 이 열의 출처로 쓸 수 없습니다.
-               대신 기준일의 재고를 앵커로 잡고 입고와 사용량을 누적해 만든 값을
-               'ERP 재고'라 부르고 있습니다. 그래서 출처가 저장위치마다 다릅니다.
-
-               별관 v_factory3_daily_stock.erp_a / erp_d
-               F.T  v_factory1_ft_erp_stock.erp_stock (item = A/C/D)
-               1공장 용지창고(대한·전주·페이퍼 등)는 아직 그런 누적 뷰가 없어
-               비어 있습니다 — 만들기 전까지 '–' 가 맞습니다. */
-            FT_ERP: 'v_factory1_ft_erp_stock',
-            F3_STOCK: 'v_factory3_daily_stock',
-
-            PAPER_ITEM: 'factory1_paper_item',         // 입고의 item_code → ERP 품목코드
             CHECK: 'factory1_inventory_check'          // 날짜별 재고 확인 상태
         },
 
         /* 재고 확인 상태 — 매일 실사를 할 수 있는 것이 아니고 숫자가 애매한 날도
            있어서, 그날의 표를 어디까지 믿을 수 있는지 남겨 둡니다.
 
-           '미확인'은 기본값이라 DB에 행이 없습니다. 확인·보류를 고른 날만 행이
-           생기고 미확인으로 되돌리면 행을 지웁니다. 그래서 DB의 CHECK 제약에는
-           'confirmed'·'hold' 둘만 있습니다. */
+           message : 그 상태를 고르면 고정으로 뜨는 문구. 메모를 받지 않습니다.
+           memo    : true 면 수정 모드에서 메모 입력칸이 뜨고, 읽기 모드에서는
+                     적어 둔 메모가 그 자리에 그대로 보입니다.
+           '확인'에 메모를 안 받는 이유는 확인됐다는 사실 외에 덧붙일 말이 없기
+           때문이고, 반대로 보류·미확인은 왜 그런지가 곧 정보입니다.
+
+           '미확인 + 메모 없음'이 기본값이라 그때만 DB에서 행을 지웁니다.
+           미확인이어도 메모를 적었으면 행이 남아야 합니다 — '아직 못 셌다'는
+           기록도 기록입니다. */
         STATUS_DEFAULT: 'unchecked',
         STATUS_OPTIONS: [
-            { key: 'confirmed', label: '확인' },
-            { key: 'hold', label: '보류' },
-            { key: 'unchecked', label: '미확인' }
+            { key: 'confirmed', label: '확인', message: '재고실사 확인됨' },
+            { key: 'hold', label: '보류', memo: true },
+            { key: 'unchecked', label: '미확인', memo: true }
         ],
 
         // 실재고 하위 열 정의 (창고 구분) — 열 추가/이름 변경 시 여기만 수정
@@ -119,11 +127,12 @@
                 ]
             },
             {
-                /* ftErp: ERP 재고를 v_factory1_ft_erp_stock 에서 읽습니다.
-                   ftGrade 가 그 뷰의 item(A/C/D)입니다. 나투라는 등급이 없어 '–'. */
+                /* F.T 도 1공장 창고라 v_factory1_erp_stock 이 그대로 덮습니다.
+                   기존 v_factory1_ft_erp_stock(= FT 재고 종합 페이지가 쓰는 뷰)과
+                   값이 같은 것을 확인했습니다(7/27 A 8,251 동일). 그쪽 뷰는 그
+                   페이지가 계속 쓰므로 건드리지 않고 그대로 둡니다. */
                 locName: '(사급)1공장 용지창고(FT)',
                 locCode: 'WB11101',
-                ftErp: true,
                 items: [
                     /* 나투라 55g — 테스트용으로 들여와 쓰고 남은 재고입니다.
                        ERP 상 2025-08-31 의 440kg 이 마지막 기록이고 그 뒤로 한 번도
@@ -141,12 +150,16 @@
                     {
                         code: '11APP-0000605',
                         name: '(페이퍼코리아)나투라 55g 788롤',
-                        fixed: { b6run: 440 },
-                        fixedNote: '실사 고정값 — 2025-08 이후 변동 없음 (DB 미연동)'
+                        /* 여섯 칸을 전부 못 박습니다. ERP 재고 440 은 원장의
+                           2025-08-31 값 그대로이고 그 뒤 11개월간 한 번도 움직이지
+                           않았습니다. 입고·사용량 0, B5·B6 0 을 같이 넣어야 합계와
+                           차이가 계산됩니다(한 칸이라도 비면 둘 다 '–'). */
+                        fixed: { erp: 440, inQty: 0, useQty: 0, b5: 0, b6: 0, b6run: 440 },
+                        fixedNote: '실사 고정값 — ERP 상 2025-08-31 이후 변동 없음 (DB 미연동)'
                     },
-                    { code: '11BNP-0000005', name: '사급-(전주)신문용지(살구) 45g 1575롤', ftGrade: 'A' },
-                    { code: '11BNP-0000006', name: '사급-(전주)신문용지(살구) 45g 1182롤', ftGrade: 'C' },
-                    { code: '11BNP-0000007', name: '사급-(전주)신문용지(살구) 45g 788롤', ftGrade: 'D' }
+                    { code: '11BNP-0000005', name: '사급-(전주)신문용지(살구) 45g 1575롤' },
+                    { code: '11BNP-0000006', name: '사급-(전주)신문용지(살구) 45g 1182롤' },
+                    { code: '11BNP-0000007', name: '사급-(전주)신문용지(살구) 45g 788롤' }
                 ]
             },
             {
@@ -178,10 +191,13 @@
             // (저장위치코드|품목코드) → { erp, inQty, useQty, b5, b6, b6run }
             values: {},
 
-            // 재고 확인 상태 — status 는 화면의 현재 선택, savedStatus 는 DB 값.
-            // 둘을 나눠 두어야 '고쳤는데 저장 안 함'을 알 수 있습니다.
+            // 재고 확인 상태 — status/memo 는 화면의 현재 값, saved* 는 DB 값.
+            // 둘을 나눠 두어야 '고쳤는데 저장 안 함'을 알 수 있고, 수정을 취소했을 때
+            // 되돌릴 곳이 생깁니다.
             status: 'unchecked',
+            memo: '',
             savedStatus: 'unchecked',
+            savedMemo: '',
             isEditMode: false
         },
 

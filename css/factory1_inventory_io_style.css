@@ -104,6 +104,39 @@
     color: #636366;
     white-space: nowrap;
 }
+
+/* 버튼 왼쪽 자리 — '확인'은 고정 문구, 보류·미확인은 메모.
+   메모가 길어도 헤더 줄이 밀리지 않도록 폭을 제한하고 말줄임합니다
+   (전체 내용은 title 툴팁으로 남습니다). */
+.f1inv-status-msg {
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #636366;
+}
+.f1inv-status-msg.is-done {
+    color: #248a3d;
+    font-weight: 700;
+}
+.f1inv-status-memo {
+    width: 240px;
+    height: 24px;
+    padding: 0 9px;
+    border: 1px solid #d1d1d6;
+    border-radius: 12px;
+    background: #ffffff;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #1d1d1f;
+    outline: none;
+    transition: border-color 0.18s ease;
+}
+.f1inv-status-memo:focus { border-color: #8e8e93; }
+.f1inv-status-memo::placeholder { color: #c7c7cc; font-weight: 500; }
 .f1inv-status-group {
     display: inline-flex;
     align-items: center;

@@ -66,84 +66,42 @@
     }
 
     /* ────────────────────────────────────────────────────────────
-       입고 · 사용량
+       1공장 3개 창고 — ERP 재고 · 입고 · 사용량
 
-       둘 다 '그날 움직인 양'이라 이월하면 안 됩니다. 어제 들어온 양이 오늘도
-       들어온 것이 되어 버립니다. (잔고인 ERP 재고와 정반대)
+       셋을 뷰 하나가 냅니다. 셋이 같은 계산에서 나오기 때문입니다 —
+       ERP 재고는 앵커에 입고를 더하고 사용량을 뺀 누적값이라, 따로 조회하면
+       화면에서 'ERP 재고의 하루 변화 != 입고 - 사용량' 이 될 수 있습니다.
 
-       빈 칸의 뜻이 두 가지입니다.
-         그날 원본에 행이 하나라도 있다 → 안 잡힌 품목은 움직임 없음 = 0
-         그날 원본이 통째로 비어 있다   → 아직 자료가 없다 = '–'
+       입고·사용량은 '그날 움직인 양'이라 이월하면 안 되고(어제 들어온 양이
+       오늘도 들어온 것이 됩니다), ERP 재고는 '잔고'라 반드시 이월해야 합니다.
+       뷰가 날짜를 매일 채워 내주므로 화면은 이월을 하지 않습니다.
+
+       has_in / has_use 는 그날 원본에 행이 하나라도 있었는지입니다.
+         true  -> 안 잡힌 품목은 움직임 없음 = 0
+         false -> 아직 자료가 없다 = '-'
        0 으로 채우면 '입고가 없었다'로 읽히지만 사실은 '모른다'입니다.
-       급지 재고의 '전산 출고' 열이 쓰는 규칙과 같습니다.
+       (급지 재고의 '전산 출고' 열이 쓰는 규칙과 같습니다)
        ──────────────────────────────────────────────────────────── */
+    async function fetchErpStock(dateStr) {
+        const { data, error } = await supabase
+            .from(App.TABLES.ERP_STOCK)
+            .select('warehouse_code, item_code, in_qty, use_qty, has_in, has_use, erp_qty')
+            .eq('date', dateStr);
 
-    /* 입고 페이지(v_factory1_ipgo)의 item_code 는 용지 마스터 코드(daehan_a 등)라
-       화면의 ERP 품목코드로 옮겨야 합니다. 마스터는 12행이고 바뀔 일이 드물어
-       페이지가 뜰 때 한 번만 읽습니다. 여기에 하드코딩하면 마스터에 용지가
-       늘어도 화면이 따라오지 않습니다. */
-    let masterPromise = null;
-    function loadItemMaster() {
-        if (masterPromise) return masterPromise;
-        masterPromise = supabase
-            .from(App.TABLES.PAPER_ITEM)
-            .select('item_code, erp_code, warehouse_code')
-            .then(({ data, error }) => {
-                if (error) {
-                    console.error('[factory1_inventory_io] 용지 마스터 조회 실패:', error.message);
-                    return {};
-                }
-                const map = {};
-                (data || []).forEach(r => {
-                    map[r.item_code] = valueKey(r.warehouse_code, r.erp_code);
-                });
-                return map;
-            });
-        return masterPromise;
-    }
-
-    // 1공장 입고 — 입고 페이지에서 사람이 적는 값
-    async function fetchInbound(dateStr) {
-        const [master, res] = await Promise.all([
-            loadItemMaster(),
-            supabase.from(App.TABLES.IPGO)
-                .select('item_code, inbound_qty')
-                .eq('ipgo_date', dateStr)
-        ]);
-
-        if (res.error) {
-            console.error('[factory1_inventory_io] 입고 조회 실패:', res.error.message);
+        if (error) {
+            console.error('[factory1_inventory_io] ERP 재고 조회 실패:', error.message);
             return null;
         }
 
         const byKey = {};
-        (res.data || []).forEach(r => {
-            const key = master[r.item_code];
-            if (!key) return;
-            byKey[key] = (byKey[key] || 0) + (Number(r.inbound_qty) || 0);
-        });
-        return { byKey, hasData: (res.data || []).length > 0 };
-    }
-
-    /* 1공장 사용량 — 급지 실적. item_code 가 이미 ERP 품목코드라 그대로 씁니다.
-       저장위치는 뷰에 없지만 1공장 품목은 창고가 하나뿐이라 품목코드로 충분합니다.
-       (별관도 같은 품목코드를 쓰지만 그쪽은 3공장 뷰에서 따로 읽습니다) */
-    async function fetchUsage(dateStr) {
-        const { data, error } = await supabase
-            .from(App.TABLES.USAGE)
-            .select('item_code, usage_qty')
-            .eq('print_date', dateStr);
-
-        if (error) {
-            console.error('[factory1_inventory_io] 사용량 조회 실패:', error.message);
-            return null;
-        }
-
-        const byCode = {};
         (data || []).forEach(r => {
-            byCode[r.item_code] = (byCode[r.item_code] || 0) + (Number(r.usage_qty) || 0);
+            byKey[valueKey(r.warehouse_code, r.item_code)] = {
+                erp: numOrNull(r.erp_qty),
+                inQty: r.has_in ? (numOrNull(r.in_qty) || 0) : null,
+                useQty: r.has_use ? (numOrNull(r.use_qty) || 0) : null
+            };
         });
-        return { byCode, hasData: (data || []).length > 0 };
+        return byKey;
     }
 
     /* 별관 입고 — factory3_io 는 품목코드 없이 A/D 두 등급으로 적습니다.
@@ -186,40 +144,6 @@
         return { byCode, hasData: (data || []).length > 0 };
     }
 
-    /* ────────────────────────────────────────────────────────────
-       ERP 재고
-
-       ERP 원장을 그대로 옮긴 값이 아니라 '앵커 재고 + 입고 − 사용량' 누적입니다.
-       결재가 밀리면 며칠 전 자료도 안 들어와 원장을 그대로 쓸 수 없기 때문입니다.
-       그래서 출처가 저장위치마다 다르고, 1공장 용지창고는 아직 없습니다.
-       ──────────────────────────────────────────────────────────── */
-
-    /* F.T — 뷰가 입고나 출고가 있었던 날만 행을 냅니다(토요일 등이 빕니다).
-       재고는 상태값이라 움직이지 않은 날도 잔고는 존재하므로, 기준일 이하의
-       마지막 행을 가져와 이월합니다. FT 재고 종합 화면이 하는 것과 같습니다. */
-    async function fetchFtErp(dateStr) {
-        const grades = ['A', 'C', 'D'];
-        const results = await Promise.all(grades.map(g =>
-            supabase.from(App.TABLES.FT_ERP)
-                .select('erp_stock')
-                .eq('item', g)
-                .lte('date', dateStr)
-                .order('date', { ascending: false })
-                .limit(1)
-        ));
-
-        const byGrade = {};
-        results.forEach((res, i) => {
-            if (res.error) {
-                console.error('[factory1_inventory_io] FT ERP 재고 조회 실패:', res.error.message);
-                return;
-            }
-            const row = (res.data || [])[0];
-            if (row) byGrade[grades[i]] = numOrNull(row.erp_stock);
-        });
-        return byGrade;
-    }
-
     // 별관 — 날짜마다 행이 있는 뷰라 이월이 필요 없습니다.
     async function fetchAnnexErp(dateStr) {
         const { data, error } = await supabase
@@ -247,19 +171,28 @@
     App.fetchStatus = async function (dateStr) {
         const { data, error } = await supabase
             .from(App.TABLES.CHECK)
-            .select('status')
+            .select('status, memo')
             .eq('check_date', dateStr);
 
         if (error) {
             console.error('[factory1_inventory_io] 확인 상태 조회 실패:', error.message);
-            return App.STATUS_DEFAULT;
+            return { status: App.STATUS_DEFAULT, memo: '' };
         }
         const row = (data || [])[0];
-        return (row && row.status) || App.STATUS_DEFAULT;
+        return {
+            status: (row && row.status) || App.STATUS_DEFAULT,
+            memo: (row && row.memo) || ''
+        };
     };
 
-    App.saveStatus = async function (dateStr, status) {
-        if (status === App.STATUS_DEFAULT) {
+    App.saveStatus = async function (dateStr, status, memo) {
+        /* '확인'은 메모를 받지 않으므로 저장하지 않습니다. 화면에서 안 보이는
+           메모가 DB에만 남아 있으면 나중에 왜 그 값이 있는지 알 수 없습니다. */
+        const opt = App.STATUS_OPTIONS.find(o => o.key === status);
+        const keep = (opt && opt.memo) ? (memo || '').trim() : '';
+
+        // 기본값(미확인) + 메모 없음 = 아무것도 기록하지 않은 상태 → 행을 지웁니다
+        if (status === App.STATUS_DEFAULT && !keep) {
             const { error } = await supabase
                 .from(App.TABLES.CHECK)
                 .delete()
@@ -270,7 +203,8 @@
 
         const { error } = await supabase
             .from(App.TABLES.CHECK)
-            .upsert({ check_date: dateStr, status: status }, { onConflict: 'check_date' });
+            .upsert({ check_date: dateStr, status: status, memo: keep || null },
+                    { onConflict: 'check_date' });
         if (error) throw new Error(error.message);
     };
 
@@ -278,42 +212,37 @@
        constant.js 의 fixed 는 DB가 아니라 파일에 박아 둔 상수라 뷰 값보다
        우선합니다(나투라 440). 뷰에 같은 칸이 생기면 그때 fixed 를 지우면 됩니다. */
     App.fetchAll = async function (dateStr) {
-        const [actual, inbound, usage, f3in, f3use, ftErp, f3Erp] = await Promise.all([
+        const [actual, erpStock, f3in, f3use, f3Erp] = await Promise.all([
             fetchActualStock(dateStr),
-            fetchInbound(dateStr),
-            fetchUsage(dateStr),
+            fetchErpStock(dateStr),
             fetchAnnexInbound(dateStr),
             fetchAnnexUsage(dateStr),
-            fetchFtErp(dateStr),
             fetchAnnexErp(dateStr)
         ]);
         const values = {};
 
         App.LOCATIONS.forEach(loc => {
-            const inSrc = loc.factory3 ? f3in : inbound;
-            const useSrc = loc.factory3 ? f3use : usage;
-
             loc.items.forEach(item => {
                 const key = valueKey(loc.locCode, item.code);
                 const row = (actual && actual[key]) || {};
 
-                let inQty = null;
-                if (inSrc && inSrc.hasData) {
-                    inQty = loc.factory3
-                        ? (inSrc.byGrade[item.f3Grade] || 0)
-                        : (inSrc.byKey[key] || 0);
-                }
+                /* 1공장 3개 창고는 뷰 하나가 세 값을 다 줍니다.
+                   별관만 3공장 원본 셋에서 따로 모읍니다. 나투라는 용지 마스터에
+                   없어 어느 쪽에도 안 잡히고 '–' 로 남습니다. */
+                let erp = null, inQty = null, useQty = null;
 
-                let useQty = null;
-                if (useSrc && useSrc.hasData) {
-                    useQty = useSrc.byCode[item.code] || 0;
+                if (loc.factory3) {
+                    if (f3in && f3in.hasData) inQty = f3in.byGrade[item.f3Grade] || 0;
+                    if (f3use && f3use.hasData) useQty = f3use.byCode[item.code] || 0;
+                    if (f3Erp && item.f3Grade) erp = f3Erp[item.f3Grade];
+                } else {
+                    const e = (erpStock && erpStock[key]) || null;
+                    if (e) {
+                        erp = e.erp;
+                        inQty = e.inQty;
+                        useQty = e.useQty;
+                    }
                 }
-
-                /* 1공장 용지창고는 누적 뷰가 없어 null 입니다. 이때 '실재고 -
-                   ERP재고' 열도 render 가 자동으로 '–' 로 둡니다. */
-                let erp = null;
-                if (loc.ftErp && item.ftGrade) erp = ftErp[item.ftGrade];
-                else if (loc.factory3 && item.f3Grade) erp = f3Erp[item.f3Grade];
                 if (erp === undefined) erp = null;
 
                 values[key] = {
