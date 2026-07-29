@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1공장 전자신문</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <link rel="stylesheet" href="css/common_header.css">
+    <link rel="stylesheet" href="css/factory1_jeonja_style.css">
+    <link rel="stylesheet" href="css/common_subnav.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+    <script src="js/common_ui.js" defer></script>
+</head>
+<body data-notice-scope="factory1">
+
+<div class="gf3-wrapper" data-page-module="Factory1JeonjaModule" style="padding-bottom: 0;">
+    <div class="gf3-header">
+        <div class="gf3-title-wrap">
+            <span class="material-symbols-outlined gf3-hamburger">menu</span>
+            <span class="gf3-main-title">1공장 전자신문</span>
+
+            <div class="gf3-dropdown">
+                <div class="gf3-dropdown-item">
+                    <span class="gf3-dropdown-label">
+                        재고 종합
+                        <span class="material-symbols-outlined gf3-submenu-arrow">chevron_right</span>
+                    </span>
+                    <div class="gf3-submenu">
+                        <a href="factory1_inventory_io.html">재고실사</a>
+                        <a href="factory1_usage.html">용지별,매체별 사용량</a>
+                    </div>
+                </div>
+                <a href="factory1_ipgo.html">1공장 입고</a>
+                <a href="factory1_jigo_inventory.html">1공장 지고 재고</a>
+                <a href="factory1_geupji_inventory.html">1공장 급지 재고</a>
+                <div class="gf3-dropdown-item">
+                    <span class="gf3-dropdown-label">
+                        1공장 FT
+                        <span class="material-symbols-outlined gf3-submenu-arrow">chevron_right</span>
+                    </span>
+                    <div class="gf3-submenu">
+                        <a href="factory1_ft.html">FT 일지</a>
+                        <a href="factory1_ft_io.html">FT 재고 종합</a>
+                    </div>
+                </div>
+                <a href="factory1_jeonja.html" class="active">1공장 전자신문</a>
+                <a href="factory1_narasarang.html">1공장 나라사랑</a>
+                <div class="gf3-dropdown-item">
+                    <span class="gf3-dropdown-label">
+                        기타
+                        <span class="material-symbols-outlined gf3-submenu-arrow">chevron_right</span>
+                    </span>
+                    <div class="gf3-submenu">
+                        <a href="factory1_inoutbound.html">입출고 상세 내역</a>
+                        <a href="factory1_rollcac.html">롤 무게 계산</a>
+                    </div>
+                </div>
+                <a href="https://eellooyy.github.io/factory3/" target="_blank">3공장으로 이동</a>
+            </div>
+        </div>
+
+        <div class="f3i-notice-ticker" id="f3iNoticeTicker" title="클릭하시면 전체 공지를 확인하실 수 있습니다.">
+            <div class="f3i-ticker-wrapper" id="f3iTickerWrapper"></div>
+        </div>
+
+        <div class="gf3-controls">
+            <div class="gf3-nav-group">
+                <button id="f1JeonjaPrevBtn" class="gf3-icon-btn" title="이전 날짜"><span class="material-symbols-outlined">chevron_left</span></button>
+                <div class="gf3-cal-wrap" id="f1JeonjaCalendarWrap">
+                    <span id="f1JeonjaDateText" class="gf3-date-text cursor-pointer"></span>
+                    <input type="text" id="f1JeonjaFlatpickr" style="display: none;">
+                </div>
+                <button id="f1JeonjaNextBtn" class="gf3-icon-btn" title="다음 날짜"><span class="material-symbols-outlined">chevron_right</span></button>
+            </div>
+
+            <button id="f1JeonjaTodayBtn" class="gf3-action-btn today-btn">오늘</button>
+            <!-- 조회 전용 화면입니다. 수정/저장은 다른 조회 페이지(사용량 · 입출고 상세)와
+                 마찬가지로 마스터 모드의 공지사항 편집용으로만 남겨 둡니다. -->
+            <button id="f1JeonjaEditBtn" class="gf3-action-btn edit-btn" disabled>수정</button>
+            <button id="f1JeonjaSaveBtn" class="gf3-action-btn save-btn" disabled>저장</button>
+            <button id="f1JeonjaExcelBtn" class="gf3-action-btn f3i-pdf-btn">
+                <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">picture_as_pdf</span>PDF 저장
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="gf3-wrapper f1jn-wrapper" data-page-module="Factory1JeonjaModule" style="padding-top: 16px;">
+
+    <!-- ============================================================
+         전자신문 용지재고대장
+         거래처(전자신문)가 쓰는 원장 그대로의 열 구성입니다. 이 화면을 뽑아
+         그쪽 원장과 나란히 놓고 맞추는 것이 목적이라, 열을 늘리거나 순서를
+         바꾸지 않았습니다.
+
+         원장에 없는데 넣은 열은 '면수' 하나뿐입니다. 출고가 면수에서
+         나오는 값이라, 면수가 화면에 없으면 왜 그 숫자인지 읽을 수가
+         없습니다. (출고 = 정미사용량 × 1.03)
+
+         날짜 단위가 아니라 '달' 단위 표입니다. 상단 날짜 네비게이션은 그대로
+         두고, 고른 날이 속한 달을 통째로 그린 뒤 그 날 줄을 잡아 줍니다.
+         원장 자체가 월 마감 단위라 하루만 떼어 보면 의미가 없습니다.
+         ============================================================ -->
+    <div class="f1jn-floor-container">
+        <div class="panel-header-grid mb-3">
+            <div class="header-left">
+                <span class="panel-title" id="f1jnMonthTitle">–</span>
+                <span class="panel-subtitle">전자신문 용지재고대장</span>
+            </div>
+            <div class="header-center text-center"></div>
+            <div class="header-right">
+                <!-- 이 화면의 숫자가 어디서 나오는지 한 줄로 붙여 둡니다.
+                     원장 출고는 실사용량이 아니라 약정 손지율을 얹은 계산값이라,
+                     ERP 사용량과 다른 것이 정상입니다. -->
+                <span class="f1jn-note">(사급)1공장 용지창고 · WB11102</span>
+            </div>
+        </div>
+
+        <div class="f1jn-panel">
+            <div class="f1jn-scroll-area" id="f1jnScroll">
+                <table class="f1jn-table">
+                    <!-- 날짜 · 면수는 고정폭, 나머지 9개 데이터 열은 균등 분할 -->
+                    <colgroup>
+                        <col class="f1jn-col-date">
+                        <col class="f1jn-col-myeon">
+                        <col class="f1jn-col-data" span="9">
+                    </colgroup>
+                    <thead>
+                        <tr class="f1jn-thead-lv1">
+                            <th class="f1jn-date-th" rowspan="2">날짜</th>
+                            <th class="f1jn-myeon-th" rowspan="2">면수</th>
+                            <th colspan="5" class="f1jn-group-th f1jn-sep" data-group="in">입고</th>
+                            <th colspan="3" class="f1jn-group-th f1jn-sep" data-group="out">출고</th>
+                            <th rowspan="2" class="f1jn-group-th f1jn-sep f1jn-stock-th" data-group="stock">재고</th>
+                        </tr>
+                        <tr class="f1jn-thead-lv2">
+                            <!-- 원장은 입고만 R/L(롤 수)과 수량(kg)을 같이 적습니다.
+                                 출고는 kg 뿐이라 그대로 따랐습니다. -->
+                            <th class="f1jn-leaf-th f1jn-sep f1jn-leaf-2line" data-col="in_a_rl">1576<br><small>R/L</small></th>
+                            <th class="f1jn-leaf-th f1jn-leaf-2line" data-col="in_a_kg">1576<br><small>kg</small></th>
+                            <th class="f1jn-leaf-th f1jn-leaf-2line" data-col="in_d_rl">788<br><small>R/L</small></th>
+                            <th class="f1jn-leaf-th f1jn-leaf-2line" data-col="in_d_kg">788<br><small>kg</small></th>
+                            <th class="f1jn-leaf-th f1jn-leaf-sum" data-col="in_sum">합계</th>
+                            <th class="f1jn-leaf-th f1jn-sep" data-col="out_a">1576</th>
+                            <th class="f1jn-leaf-th" data-col="out_d">788</th>
+                            <th class="f1jn-leaf-th f1jn-leaf-sum" data-col="out_sum">합계</th>
+                        </tr>
+                    </thead>
+                    <tbody id="f1jnBody"></tbody>
+                    <!-- 소계는 원장에 있는 행입니다. 스크롤해도 바닥에 붙여 둡니다 -->
+                    <tfoot id="f1jnFoot"></tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- 표 아래 한 줄 설명. 원장 숫자의 근거라 화면에서 빼지 않습니다. -->
+        <div class="f1jn-legend">
+            <span class="f1jn-legend-item"><i class="f1jn-dot f1jn-dot-plus"></i>증면일 — 본지 28면 + 특집 8면</span>
+            <span class="f1jn-legend-item"><i class="f1jn-dot f1jn-dot-off"></i>휴간 · 미작업일 — 출고 없음</span>
+            <span class="f1jn-legend-sep">|</span>
+            <span class="f1jn-legend-note">출고 = 정미사용량 × 1.03 (약정 손지 3%) · 1576롤 1R/L = 1,404kg · 788롤 1R/L = 702kg</span>
+        </div>
+    </div>
+</div>
+
+<div id="f3iNoticeModal" class="f3i-nmodal-overlay">
+    <div class="f3i-nmodal-box">
+        <div class="f3i-nmodal-header">
+            <button id="f3iNoticeBackBtn" class="f3i-nmodal-back-btn" style="display: none;">
+                <span class="material-symbols-outlined">arrow_back</span> 뒤로가기
+            </button>
+            <span id="f3iNoticeModalTitle" class="f3i-nmodal-title">전체 공지사항 목록</span>
+            <span id="f3iNoticeCloseBtn" class="material-symbols-outlined f3i-nmodal-close">close</span>
+        </div>
+        <div class="f3i-nmodal-body" id="f3iNoticeModalBody"></div>
+        <div class="f3i-nmodal-footer-info" id="f3iMasterNoticeInfo" style="display: none;">
+            ⚠️ 마스터 모드: 글이나 HTML 태그를 편집한 후 상단 [저장] 버튼을 누르면 확정됩니다.
+        </div>
+    </div>
+</div>
+
+<script src="js/common_utils.js"></script>
+<script src="js/common_header.js"></script>
+<script src="js/common_pdf.js"></script>
+<script src="js/common_subnav.js"></script>
+
+<script src="js/factory1_jeonja_constant.js"></script>
+<script src="js/factory1_jeonja_render.js"></script>
+<script src="js/factory1_jeonja_main.js"></script>
+</body>
+</html>

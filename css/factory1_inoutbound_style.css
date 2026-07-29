@@ -88,6 +88,22 @@
     margin: 0;
 }
 
+/* 최근 DB 갱신 시간 — 제목 줄 우측, 방향 스위처 왼쪽.
+   기준일(제목 옆)과 헷갈리면 안 되는 값이라 색과 크기를 한 단계 낮추고
+   회색 알약으로 감싸 "표의 일부가 아니라 상태 표시"로 읽히게 했습니다. */
+.f1iob-dbstamp {
+    font-size: 11px;
+    font-weight: 600;
+    color: #8e8e93;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    padding: 3px 9px;
+    border-radius: 6px;
+    background: #f5f5f7;
+    border: 1px solid #ececf0;
+}
+.f1iob-dbstamp:empty { display: none; }
+
 /* 제목 옆 보조 설명 (기준일 · 층 설명) */
 .panel-subtitle {
     font-size: 12px;
@@ -239,6 +255,8 @@
     padding: 12px 14px;
 }
 
+/* 요약 칸 제목 — '요약' 대신 '6층 입고' 태그가 섭니다(render.js).
+   아래 품목 줄이 어느 층 것인지를 제목이 말하게 하려는 것입니다. */
 .f1iob-side-title {
     font-size: 11.5px;
     font-weight: 800;
@@ -247,6 +265,12 @@
     padding-bottom: 8px;
     border-bottom: 1px solid #f2f2f7;
     flex-shrink: 0;
+}
+/* 제목 자리의 태그는 아래 '5층 입고' 줄보다 한 급 크게 세웁니다 —
+   같은 크기면 둘이 같은 층위의 줄로 읽힙니다. */
+.f1iob-side-title .f1iob-side-tag {
+    font-size: 11px;
+    padding: 3px 8px;
 }
 
 /* 품목 줄 목록 — 남는 높이를 채우고, 모자라면 이 안에서만 스크롤합니다 */
@@ -350,7 +374,7 @@
     overflow-wrap: anywhere;
 }
 
-/* 5층 입고 태그 줄 — 표에서 색이 칠해진 행이 몇 롤인지입니다.
+/* 5층 입고 줄 — 표에서 색이 칠해진 행이 몇 롤인지입니다.
    품목 목록과 성격이 다른 숫자(층별 집계)라 목록 밖에 따로 세웁니다.
    출고에는 5층이 없으므로 입고를 볼 때만 나옵니다. */
 .f1iob-side-tagrow {
@@ -358,6 +382,7 @@
     border-top: 1px solid #f2f2f7;
 }
 .f1iob-side-tag {
+    display: inline-block;      /* 요약 제목 자리(비 grid)에서도 여백이 서게 */
     justify-self: start;
     align-self: center;
     font-size: 10px;
@@ -365,10 +390,15 @@
     letter-spacing: -0.2px;
     padding: 2px 6px;
     border-radius: 4px;
-    color: #1c6ec4;
-    background: #e8f1fb;
     white-space: nowrap;
 }
+
+/* 층 색 — 5층은 파랑, 6층은 초록입니다. 같은 계열로 두면 요약 제목(6층)과
+   아래 5층 줄이 한눈에 갈리지 않습니다.
+   5층 파랑은 상세 표의 B5 행 배경(.f1iob-row-tagged)과 같은 계열이라
+   둘이 같은 것을 가리킨다는 게 보입니다. 6층은 표에 색이 없습니다. */
+.f1iob-side-tag.f1iob-tag-b5 { color: #1c6ec4; background: #e8f1fb; }
+.f1iob-side-tag.f1iob-tag-b6 { color: #1a7f5a; background: #e6f5ee; }
 
 /* 합계 — 품목 줄의 합이 아니라 그날 스캔된 전체 롤 수입니다
    (품목을 모르는 '미상' 롤까지 포함) */

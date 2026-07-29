@@ -42,7 +42,6 @@
                 <a href="factory1_ipgo.html">1공장 입고</a>
                 <a href="factory1_jigo_inventory.html">1공장 지고 재고</a>
                 <a href="factory1_geupji_inventory.html">1공장 급지 재고</a>
-                <a href="factory1_narasarang.html">1공장 나라사랑</a>
                 <div class="gf3-dropdown-item">
                     <span class="gf3-dropdown-label">
                         1공장 FT
@@ -53,6 +52,8 @@
                         <a href="factory1_ft_io.html">FT 재고 종합</a>
                     </div>
                 </div>
+                <a href="factory1_jeonja.html">1공장 전자신문</a>
+                <a href="factory1_narasarang.html">1공장 나라사랑</a>
                 <div class="gf3-dropdown-item">
                     <span class="gf3-dropdown-label">
                         기타
@@ -121,6 +122,11 @@
             </div>
             <div class="header-center text-center"></div>
             <div class="header-right">
+                <!-- 최근 DB 갱신 시간 — 조회 기준일과 무관합니다. 이 화면의
+                     숫자가 "언제까지 들어온 데이터인지"를 알려 줍니다.
+                     (DB 에 들어와 있는 가장 최근 스캔 시각. api.js 참고) -->
+                <span class="f1iob-dbstamp" id="f1iobDbStamp"></span>
+
                 <!-- 방향 스위처 — R/L · Kg 스위처와 같은 부품입니다 -->
                 <div class="unit-switcher f1iob-dir-switch" id="f1iobDirSwitch" title="입고 / 출고 전환">
                     <div class="selection-bg mode-in"></div>

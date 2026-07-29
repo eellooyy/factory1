@@ -75,6 +75,12 @@
         return `<tr class="f1iob-placeholder"><td colspan="${columns.length}">${msg}</td></tr>`;
     }
 
+    // 표에 배경색을 칠할 층 (B5 하나뿐입니다 — constant.js 의 FLOOR_TAGS)
+    function tintFloor() {
+        const t = App.FLOOR_TAGS.find(x => x.tint);
+        return t ? t.floor : null;
+    }
+
     // ── 상세 표 ───────────────────────────────────────────────────
     /* 5층(B5)에서 들어온 행은 배경으로 구분합니다. 표를 층별로 나누지 않기로
        했으므로, 어느 층 것인지는 색과 우측 '5층 입고' 태그로만 드러납니다. */
@@ -89,8 +95,9 @@
             return;
         }
 
+        const tint = tintFloor();
         body.innerHTML = resolved.map(r =>
-            rowHtml(r, App.COLUMNS, r.floor === App.FLOOR_TAG.floor ? 'f1iob-row-tagged' : '')
+            rowHtml(r, App.COLUMNS, r.floor === tint ? 'f1iob-row-tagged' : '')
         ).join('');
     }
 
@@ -113,9 +120,8 @@
         if (!wrap) return;
 
         const rows = currentRows();
-        const count = {}, kg = {};
+        const count = {}, kg = {}, byFloor = {};
         let unknown = 0, totalKg = 0;
-        let tagged = 0, taggedKg = 0;
 
         rows.forEach(r => {
             const w = Number(r.weight) || 0;
@@ -128,10 +134,12 @@
                 totalKg += w;
             }
 
-            if (r.floor === App.FLOOR_TAG.floor) {
-                tagged += 1;
-                if (!isBlank(r.itemKey)) taggedKg += w;
-            }
+            /* 층별 집계 — 롤 수는 해석 여부와 무관하게 전부 세고(물건은
+               실제로 들어왔습니다), Kg 은 해석된 행만 더합니다. 미상 행의
+               중량은 깨진 값이라 더하면 없는 무게가 생깁니다. */
+            const f = byFloor[r.floor] || (byFloor[r.floor] = { n: 0, kg: 0 });
+            f.n += 1;
+            if (!isBlank(r.itemKey)) f.kg += w;
         });
 
         const num = v => Number(v).toLocaleString('ko-KR');
@@ -174,18 +182,29 @@
                 "해석하지 못해 품목을 모르는 롤입니다. 아래 '확인 필요'에 있습니다.");
         }
 
-        /* 5층 입고 태그 줄 — 표에서 색이 칠해진 행이 몇 롤인지입니다.
-           출고에는 5층이 없으므로 입고를 볼 때만 나옵니다. */
+        /* 5층 입고 줄 — 표에서 색이 칠해진 행이 몇 롤인지입니다. 위 품목
+           줄에서 이만큼이 5층 몫이라는 뜻이기도 합니다.
+           출고에는 5층이 없으므로 입고를 볼 때만 나옵니다. 0롤인 날도 줄을
+           지킵니다 — 줄이 사라지면 "오늘 5층이 아예 없었다"가 안 보입니다. */
         const tagHtml = (App.state.direction === 'in')
-            ? `<div class="f1iob-side-tagrow">
-                   <span class="f1iob-side-tag">${App.FLOOR_TAG.label}</span>
-                   <span class="f1iob-side-roll"><b>${num(tagged)}</b>롤</span>
-                   ${kgCell(taggedKg)}
-               </div>`
+            ? App.FLOOR_TAGS.map(t => {
+                const f = byFloor[t.floor] || { n: 0, kg: 0 };
+                return `<div class="f1iob-side-tagrow">
+                            <span class="f1iob-side-tag ${t.cls}">${t.label}</span>
+                            <span class="f1iob-side-roll"><b>${num(f.n)}</b>롤</span>
+                            ${kgCell(f.kg)}
+                        </div>`;
+              }).join('')
             : '';
 
+        /* 제목 자리 — '요약' 대신 '6층 입고' 태그를 세웁니다. 아래 품목 줄이
+           어느 층 것인지를 제목이 말하게 하려는 것입니다. 숫자는 붙이지
+           않습니다(제목이지 집계 줄이 아닙니다). */
+        const sideTag = App.SIDE_TAG;
+        const titleHtml = `<span class="f1iob-side-tag ${sideTag.cls}">${sideTag.label} ${currentDir().label}</span>`;
+
         wrap.innerHTML = `
-            <div class="f1iob-side-title">요약</div>
+            <div class="f1iob-side-title">${titleHtml}</div>
             <div class="f1iob-side-list">${html}</div>
             ${tagHtml}
             <div class="f1iob-side-total">
@@ -243,6 +262,20 @@
         el.textContent = dateStr ? utils.formatKoDate(dateStr) : '';
     }
 
+    /* 최근 DB 갱신 시간 — 방향 스위처 왼쪽.
+       "최근 DB 갱신 시간 07-29 14:22" 처럼 월-일 시:분까지만 씁니다. 초까지는
+       필요 없고, 날짜가 붙어야 "며칠째 멈춰 있다"가 보입니다.
+       문자열을 그대로 자릅니다 — Date 로 바꾸면 안 됩니다(api.js 참고). */
+    function renderDbStamp(stamp) {
+        const el = App.elements.dbstamp;
+        if (!el) return;
+
+        const s = String(stamp || '');
+        if (s.length < 16) { el.textContent = ''; return; }
+
+        el.textContent = `최근 DB 갱신 시간 ${s.slice(5, 7)}-${s.slice(8, 10)} ${s.slice(11, 16)}`;
+    }
+
     /* 방향 전환 — 이미 받아 둔 데이터를 다시 그리기만 합니다 */
     function setDirection(key) {
         if (App.state.direction === key) return;
@@ -266,6 +299,10 @@
     async function loadData(dateStr) {
         App.state.currentDate = dateStr;
         renderBaseDate(dateStr);
+
+        /* DB 최신 시각은 조회 기준일과 무관하므로 표와 따로 돕니다.
+           실패해도 표는 그대로 그려야 하니 기다리지 않습니다. */
+        App.fetchLastUpdate().then(renderDbStamp).catch(() => {});
 
         if (App.state.isLoading) return;
         App.state.isLoading = true;

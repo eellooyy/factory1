@@ -60,6 +60,46 @@
         return byItem;
     }
 
+    /* ── DB 최신 시각 ─────────────────────────────────────────────
+       백업 스크립트(C:\AutoRun\factory1_io_supabase_backup.pyw)가 **언제
+       돌았는지는 어디에도 기록되지 않습니다.** 원본 테이블에는 스캔 시각
+       (created_at) 하나뿐이고 적재 시각 컬럼이 없습니다.
+
+       그래서 대신 **DB 에 들어와 있는 가장 최근 스캔 시각**을 봅니다.
+       오늘 것이 보이면 백업이 살아 있다는 뜻이고, 며칠 전에서 멈춰 있으면
+       공정 PC 나 백업 중 하나가 멈춘 것입니다. "언제 백업했나"는 아니지만
+       "데이터가 어디까지 와 있나"는 정확히 알려 줍니다.
+
+       조회 기준일과 무관합니다 — 과거 날짜를 보고 있어도 값은 그대로여야
+       합니다. 백업이 살아 있는지는 보고 있는 날짜와 상관없는 사실입니다.
+
+       ※ 실제 백업 실행 시각까지 보려면 백업 스크립트가 실행 결과를 남길
+         로그 테이블(factory1_sync_log 같은)이 하나 필요합니다.
+       ──────────────────────────────────────────────────────────── */
+    App.fetchLastUpdate = async function () {
+        const names = [];
+        App.DIRECTIONS.forEach(d => d.tables.forEach(t => names.push(t.name)));
+
+        const done = await Promise.all(names.map(async name => {
+            const { data, error } = await supabase
+                .from(name)
+                .select('created_at')
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (error) {
+                console.warn(`[factory1_inoutbound] ${name} 최신 시각 조회 실패:`, error.message);
+                return null;
+            }
+            return (data && data[0]) ? String(data[0].created_at) : null;
+        }));
+
+        /* 저장된 값이 한국시간 벽시계 문자열이라 그대로 비교합니다.
+           Date 로 바꾸면 야간 스캔이 하루씩 밀립니다 (constant.js 참고). */
+        const stamps = done.filter(Boolean).sort();
+        return stamps.length ? stamps[stamps.length - 1] : null;
+    };
+
     App.fetchDay = async function (dateStr) {
         const jobs = App.DIRECTIONS.map(async dir => ({
             dir: dir.key,

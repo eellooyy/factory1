@@ -85,6 +85,7 @@
 
             App.elements.title    = document.getElementById('f1iobDirTitle');
             App.elements.basedate = document.getElementById('f1iobBaseDate');
+            App.elements.dbstamp  = document.getElementById('f1iobDbStamp');
             App.elements.switcher = document.getElementById('f1iobDirSwitch');
 
             App.headerApi = window.CommonHeader.init({
