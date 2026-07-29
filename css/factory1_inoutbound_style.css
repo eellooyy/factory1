@@ -182,7 +182,6 @@
     display: flex;
     flex-direction: column;
 }
-.f1iob-split-main .f1iob-table-scroll { flex: 1 1 auto; }
 
 /* ── 표 좌우 날짜 이동 버튼 ───────────────────────────────────────
    서브메뉴 이동 버튼(.gf3-subnav)과 같은 성격입니다 — 평소에는 흐릿하게
@@ -395,30 +394,79 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 }
 
-/* 표 스크롤 영역 — 세로는 --iob-table-max-height 에서 가두고 헤더를 붙여 둡니다 */
-.f1iob-table-scroll {
-    max-height: var(--iob-table-max-height);
-    overflow: auto;
+/* ── 표 틀 ────────────────────────────────────────────────────────
+   헤더와 본문을 표 둘로 나눠 놓았습니다. 한 표에 sticky 헤더를 얹으면
+   세로 스크롤바가 헤더 옆까지 올라와, 스크롤바가 헤더 위에 얹혀 있는 것처럼
+   보입니다. 본문만 스크롤 영역으로 두면 스크롤바도 본문 옆에서 시작합니다.
+
+   가로 스크롤은 바깥 프레임이 맡습니다 — 여기서 함께 밀려야 헤더와 본문의
+   열이 어긋나지 않습니다.
+   ──────────────────────────────────────────────────────────────── */
+.f1iob-table-frame {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    overflow-x: auto;
     scrollbar-width: thin;
     scrollbar-color: #c7c7cc transparent;
 }
-.f1iob-table-scroll::-webkit-scrollbar {
+.f1iob-table-inner {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    /* 열 폭 합(628px)에 스크롤바 자리를 더한 값보다 조금 넉넉하게.
+       이보다 좁아지면 가로 스크롤로 넘어갑니다. */
+    min-width: 620px;
+}
+
+/* 헤더 표 — 본문의 스크롤바 자리만큼 오른쪽을 비워 둬야 열이 맞습니다.
+   padding 으로 8px 을 주지 않고 본문과 똑같이 스크롤 영역으로 만든 이유는,
+   브라우저가 실제로 잡는 자리가 ::-webkit-scrollbar 에 적은 폭과 딱 같지
+   않기 때문입니다(8px 로 적어도 9px 을 잡습니다). 같은 방식으로 자리를
+   잡게 두면 그 차이가 저절로 맞습니다. 트랙은 투명이라 보이지 않습니다. */
+.f1iob-table-head {
+    flex: 0 0 auto;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+.f1iob-table-head::-webkit-scrollbar { width: var(--iob-scrollbar-width); }
+.f1iob-table-head::-webkit-scrollbar-track,
+.f1iob-table-head::-webkit-scrollbar-thumb { background: transparent; }
+
+/* 본문 스크롤 영역 — 헤더 높이를 뺀 만큼이 최대 높이입니다.
+   (카드 전체 높이는 --iob-table-max-height 그대로) */
+.f1iob-table-scroll {
+    flex: 1 1 auto;
+    max-height: calc(var(--iob-table-max-height) - var(--iob-head-height));
+    overflow-y: auto;
+    overflow-x: hidden;      /* 가로는 바깥 프레임이 맡습니다 */
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: #c7c7cc transparent;
+}
+.f1iob-table-scroll::-webkit-scrollbar,
+.f1iob-table-frame::-webkit-scrollbar {
     width: var(--iob-scrollbar-width);
     height: var(--iob-scrollbar-width);
 }
-.f1iob-table-scroll::-webkit-scrollbar-track { background: transparent; }
-.f1iob-table-scroll::-webkit-scrollbar-thumb {
+.f1iob-table-scroll::-webkit-scrollbar-track,
+.f1iob-table-frame::-webkit-scrollbar-track { background: transparent; }
+.f1iob-table-scroll::-webkit-scrollbar-thumb,
+.f1iob-table-frame::-webkit-scrollbar-thumb {
     background-color: #c7c7cc;
     border-radius: 8px;
     border: 2px solid transparent;
     background-clip: padding-box;
 }
-.f1iob-table-scroll::-webkit-scrollbar-thumb:hover { background-color: #a1a1a6; }
+.f1iob-table-scroll::-webkit-scrollbar-thumb:hover,
+.f1iob-table-frame::-webkit-scrollbar-thumb:hover { background-color: #a1a1a6; }
 
+/* 최소 폭은 표가 아니라 .f1iob-table-inner 가 잡습니다. 여기에도 걸면
+   헤더 표는 스크롤바 자리(padding-right)만큼 더 넓어져 프레임을 밀어냅니다. */
 .f1iob-table {
     width: 100%;
-    /* RollNo 와 물류코드가 뭉개지지 않는 최소 폭 — 이보다 좁아지면 가로 스크롤 */
-    min-width: 640px;
     table-layout: fixed;
     border-collapse: separate !important;
     border-spacing: 0 !important;
@@ -437,13 +485,10 @@
 .f1iob-col-weight { width: 88px; }
 .f1iob-col-pcode  { width: 118px; }
 
-/* ── 헤더 (단 헤더) ── */
+/* ── 헤더 (단 헤더) ──
+   스크롤 영역 밖의 별도 표라 sticky 가 필요 없습니다. */
 .f1iob-table thead {
-    position: sticky;
-    top: 0;
-    z-index: 30;
     background-color: #ffffff;
-    transform: translateZ(0);   /* HW 가속으로 스크롤 잔상 방지 */
 }
 
 .f1iob-table thead th {

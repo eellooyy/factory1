@@ -135,31 +135,56 @@
                     <span class="material-symbols-outlined">chevron_left</span>
                 </button>
 
+                <!-- 헤더와 본문을 표 둘로 나눕니다. 세로 스크롤바가 본문 옆에만
+                     서게 하려는 것입니다 — 한 표로 두면 스크롤바가 헤더까지
+                     올라와 얹혀 있는 것처럼 보입니다.
+                     가로 스크롤은 바깥 프레임(.f1iob-table-frame)이 맡아 두 표가
+                     같이 움직입니다.
+
+                     ※ colgroup 을 두 벌 적어야 합니다. 한쪽만 고치면 열이
+                       어긋납니다. (constant.js 의 COLUMNS 와도 짝입니다) -->
                 <div class="inner-layout-card">
-                    <div class="f1iob-table-scroll">
-                        <table class="f1iob-table">
-                            <colgroup>
-                                <col class="f1iob-col-time">
-                                <col class="f1iob-col-vendor">
-                                <col class="f1iob-col-grade">
-                                <col class="f1iob-col-roll">
-                                <col class="f1iob-col-weight">
-                                <col class="f1iob-col-pcode">
-                            </colgroup>
-                            <thead>
-                                <tr>
-                                    <th>시간</th>
-                                    <th>회사</th>
-                                    <th>권종</th>
-                                    <th>RollNo</th>
-                                    <th>중량</th>
-                                    <th>물류코드</th>
-                                </tr>
-                            </thead>
-                            <tbody id="f1iobBody">
-                                <tr class="f1iob-placeholder"><td colspan="6">불러오는 중...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="f1iob-table-frame">
+                        <div class="f1iob-table-inner">
+                            <div class="f1iob-table-head">
+                                <table class="f1iob-table">
+                                    <colgroup>
+                                        <col class="f1iob-col-time">
+                                        <col class="f1iob-col-vendor">
+                                        <col class="f1iob-col-grade">
+                                        <col class="f1iob-col-roll">
+                                        <col class="f1iob-col-weight">
+                                        <col class="f1iob-col-pcode">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th>시간</th>
+                                            <th>회사</th>
+                                            <th>권종</th>
+                                            <th>RollNo</th>
+                                            <th>중량</th>
+                                            <th>물류코드</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+
+                            <div class="f1iob-table-scroll">
+                                <table class="f1iob-table">
+                                    <colgroup>
+                                        <col class="f1iob-col-time">
+                                        <col class="f1iob-col-vendor">
+                                        <col class="f1iob-col-grade">
+                                        <col class="f1iob-col-roll">
+                                        <col class="f1iob-col-weight">
+                                        <col class="f1iob-col-pcode">
+                                    </colgroup>
+                                    <tbody id="f1iobBody">
+                                        <tr class="f1iob-placeholder"><td colspan="6">불러오는 중...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -214,33 +239,52 @@
             </div>
         </div>
 
+        <!-- 위 표와 같은 구조입니다 (헤더 표 + 본문 표). colgroup 두 벌 주의. -->
         <div class="inner-layout-card">
-            <div class="f1iob-table-scroll">
-                <table class="f1iob-table">
-                    <colgroup>
-                        <col class="f1iob-col-origin">
-                        <col class="f1iob-col-time">
-                        <col class="f1iob-col-vendor">
-                        <col class="f1iob-col-grade">
-                        <col class="f1iob-col-roll">
-                        <col class="f1iob-col-weight">
-                        <col class="f1iob-col-pcode">
-                    </colgroup>
-                    <thead>
-                        <tr>
-                            <th>구분</th>
-                            <th>시간</th>
-                            <th>제조사코드</th>
-                            <th>권종</th>
-                            <th>RollNo</th>
-                            <th>중량</th>
-                            <th>물류코드</th>
-                        </tr>
-                    </thead>
-                    <tbody id="f1iobReviewBody">
-                        <tr class="f1iob-placeholder"><td colspan="7">불러오는 중...</td></tr>
-                    </tbody>
-                </table>
+            <div class="f1iob-table-frame">
+                <div class="f1iob-table-inner">
+                    <div class="f1iob-table-head">
+                        <table class="f1iob-table">
+                            <colgroup>
+                                <col class="f1iob-col-origin">
+                                <col class="f1iob-col-time">
+                                <col class="f1iob-col-vendor">
+                                <col class="f1iob-col-grade">
+                                <col class="f1iob-col-roll">
+                                <col class="f1iob-col-weight">
+                                <col class="f1iob-col-pcode">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>구분</th>
+                                    <th>시간</th>
+                                    <th>제조사코드</th>
+                                    <th>권종</th>
+                                    <th>RollNo</th>
+                                    <th>중량</th>
+                                    <th>물류코드</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+
+                    <div class="f1iob-table-scroll">
+                        <table class="f1iob-table">
+                            <colgroup>
+                                <col class="f1iob-col-origin">
+                                <col class="f1iob-col-time">
+                                <col class="f1iob-col-vendor">
+                                <col class="f1iob-col-grade">
+                                <col class="f1iob-col-roll">
+                                <col class="f1iob-col-weight">
+                                <col class="f1iob-col-pcode">
+                            </colgroup>
+                            <tbody id="f1iobReviewBody">
+                                <tr class="f1iob-placeholder"><td colspan="7">불러오는 중...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
