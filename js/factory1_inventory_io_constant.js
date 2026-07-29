@@ -203,6 +203,8 @@
 
         elements: {
             wrapper: null,
+            scroll: null,
+            head: null,
             blocks: null,
             subtitle: null,
             status: null

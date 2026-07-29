@@ -91,11 +91,13 @@
     </div>
 </div>
 
-<div class="gf3-wrapper f1inv-wrapper" data-page-module="Factory1InventoryIoModule" style="padding-top: 16px;">
+<div class="gf3-wrapper f1inv-wrapper" data-page-module="Factory1InventoryIoModule" style="padding-top: 12px;">
 
     <!-- 1층: 저장위치별 재고 종합표 (ERP 재고 · 전일 입출 · 실재고 대조) -->
     <div class="f1inv-floor-container">
-        <div class="panel-header-grid mb-3">
+        <!-- 아래 여백은 .panel-header-grid 가 잡습니다 (.mb-3 을 겹치면 그 값이
+             이깁니다 — 표 높이를 여기서 재는 중이라 한 곳에서만 정합니다) -->
+        <div class="panel-header-grid">
             <div class="header-left">
                 <span class="panel-subtitle" id="f1invSubtitle"></span>
             </div>
@@ -109,10 +111,12 @@
             </div>
         </div>
 
-        <!-- 저장위치별로 카드를 나눕니다. 표 머리글은 첫 카드에만 있고, 아래
-             카드들은 같은 colgroup 을 써서 열이 그대로 맞습니다. 가로 스크롤은
-             바깥 프레임이 맡아 카드 전체가 같이 밀립니다. -->
+        <!-- 저장위치별로 카드를 나눕니다. 표 머리글은 카드 밖에 따로 서서
+             스크롤에도 붙어 있고, 카드들은 머리글과 같은 colgroup 을 써서 열이
+             그대로 맞습니다. 가로·세로 스크롤은 바깥 프레임이 맡아 머리글과
+             본문이 같이 밀립니다. -->
         <div class="f1inv-table-scroll">
+            <div class="f1inv-head-sticky" id="f1invHead"></div>
             <div class="f1inv-blocks" id="f1invBlocks">
                 <div class="f1inv-placeholder-box">불러오는 중...</div>
             </div>

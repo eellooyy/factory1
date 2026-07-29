@@ -18,10 +18,40 @@
     /* [표 스크롤바 폭 옵션] */
     --inv-scrollbar-width: 8px;
 
-    /* [행 높이 옵션] 데이터 행 / 1레벨 헤더 / 2레벨 헤더 높이 */
-    --inv-row-height: 42px;
-    --inv-head-lv1-height: 38px;
-    --inv-head-lv2-height: 34px;
+    /* [행 높이 옵션] 데이터 행 / 1레벨 헤더 / 2레벨 헤더 높이.
+       1920×1080 전체화면에서 표 전체가 스크롤 없이 들어가도록 잡은 값입니다.
+       여기를 키우면 화면 스크롤과 표 안 스크롤이 같이 생깁니다. */
+    --inv-row-height: 35px;
+    --inv-head-lv1-height: 32px;
+    --inv-head-lv2-height: 28px;
+
+    /* [카드 간격 옵션] 저장위치 카드 사이 · 머리글과 첫 카드 사이 */
+    --inv-card-gap: 6px;
+
+    /* [표 최소 폭 옵션] 품목명이 뭉개지지 않는 폭. 머리글·본문·바깥 프레임이
+       모두 이 값을 써야 열이 어긋나지 않습니다 — 한 곳만 고치면 안 됩니다. */
+    --inv-min-width: 1140px;
+
+    /* [표 높이 옵션] 표가 화면에서 차지할 최대 높이.
+       여기서 가둬야 머리글이 붙어 있을 자리(스크롤 영역)가 생깁니다.
+
+       빼는 값은 표 위아래에 늘 붙어 있는 것들(공통 헤더 · 기준일 줄 · 바깥
+       여백)의 높이 합입니다. 실측 199px 에 여유 20px 을 얹은 값입니다.
+       이보다 작게 잡으면 표가 화면 밖으로 밀려 화면 스크롤이 생기고, 크게
+       잡으면 표 안 스크롤이 먼저 생깁니다. 둘 다 생기면 스크롤이 두 겹이 되어
+       가장 피곤합니다. 1920×1080 에서는 표 전체(619px)가 들어가 어느 쪽도
+       생기지 않습니다.
+       PDF 저장 때는 .f1inv-capturing 이 이 제한을 잠깐 풀어 전체를 그립니다. */
+    --inv-table-max-height: calc(100vh - 220px);
+
+    /* [강조색 옵션] 지고 재고 · 입고 페이지의 셀 선택과 같은 규격입니다.
+       자취는 회색, 머리글은 주황, 고른 칸에는 유리 커서가 얹힙니다.
+       색을 새로 만들지 않은 이유는, 같은 동작이 페이지마다 다른 색이면
+       화면을 옮길 때마다 무엇이 선택인지 다시 배워야 하기 때문입니다. */
+    --inv-hl-trail: #f4f4f8;
+    --inv-hl-cell: #ebebf0;
+    --inv-hl-head-bg: rgba(255, 160, 50, 0.18);
+    --inv-hl-head-fg: #c05a00;
 }
 
 .f1inv-wrapper {
@@ -32,7 +62,7 @@
 .f1inv-floor-container {
     background: #ffffff;
     border-radius: 16px;
-    padding: 18px 20px;
+    padding: 12px 18px 14px;
     box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
     border: 1px solid #dcdce4;
     margin-bottom: 0;
@@ -43,8 +73,8 @@
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: stretch;
-    padding-bottom: 6px;
-    margin-bottom: 14px;
+    padding-bottom: 2px;
+    margin-bottom: 8px;
 }
 
 .panel-header-grid .header-left,
@@ -97,12 +127,6 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-}
-.f1inv-status-title {
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #636366;
-    white-space: nowrap;
 }
 
 /* 버튼 왼쪽 자리 — '확인'은 고정 문구, 보류·미확인은 메모.
@@ -188,8 +212,9 @@
 .f1inv-blocks {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    min-width: 1140px;
+    gap: var(--inv-card-gap);
+    min-width: var(--inv-min-width);
+    position: relative;   /* 유리 커서(.f1inv-cursor)의 기준 상자 */
 }
 .f1inv-placeholder-box {
     padding: 28px 0;
@@ -199,14 +224,33 @@
     color: #8e8e93;
 }
 
-/* 표 스크롤 영역 — 세로는 내용 전체를 그대로 펼치고(PDF 저장 시 잘리지 않도록),
-   가로는 좁은 화면에서만 스크롤합니다. 행 수가 많이 늘어나 화면 안에 가두고
-   싶어지면 여기에 max-height 를 주기만 하면 헤더는 자동으로 고정됩니다. */
+/* 표 스크롤 영역 — 가로는 좁은 화면에서, 세로는 화면 높이를 넘길 때만
+   스크롤합니다. 머리글은 이 영역 안에서 붙어 있으므로 세로 제한이 없으면
+   붙을 자리도 없습니다(스크롤이 없으면 sticky 는 아무 일도 하지 않습니다).
+   PDF 는 이 제한을 잠깐 풀고 찍으므로 잘리지 않습니다 (.f1inv-capturing). */
 .f1inv-table-scroll {
-    overflow-x: auto;
+    overflow: auto;
+    max-height: var(--inv-table-max-height);
     scrollbar-width: thin;
     scrollbar-color: #c7c7cc transparent;
 }
+
+/* 표 머리글 — 카드 위에 따로 서서, 본문이 아래로 지나가도 자리를 지킵니다.
+   1·2레벨을 한 덩어리로 묶어 두 줄이 같이 멈춥니다.
+   본문 카드들과 같은 colgroup·같은 폭을 쓰고 세로 스크롤바도 같은 프레임
+   안에서 생기므로 열이 어긋나지 않습니다. */
+.f1inv-head-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    min-width: var(--inv-min-width);
+    background: #ffffff;    /* 카드 사이 틈으로 지나가는 행이 비쳐 보이지 않도록 */
+    padding-bottom: var(--inv-card-gap);
+}
+.f1inv-head-sticky:empty { display: none; }
+
+/* 머리글 아래 구분선은 카드 테두리가 대신합니다 */
+.f1inv-head-card .f1inv-thead-lv2 th { border-bottom: none; }
 .f1inv-table-scroll::-webkit-scrollbar {
     width: var(--inv-scrollbar-width);
     height: var(--inv-scrollbar-width);
@@ -226,7 +270,7 @@
 .f1inv-table {
     width: 100%;
     /* 품목명이 뭉개지지 않는 최소 폭 — 이보다 좁아지면 가로 스크롤로 전환됩니다 */
-    min-width: 1140px;
+    min-width: var(--inv-min-width);
     table-layout: fixed;
     border-collapse: separate !important;
     border-spacing: 0 !important;
@@ -242,13 +286,11 @@
 .f1inv-col-sum  { width: 86px; }
 .f1inv-col-diff { width: 98px; }
 
-/* ── 헤더 ── */
+/* ── 헤더 ──
+   고정은 바깥의 .f1inv-head-sticky 가 맡습니다. thead 자체에 sticky 를 걸면
+   그 표(첫 카드) 안에서만 붙어 있어, 아래 카드로 넘어가는 순간 사라집니다. */
 .f1inv-table thead {
-    position: sticky;
-    top: 0;
-    z-index: 30;
     background-color: #ffffff;
-    transform: translateZ(0);   /* HW 가속으로 스크롤 잔상 방지 */
 }
 
 .f1inv-thead-lv1 th {
@@ -378,6 +420,63 @@
 .f1inv-table tbody tr:hover td { background-color: #fafafa; }
 .f1inv-table tbody tr:hover .f1inv-sum { background-color: #f7f7fa !important; }
 
+/* ========================================
+   셀 선택
+   ----------------------------------------
+   지고 재고 · 입고 페이지와 같은 규격입니다 — 칸을 누르면 유리 커서가 얹히고
+   머리글(1·2레벨)이 주황으로 켜집니다. 다른 점은 자취뿐입니다. 저 페이지들은
+   행을 통째로 칠하지만 여기는 왼쪽(같은 행)과 위쪽(같은 열) 두 갈래만
+   칠합니다. 열이 11개라 행·열을 다 칠하면 화면 절반이 물들어 정작 고른 칸이
+   묻힙니다. 숫자를 확인할 때 눈이 가는 곳도 왼쪽 끝의 품목명과 위쪽 끝의
+   열 이름 둘뿐입니다.
+
+   합계 열과 hover 색이 !important 라 여기도 같은 무게로 덮습니다.
+   ======================================== */
+.f1inv-wrapper .inner-layout-card .f1inv-table tbody td.f1inv-hl-row,
+.f1inv-wrapper .inner-layout-card .f1inv-table tbody td.f1inv-hl-col {
+    background-color: var(--inv-hl-trail) !important;
+}
+.f1inv-wrapper .inner-layout-card .f1inv-table tbody td.f1inv-hl-cell {
+    background-color: var(--inv-hl-cell) !important;
+    position: relative;
+    z-index: 10;          /* 유리 커서(z-index 8) 위에 글자가 남도록 */
+    font-weight: 900;
+}
+.f1inv-wrapper .inner-layout-card .f1inv-table thead th.f1inv-hl-head {
+    background-color: var(--inv-hl-head-bg) !important;
+    color: var(--inv-hl-head-fg);
+}
+
+/* 유리 커서 — 고른 칸 위에 얹히는 반투명 판 (지고 재고 · 입고와 동일 규격).
+   칸에서 칸으로 미끄러져 이동해서 방향키로 옮길 때 어디로 갔는지 눈이 따라갑니다. */
+.f1inv-cursor {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.10), inset 0 0 8px rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    z-index: 8;
+    opacity: 0;
+    transition:
+        top 0.12s cubic-bezier(0.23, 1, 0.32, 1),
+        left 0.12s cubic-bezier(0.23, 1, 0.32, 1),
+        width 0.10s ease-out,
+        height 0.10s ease-out,
+        opacity 0.10s ease-out;
+}
+.f1inv-cursor.active { opacity: 1; }
+
+/* 누를 수 있는 곳임을 커서로 알립니다 (다른 페이지의 .f1jg-data-cell 과 동일) */
+.f1inv-table tbody td { cursor: pointer; }
+
+/* PDF 캡쳐 중에만 — 세로 제한과 고정 머리글을 잠깐 풀어 전체를 펼칩니다.
+   (html2canvas 는 스크롤 영역을 잘라 찍고, sticky 요소는 엉뚱한 자리에 그립니다) */
+.f1inv-capturing .f1inv-table-scroll {
+    max-height: none;
+    overflow: visible;
+}
+.f1inv-capturing .f1inv-head-sticky { position: static; }
+
 /* 데이터 로딩/비어있음 안내 행 */
 .f1inv-placeholder td {
     height: 120px;
@@ -405,7 +504,7 @@
     .panel-subtitle { display: none; }
     .f1inv-legend { display: none; }
 
-    .f1inv-table td { font-size: 12px; height: 38px; }
+    .f1inv-table td { font-size: 12px; height: 34px; }
     .f1inv-thead-lv1 th { font-size: 12px; }
     .f1inv-thead-lv2 th { font-size: 11px; }
     .f1inv-loc-name { font-size: 12px; }

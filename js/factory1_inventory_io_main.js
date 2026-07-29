@@ -16,11 +16,14 @@
             App.elements.wrapper = document.querySelector('.f1inv-wrapper');
             if (!App.elements.wrapper) return;
 
+            App.elements.scroll = document.querySelector('.f1inv-table-scroll');
+            App.elements.head = document.getElementById('f1invHead');
             App.elements.blocks = document.getElementById('f1invBlocks');
             App.elements.subtitle = document.getElementById('f1invSubtitle');
             App.elements.status = document.getElementById('f1invStatus');
 
             App.bindStatus();
+            App.bindCellSelect();
             App.renderStatus();
 
             App.headerApi = window.CommonHeader.init({
@@ -43,11 +46,16 @@
                             App.headerApi.elements.saveBtn,
                             pdfBtn
                         ],
+                        /* 화면에서는 표를 한 화면 높이로 가두고 머리글을 붙여
+                           두지만, 그대로 찍으면 스크롤 밖의 행이 잘려 나갑니다.
+                           캡쳐하는 동안만 제한을 풀어 전체를 펼칩니다. */
                         onBusy: function () {
+                            App.elements.wrapper.classList.add('f1inv-capturing');
                             pdfBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">hourglass_empty</span>처리중...';
                             pdfBtn.disabled = true;
                         },
                         onDone: function () {
+                            App.elements.wrapper.classList.remove('f1inv-capturing');
                             pdfBtn.innerHTML = btnInner;
                             pdfBtn.disabled = false;
                         }
