@@ -60,8 +60,23 @@
 
             /* 공통 헤더 기본값이 '어제'입니다. 이 표는 달 단위라 어느 날로
                열든 같은 달이 나오고, 그 날 줄만 잡혀 있으면 됩니다.
-               (재고실사처럼 '어제'를 기준일로 삼는 화면과 줄이 맞습니다) */
-            App.loadData(App.headerApi.getCurrentDate());
+               (재고실사처럼 '어제'를 기준일로 삼는 화면과 줄이 맞습니다)
+
+               단 ?d=YYYY-MM-DD 로 들어오면 그 날짜로 엽니다. 재고실사의
+               대조 팝업에서 '전체 보기'로 넘어올 때 쓰는 길이라, 보고 있던
+               날과 다른 달이 열리면 대조가 끊깁니다. 오늘 이후 날짜는
+               공통 헤더가 막고 있으므로 무시합니다. */
+            const asked = new URLSearchParams(location.search).get('d');
+            const today = window.Factory3Utils.getTodayStr();
+            const start = (asked && /^\d{4}-\d{2}-\d{2}$/.test(asked) && asked <= today)
+                ? asked
+                : App.headerApi.getCurrentDate();
+
+            if (start !== App.headerApi.getCurrentDate()) {
+                App.headerApi.setCurrentDate(start);   // 표까지 같이 그려집니다
+            } else {
+                App.loadData(start);
+            }
         }
     };
 

@@ -24,6 +24,7 @@
 
             App.bindStatus();
             App.bindCellSelect();
+            if (App.bindLedger) App.bindLedger();   // 전자신문 대장 대조 팝업
             App.renderStatus();
 
             App.headerApi = window.CommonHeader.init({
@@ -41,6 +42,9 @@
                         backgroundColor: '#f5f5f7',
                         hideDuringCapture: [
                             document.getElementById('f3iNoticeTicker'),
+                            // 대조 버튼은 조작용이라 뺍니다. 표 안의 대장 배지는
+                            // 그날 대조 결과라 그대로 찍힙니다.
+                            document.getElementById('f1invLedgerBtn'),
                             App.headerApi.elements.todayBtn,
                             App.headerApi.elements.editBtn,
                             App.headerApi.elements.saveBtn,

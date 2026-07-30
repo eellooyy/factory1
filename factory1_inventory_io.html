@@ -104,6 +104,14 @@
             </div>
             <div class="header-center text-center"></div>
             <div class="header-right">
+                <!-- 전자신문 대장 대조 — 사급 창고(WB11102) 한 곳만 해당합니다.
+                     표 안에서는 그 블록의 저장위치 칸에 붙은 배지로도 열 수 있고,
+                     여기 버튼은 '어디 있는지 몰라 못 찾는 것'을 막는 자리입니다. -->
+                <button type="button" class="f1inv-ledger-btn" id="f1invLedgerBtn"
+                        title="전자신문 용지재고대장과 대조합니다 (사급 창고 WB11102)">
+                    <span class="material-symbols-outlined">description</span>전자신문 대조
+                </button>
+
                 <!-- 재고 확인 상태 — 날짜별로 저장됩니다.
                      매일 실사를 할 수 있는 것이 아니고 숫자가 애매한 날도 있어서,
                      그날의 표를 어디까지 믿을 수 있는지 남겨 두는 자리입니다.
@@ -141,13 +149,37 @@
     </div>
 </div>
 
+<!-- ================================================================
+     전자신문 대장 대조 팝업
+
+     껍데기는 공지 모달(.f3i-nmodal-*)을 그대로 씁니다. 이 페이지가 이미
+     쓰는 모양이라 새로 익힐 것이 없고, 표 안에 말풍선을 띄우면
+     .f1inv-table-scroll 의 overflow 에 잘리는 문제도 피할 수 있습니다.
+
+     내용은 ledger.js 가 채웁니다. 지금은 DB 뷰가 없어 전자신문 페이지의
+     표본(factory1_jeonja_constant.js 의 SAMPLE)을 읽습니다 — 값을 넣는
+     곳이 한 군데뿐이라, 뷰가 생기면 ledger.js 의 조회 함수만 바뀝니다.
+     ================================================================ -->
+<div id="f1invLedgerModal" class="f3i-nmodal-overlay f1inv-lmodal">
+    <div class="f3i-nmodal-box f1inv-lmodal-box">
+        <div class="f3i-nmodal-header">
+            <span class="f3i-nmodal-title" id="f1invLedgerTitle">전자신문 용지재고대장</span>
+            <span id="f1invLedgerCloseBtn" class="material-symbols-outlined f3i-nmodal-close">close</span>
+        </div>
+        <div class="f3i-nmodal-body" id="f1invLedgerBody"></div>
+    </div>
+</div>
+
 <script src="js/common_utils.js"></script>
 <script src="js/common_header.js"></script>
 <script src="js/common_pdf.js"></script>
 <script src="js/common_subnav.js"></script>
+<!-- 전자신문 원장 표본 — 값을 읽기만 합니다. DB 뷰가 붙으면 이 줄을 뺍니다. -->
+<script src="js/factory1_jeonja_constant.js"></script>
 <script src="js/factory1_inventory_io_constant.js"></script>
 <script src="js/factory1_inventory_io_api.js"></script>
 <script src="js/factory1_inventory_io_render.js"></script>
+<script src="js/factory1_inventory_io_ledger.js"></script>
 <script src="js/factory1_inventory_io_main.js"></script>
 </body>
 </html>

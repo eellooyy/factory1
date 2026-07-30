@@ -170,10 +170,16 @@
 
                 // 저장위치 셀 — 그룹의 첫 행에서 품목 수만큼 세로 병합
                 if (idx === 0) {
+                    /* 대장이 있는 저장위치(ledger: true)에는 배지가 한 줄 더
+                       붙습니다. 열을 늘리지 않고 이미 병합된 이 칸을 쓰는
+                       이유는 ledger.js 머리말에 적어 두었습니다. */
+                    const badge = App.ledgerBadgeHtml ? App.ledgerBadgeHtml(loc) : '';
+                    const locCls = 'f1inv-loc-td' + (badge ? ' has-ledger' : '');
                     html += `
-                        <td class="f1inv-loc-td" rowspan="${items.length}" data-col="${COL_LOC}">
+                        <td class="${locCls}" rowspan="${items.length}" data-col="${COL_LOC}">
                             <span class="f1inv-loc-name">${loc.locName}</span>
                             <span class="f1inv-loc-code">${loc.locCode}</span>
+                            ${badge}
                         </td>`;
                 }
 
