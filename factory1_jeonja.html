@@ -132,10 +132,18 @@
             </div>
             <div class="header-center text-center"></div>
             <div class="header-right">
-                <!-- 이 화면의 숫자가 어디서 나오는지 한 줄로 붙여 둡니다.
-                     원장 출고는 실사용량이 아니라 약정 손지율을 얹은 계산값이라,
-                     ERP 사용량과 다른 것이 정상입니다. -->
+                <!-- 이 원장이 어느 창고를 보는 것인지 -->
                 <span class="f1jn-note">(사급)1공장 용지창고 · WB11102</span>
+
+                <!-- 스크롤 잠금 — 네 패널에 동시에 걸립니다. 패널은 붙어 다니므로
+                     애초에 따로 잠글 수가 없습니다. (지고 재고 · 나라사랑과 같은 처리) -->
+                <div class="d-flex align-items-center" id="f1jnScrollToggleWrap">
+                    <span class="panel-toggle-label">스크롤 ON/OFF</span>
+                    <label class="f1-toggle-switch" title="표 안의 세로 스크롤 ON/OFF (네 패널 동시 적용)">
+                        <input type="checkbox" id="f1jnScrollToggle">
+                        <span class="f1-toggle-slider"></span>
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -143,7 +151,7 @@
 
             <!-- ① 그날이 어떤 날인가 -->
             <div class="f1jn-panel f1jn-panel-1">
-                <div class="f1jn-scroll-area" id="f1jnScroll1">
+                <div class="f1jn-scroll-area locked" id="f1jnScroll1">
                     <table class="f1jn-table">
                         <colgroup>
                             <col class="f1jn-col-date">
@@ -166,7 +174,7 @@
 
             <!-- ② 들어온 것 — kg 아래 작은 글씨가 롤 수(R/L)입니다 -->
             <div class="f1jn-panel f1jn-panel-2">
-                <div class="f1jn-scroll-area" id="f1jnScroll2">
+                <div class="f1jn-scroll-area locked" id="f1jnScroll2">
                     <table class="f1jn-table">
                         <colgroup>
                             <col class="f1jn-col-spec" span="2">
@@ -174,7 +182,7 @@
                         </colgroup>
                         <thead>
                             <tr class="f1jn-thead-lv1">
-                                <th colspan="3">입고 <small>(kg)</small></th>
+                                <th colspan="3">입고</th>
                             </tr>
                             <tr class="f1jn-thead-lv2">
                                 <th>1576</th>
@@ -190,7 +198,7 @@
 
             <!-- ③ 나간 것 — 면수에서 계산되는 값 -->
             <div class="f1jn-panel f1jn-panel-3">
-                <div class="f1jn-scroll-area" id="f1jnScroll3">
+                <div class="f1jn-scroll-area locked" id="f1jnScroll3">
                     <table class="f1jn-table">
                         <colgroup>
                             <col class="f1jn-col-spec" span="2">
@@ -198,7 +206,7 @@
                         </colgroup>
                         <thead>
                             <tr class="f1jn-thead-lv1">
-                                <th colspan="3">출고 <small>(kg)</small></th>
+                                <th colspan="3">출고</th>
                             </tr>
                             <tr class="f1jn-thead-lv2">
                                 <th>1576</th>
@@ -214,17 +222,19 @@
 
             <!-- ④ 이어지는 값 — 1576 · 788 합산입니다 (원장이 나눠 적지 않습니다) -->
             <div class="f1jn-panel f1jn-panel-4">
-                <div class="f1jn-scroll-area" id="f1jnScroll4">
+                <div class="f1jn-scroll-area locked" id="f1jnScroll4">
                     <table class="f1jn-table">
                         <colgroup>
                             <col class="f1jn-col-stock">
                         </colgroup>
                         <thead>
                             <tr class="f1jn-thead-lv1">
-                                <th>재고 <small>(kg)</small></th>
+                                <th>재고</th>
                             </tr>
+                            <!-- 나라사랑처럼 단위는 2단에 둡니다. 원장이 1576 · 788 을
+                                 나눠 적지 않아 이 열만 합산이라는 것도 여기 적습니다. -->
                             <tr class="f1jn-thead-lv2">
-                                <th>합산</th>
+                                <th>Kg 합산</th>
                             </tr>
                         </thead>
                         <tbody id="f1jnBody4"></tbody>

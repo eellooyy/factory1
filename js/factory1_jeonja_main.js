@@ -37,6 +37,7 @@
                         backgroundColor: '#f5f5f7',
                         hideDuringCapture: [
                             document.getElementById('f3iNoticeTicker'),
+                            document.getElementById('f1jnScrollToggleWrap'),
                             App.headerApi.elements.todayBtn,
                             App.headerApi.elements.editBtn,
                             App.headerApi.elements.saveBtn,

@@ -116,13 +116,15 @@
         };
     }
 
-    function dayRowSet(monthStr, r, baseDay) {
+    function dayRowSet(monthStr, r, selDay, todayDay) {
         const wd = weekdayOf(monthStr, r.d);
 
         const cls = [];
         if (r.kind === App.ROW_OFF) cls.push('f1jn-row-off');
         else if (r.kind === App.ROW_PENDING) cls.push('f1jn-row-pending');
-        if (r.d === baseDay) cls.push('f1jn-row-base');
+        // 오늘(푸른색)과 선택 행(회색)은 다른 줄입니다 — 헤더 기본값이 '어제'입니다.
+        if (r.d === todayDay) cls.push('f1jn-row-today');
+        if (r.d === selDay) cls.push('f1jn-row-selected');
 
         let dateCls = '';
         if (wd === '토') dateCls = 'f1jn-sat';
@@ -146,8 +148,12 @@
         if (!el.body[1]) return;
 
         const monthStr = monthOf(dateStr);
-        const baseDay = dayOf(dateStr);
+        const selDay = dayOf(dateStr);
         const data = monthData(monthStr);
+
+        // 오늘 줄은 보고 있는 달이 이번 달일 때만 있습니다
+        const today = window.Factory3Utils.getTodayStr();
+        const todayDay = (monthOf(today) === monthStr) ? dayOf(today) : null;
 
         state.currentDate = dateStr;
         state.currentMonth = monthStr;
@@ -160,7 +166,7 @@
         const push = set => PANELS.forEach(p => buf[p].push(set[p]));
 
         push(rowSet({ cls: 'f1jn-row-carry', label: '전월재고', v: { stock: data.carryStock } }));
-        data.rows.forEach(r => push(dayRowSet(monthStr, r, baseDay)));
+        data.rows.forEach(r => push(dayRowSet(monthStr, r, selDay, todayDay)));
 
         const foot = rowSet({ label: '소계', v: data.total || {} });
 
@@ -173,14 +179,16 @@
         scrollToBase();
     }
 
-    /* 기준일 줄을 화면 가운데로 끌어옵니다. 달의 마지막 주를 보고 있는데
-       표가 1일부터 시작해 있으면 매번 손으로 내려야 합니다. */
+    /* 선택한 줄을 화면 가운데로 끌어옵니다. 달의 마지막 주를 보고 있는데
+       표가 1일부터 시작해 있으면 매번 손으로 내려야 합니다.
+       스크롤이 잠겨 있어도 scrollTop 은 이렇게 직접 넣을 수 있습니다 —
+       잠금은 사람이 굴리는 것만 막습니다. */
     function scrollToBase() {
         const el = App.elements;
         const area = el.scroll[1];
         if (!area) return;
 
-        const row = el.body[1].querySelector('.f1jn-row-base');
+        const row = el.body[1].querySelector('.f1jn-row-selected');
         const top = row
             ? Math.max(0, row.offsetTop - (area.clientHeight / 2) + (row.offsetHeight / 2))
             : 0;
@@ -215,6 +223,25 @@
             });
             area.addEventListener('mouseleave', function () { setHoverDay(null); });
         });
+
+        bindScrollToggle();
+    }
+
+    /* 스크롤 ON/OFF — 네 패널에 동시에 걸립니다. 패널은 붙어 다니므로 애초에
+       따로 잠글 수가 없습니다. 기본값은 잠김입니다(지고 재고 · 나라사랑과 같음).
+       한 달치가 33줄이라 열자마자 굴러가면 선택한 줄에서 벗어나기 쉽습니다. */
+    function bindScrollToggle() {
+        const el = App.elements;
+        const toggle = document.getElementById('f1jnScrollToggle');
+        if (!toggle) return;
+
+        const apply = () => PANELS.forEach(p => {
+            if (el.scroll[p]) el.scroll[p].classList.toggle('locked', !toggle.checked);
+        });
+
+        toggle.checked = false;
+        apply();
+        toggle.addEventListener('change', apply);
     }
 
     function setHoverDay(day) {
